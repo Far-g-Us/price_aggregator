@@ -1,0 +1,43 @@
+# deps
+node_modules/
+.opencode/
+.claude/
+opencode.json
+
+# build (electron-builder кладёт установщик в dist/)
+dist/
+dist-electron/
+out/
+*.tsbuildinfo
+
+# electron-builder cache / win code-sign
+.cache/
+*.exe
+*.msi
+*.nsis.*
+
+# local DB / user data (цены и история — локальные, в репо не нужны)
+*.db
+*.sqlite
+*.sqlite-journal
+*.db-journal
+app-data/
+
+# env / secrets (API-ключи Firecrawl/Apify и т.п.)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Playwright: браузеры качаются ТОЛЬКО в проект
+.playwright-browsers/
