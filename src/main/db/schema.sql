@@ -57,11 +57,65 @@ CREATE TABLE IF NOT EXISTS favorites (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Наши собственные категории (не витрины сетей): id как в taxonomy.ts.
+CREATE TABLE IF NOT EXISTS our_categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  parent_id TEXT REFERENCES our_categories(id),
+  position INTEGER NOT NULL DEFAULT 0
+);
+
+-- Товар может лежать в нескольких наших категориях (у сетей он в разных),
+-- поэтому связь many-to-many. city держим, чтобы разделить раскладку по городам.
+CREATE TABLE IF NOT EXISTS product_categories (
+  canonical_id TEXT NOT NULL REFERENCES products(id),
+  store_id TEXT NOT NULL,
+  city TEXT NOT NULL,
+  category_id TEXT NOT NULL REFERENCES our_categories(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (canonical_id, store_id, city, category_id)
+);
+CREATE INDEX IF NOT EXISTS idx_product_categories_cat
+  ON product_categories (city, category_id, store_id);
+
+INSERT OR IGNORE INTO our_categories (id, name, parent_id, position) VALUES
+  ('dairy', 'Молочное и яйца', NULL, 1),
+  ('dairy-milk', 'Молоко', 'dairy', 1),
+  ('dairy-fermented', 'Кефир и йогурты', 'dairy', 2),
+  ('dairy-cheese', 'Сыры', 'dairy', 3),
+  ('dairy-butter', 'Масло', 'dairy', 4),
+  ('bakery', 'Хлеб и выпечка', NULL, 2),
+  ('bakery-bread', 'Хлеб и батоны', 'bakery', 1),
+  ('meat', 'Мясо и птица', NULL, 3),
+  ('meat-chicken', 'Курица и индейка', 'meat', 1),
+  ('sausage', 'Колбасы', NULL, 4),
+  ('vegetables', 'Овощи', NULL, 5),
+  ('fruit', 'Фрукты и ягоды', NULL, 6),
+  ('groceries', 'Бакалея', NULL, 7),
+  ('groceries-flour', 'Мука', 'groceries', 1),
+  ('drinks', 'Напитки', NULL, 8),
+  ('household', 'Быт и химия', NULL, 9)
+ON CONFLICT(id) DO UPDATE SET
+  name = excluded.name,
+  parent_id = excluded.parent_id,
+  position = excluded.position;
+
 INSERT OR IGNORE INTO cities (id, name) VALUES ('moscow', 'Москва');
+INSERT OR IGNORE INTO cities (id, name) VALUES ('saint-petersburg', 'Санкт-Петербург');
 INSERT OR IGNORE INTO cities (id, name) VALUES ('ulyanovsk', 'Ульяновск');
+INSERT OR IGNORE INTO cities (id, name) VALUES ('krasnodar', 'Краснодар');
+INSERT OR IGNORE INTO cities (id, name) VALUES ('irkutsk', 'Иркутск');
 INSERT OR IGNORE INTO stores (id, city, external_store_id, name)
 VALUES
-  ('pyaterochka', 'moscow', 'TBD_SAP', 'Пятёрочка'),
-  ('magnit', 'moscow', '473996', 'Магнит'),
+  ('pyaterochka', 'moscow', '35XY', 'Пятёрочка'),
+  ('magnit', 'moscow', '303857', 'Магнит'),
   ('lenta', 'moscow', 'TBD_STOREID', 'Лента'),
-  ('pyaterochka', 'ulyanovsk', '3CX1', 'Пятёрочка');
+  ('pyaterochka', 'saint-petersburg', '5415', 'Пятёрочка'),
+  ('magnit', 'saint-petersburg', '501478', 'Магнит'),
+  ('pyaterochka', 'ulyanovsk', '3288', 'Пятёрочка'),
+  ('magnit', 'ulyanovsk', '730159', 'Магнит'),
+  ('magnit', 'krasnodar', '010033', 'Магнит'),
+  ('magnit', 'irkutsk', '540675', 'Магнит')
+ON CONFLICT(id, city) DO UPDATE SET
+  external_store_id = excluded.external_store_id,
+  name = excluded.name;

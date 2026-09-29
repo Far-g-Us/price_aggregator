@@ -43,4 +43,38 @@ const groups = groupByProduct([milkA, milkB, other]);
 assert.equal(groups.length, 2);
 assert.equal(groups.find((g) => g.name.includes('Молоко'))?.offers.length, 2);
 
+const dupA = item({ canonicalId: 'magnit-10', name: 'Молоко 3.2% 1л', price: 100 });
+const dupB = item({ canonicalId: 'magnit-10', name: 'Молоко пастеризованное 3.2% 1л', price: 100 });
+const dupGroups = groupByProduct([dupA, dupB, dupA]);
+assert.equal(dupGroups.length, 1, 'same canonical merges despite name drift');
+assert.equal(dupGroups[0]?.offers.length, 1, 'no offer duplication');
+assert.equal(dupGroups[0]?.offers[0]?.product.price, 100);
+
+const pie1 = item({ canonicalId: 'magnit-100', name: 'Пирожок слоеный вишня Дом выпечки 70г', price: 44.99 });
+const pie2 = item({ canonicalId: 'magnit-200', name: 'Пирожок слоеный с вишной Дом выпечки 70г', price: 44.99 });
+const pie5ka = item({
+  canonicalId: '5ka-300',
+  storeId: 'pyaterochka',
+  name: 'Пирожок слоеный вишня Дом выпечки 70г',
+  price: 39.99,
+});
+const pieGroups = groupByProduct([pie1, pie2, pie5ka]);
+for (const g of pieGroups) {
+  const ids = g.offers.map((o) => o.storeId);
+  assert.equal(new Set(ids).size, ids.length, `one offer per store in ${g.key}`);
+}
+assert.equal(pieGroups.length, 2, 'похожие товары одного магазина не сливаются в одну карточку');
+assert.equal(
+  pieGroups.find((g) => g.offers.length === 2)?.offers.length,
+  2,
+  'cross-store merge intact',
+);
+const offerTotal = pieGroups.reduce((n, g) => n + g.offers.length, 0);
+assert.equal(offerTotal, 3, 'ни один товар не потерян');
+assert.equal(
+  pieGroups.filter((g) => g.offers[0]?.product.canonicalId === 'magnit-200').length,
+  1,
+  'дубль canonicalId не сеет вторую цену',
+);
+
 console.log('matching: ALL GREEN');

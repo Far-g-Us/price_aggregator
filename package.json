@@ -6,22 +6,28 @@
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.mjs",
+    "5ka:store": "node scripts/5ka-store.mjs",
+    "magnit:store": "node scripts/magnit-store.mjs",
     "test:magnit": "npx tsx scripts/test-magnit.ts",
+    "test:5ka": "npx tsx scripts/test-5ka.ts",
+    "test:taxonomy": "npx tsx scripts/test-taxonomy.ts",
     "test:matching": "npx tsx scripts/test-matching.ts",
     "test:db": "npx tsx scripts/test-db.ts",
     "test:scheduler": "npx tsx scripts/test-scheduler.ts",
-    "test": "npm run test:magnit --silent && npm run test:matching --silent && npm run test:db --silent && npm run test:scheduler --silent",
+    "test": "npm run test:5ka --silent && npm run test:magnit --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:db --silent && npm run test:scheduler --silent",
     "predev": "npm run version:sync",
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "dev:vite": "vite",
-    "dev:electron": "tsc -p tsconfig.electron.json && electron .",
+    "dev:electron": "node scripts/build-electron.mjs && electron .",
+    "build:electron": "node scripts/build-electron.mjs",
     "prebuild": "npm run version:sync",
-    "build": "tsc -p tsconfig.electron.json && vite build && electron-builder",
+    "build": "npm run build:electron && vite build && electron-builder",
     "release:win": "npm run build -- --win nsis --publish always",
     "build:win": "npm run build -- --win nsis",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -31,6 +37,7 @@
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "playwright": "^1.63.0",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
@@ -57,7 +64,8 @@
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "icon": "build/icon.ico"
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable.${ext}"

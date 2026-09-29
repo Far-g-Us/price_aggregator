@@ -42,10 +42,17 @@ export function sameProduct(a: ScrapedProduct, b: ScrapedProduct): boolean {
 export function groupByProduct(items: ScrapedProduct[]): PriceGroup[] {
   const groups: PriceGroup[] = [];
   for (const item of items) {
-    const linked = groups.find((x) => {
-      const first = x.offers[0];
-      return first !== undefined && sameProduct(first.product, item);
-    });
+    const sameId = groups.some((x) =>
+      x.offers.some((o) => o.storeId === item.storeId && o.product.canonicalId === item.canonicalId),
+    );
+    if (sameId) {
+      continue;
+    }
+    const linked = groups.find(
+      (x) =>
+        !x.offers.some((o) => o.storeId === item.storeId) &&
+        x.offers.some((o) => sameProduct(o.product, item)),
+    );
     if (linked) {
       linked.offers.push({ storeId: item.storeId, product: item });
       continue;
@@ -56,8 +63,8 @@ export function groupByProduct(items: ScrapedProduct[]): PriceGroup[] {
       offers: [{ storeId: item.storeId, product: item }],
     };
     if (item.imageUrl) group.imageUrl = item.imageUrl;
-    if (group.brand === undefined && item.brand) group.brand = item.brand;
-    if (group.unit === undefined && item.unit) group.unit = item.unit;
+    if (item.brand) group.brand = item.brand;
+    if (item.unit) group.unit = item.unit;
     groups.push(group);
   }
   return groups;

@@ -3,8 +3,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { ScrapedProduct, StoreAdapter } from '../src/shared/types.js';
+import { CITY_STORES } from '../src/shared/catalog.js';
 import { getPriceHistory, openDb } from '../src/main/db/db.js';
 import { pollOnce } from '../src/main/scheduler.js';
+
+const magnitMoscow = CITY_STORES.moscow?.find((s) => s.storeId === 'magnit')?.externalStoreId ?? '';
 
 let price = 100;
 const fake: StoreAdapter = {
@@ -13,7 +16,7 @@ const fake: StoreAdapter = {
     return [];
   },
   async fetchProduct(canonicalId: string, ctx: { city: string; externalStoreId: string }) {
-    assert.equal(ctx.externalStoreId, '473996');
+    assert.equal(ctx.externalStoreId, magnitMoscow);
     const p: ScrapedProduct = {
       canonicalId,
       storeId: 'magnit',

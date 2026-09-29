@@ -44,10 +44,22 @@ export interface ScrapedProduct extends PricePoint {
 }
 
 // Адаптер под каждую сеть. Реализации: Playwright / fetch к скрытому API / Firecrawl / Apify
+export interface StoreCategory {
+  id: string;
+  name: string;
+  url: string;
+  imageUrl?: string;
+}
+
 export interface StoreAdapter {
   readonly storeId: Store['id'];
   search(query: string, ctx: { city: CityId; externalStoreId: string }): Promise<ScrapedProduct[]>;
   fetchProduct(canonicalId: string, ctx: { city: CityId; externalStoreId: string }): Promise<ScrapedProduct>;
+  fetchCategories?(ctx: { city: CityId; externalStoreId: string }): Promise<StoreCategory[]>;
+  fetchCategoryProducts?(
+    categoryUrl: string,
+    ctx: { city: CityId; externalStoreId: string },
+  ): Promise<ScrapedProduct[]>;
 }
 
 // Правило обновления: сеть опрашиваем (poll), а в БД пишем только если цена изменилась.

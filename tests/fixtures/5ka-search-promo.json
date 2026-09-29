@@ -1,0 +1,805 @@
+{
+ "source": "5ka.ru category skidki-nedeli--251C17046 via Playwright Firefox",
+ "store": "35XY",
+ "capturedAt": "2026-09-29T07:54:44.860Z",
+ "products": [
+  {
+   "plu": 4323893,
+   "name": "Батарейка Opticell AA 4шт.",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1620948-main/320x320.jpeg?updated_at=2026-09-04T13:30:15.246Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1620948-main/800x800.jpeg?updated_at=2026-09-04T13:30:15.246Z",
+     "https://catalog-images.x5static.net/product/2bb7c80c21395d482176d4fa0bd1aa79-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": null,
+   "promo": null,
+   "prices": {
+    "regular": "437.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": null,
+   "cpd_labels": null,
+   "property_clarification": "4 шт",
+   "has_age_restriction": false,
+   "stock_limit": "12.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1620948-main/320x320.jpeg?updated_at=2026-09-04T13:30:15.246Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1620948-main/800x800.jpeg?updated_at=2026-09-04T13:30:15.246Z",
+      "https://catalog-images.x5static.net/product/2bb7c80c21395d482176d4fa0bd1aa79-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 280,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4323892,
+   "name": "Батарейка Opticell AAA 4шт.",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1621015-main/320x320.jpeg?updated_at=2026-09-04T13:28:38.472Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1621015-main/800x800.jpeg?updated_at=2026-09-04T13:28:38.472Z",
+     "https://catalog-images.x5static.net/product/e41eb22c2d4e9d89035b19a3769e8495-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": null,
+   "promo": null,
+   "prices": {
+    "regular": "429.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": null,
+   "cpd_labels": null,
+   "property_clarification": "4 шт",
+   "has_age_restriction": false,
+   "stock_limit": "5.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1621015-main/320x320.jpeg?updated_at=2026-09-04T13:28:38.472Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1621015-main/800x800.jpeg?updated_at=2026-09-04T13:28:38.472Z",
+      "https://catalog-images.x5static.net/product/e41eb22c2d4e9d89035b19a3769e8495-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 280,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4377195,
+   "name": "Отбеливатель-пятновыводитель Елизар многофункциональный кислородный 3кг",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1803063-main/320x320.jpeg?updated_at=2025-09-24T17:46:39.585Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1803063-main/800x800.jpeg?updated_at=2025-09-24T17:46:39.585Z",
+     "https://catalog-images.x5static.net/product/9b8a8f778f1a844fd766e7f86f75a51b-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.3,
+    "rates_count": 10
+   },
+   "promo": null,
+   "prices": {
+    "regular": "999.0",
+    "discount": "739.0",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-26%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "3 кг",
+   "has_age_restriction": false,
+   "stock_limit": "21.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1803063-main/320x320.jpeg?updated_at=2025-09-24T17:46:39.585Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1803063-main/800x800.jpeg?updated_at=2025-09-24T17:46:39.585Z",
+      "https://catalog-images.x5static.net/product/9b8a8f778f1a844fd766e7f86f75a51b-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 3148279,
+   "name": "Авокадо Global Village Хасс 2шт.",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1162650-main/320x320.jpeg?updated_at=2026-05-13T08:03:04.081Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1162650-main/800x800.jpeg?updated_at=2026-05-13T08:03:04.081Z",
+     "https://catalog-images.x5static.net/product/4c0a0d1faa1515f672a19abc2f3cb5dd-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/2ff00f725e5d818501434ea847608def-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/94933ea539a8dd091df9bd7f2443492c-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/2c1cce8b5360d2f9c770e81c30988cf4-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/8b654e9cd507c5a8847d1df871dde8a9-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.73,
+    "rates_count": 17232
+   },
+   "promo": null,
+   "prices": {
+    "regular": "234.99",
+    "discount": "209.99",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-11%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "2 шт",
+   "has_age_restriction": false,
+   "stock_limit": "67.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1162650-main/320x320.jpeg?updated_at=2026-05-13T08:03:04.081Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1162650-main/800x800.jpeg?updated_at=2026-05-13T08:03:04.081Z",
+      "https://catalog-images.x5static.net/product/4c0a0d1faa1515f672a19abc2f3cb5dd-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/2ff00f725e5d818501434ea847608def-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/94933ea539a8dd091df9bd7f2443492c-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/2c1cce8b5360d2f9c770e81c30988cf4-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/8b654e9cd507c5a8847d1df871dde8a9-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4217621,
+   "name": "Сервелат Папа Может Финский варено-копченый 350г",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1445995-main/320x320.jpeg?updated_at=2026-09-22T15:44:03.231Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1445995-main/800x800.jpeg?updated_at=2026-09-22T15:44:03.231Z",
+     "https://catalog-images.x5static.net/product/0c8d1c694fa2aefacf4c6556c974d46e-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/1009b3e79ef67d78d3590a16609ceec0-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.91,
+    "rates_count": 18073
+   },
+   "promo": null,
+   "prices": {
+    "regular": "199.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": null,
+   "cpd_labels": null,
+   "property_clarification": "350 г",
+   "has_age_restriction": false,
+   "stock_limit": "21.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1445995-main/320x320.jpeg?updated_at=2026-09-22T15:44:03.231Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1445995-main/800x800.jpeg?updated_at=2026-09-22T15:44:03.231Z",
+      "https://catalog-images.x5static.net/product/0c8d1c694fa2aefacf4c6556c974d46e-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/1009b3e79ef67d78d3590a16609ceec0-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 70,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 3236287,
+   "name": "Суп гороховый с копченостями Главсуп 250г",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1164304-main/320x320.jpeg?updated_at=2025-02-03T15:34:56.745Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1164304-main/800x800.jpeg?updated_at=2025-02-03T15:34:56.745Z"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.84,
+    "rates_count": 1283
+   },
+   "promo": null,
+   "prices": {
+    "regular": "139.99",
+    "discount": "118.99",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-15%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "250 г",
+   "has_age_restriction": false,
+   "stock_limit": "16.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1164304-main/320x320.jpeg?updated_at=2025-02-03T15:34:56.745Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1164304-main/800x800.jpeg?updated_at=2025-02-03T15:34:56.745Z"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4214450,
+   "name": "Набор колбас Велком Брауншвейгская, велкомовская, миланская сырокопченые полусухие 90г",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1448090-main/320x320.jpeg?updated_at=2025-08-19T11:54:17.730Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1448090-main/800x800.jpeg?updated_at=2025-08-19T11:54:17.730Z",
+     "https://catalog-images.x5static.net/product/6aa0a46a5377caa53dc03570844e6913-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/70434e52617c7e809c385451c2bd6c48-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.9,
+    "rates_count": 7633
+   },
+   "promo": null,
+   "prices": {
+    "regular": "149.99",
+    "discount": "129.99",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-13%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "90 г",
+   "has_age_restriction": false,
+   "stock_limit": "117.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1448090-main/320x320.jpeg?updated_at=2025-08-19T11:54:17.730Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1448090-main/800x800.jpeg?updated_at=2025-08-19T11:54:17.730Z",
+      "https://catalog-images.x5static.net/product/6aa0a46a5377caa53dc03570844e6913-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/70434e52617c7e809c385451c2bd6c48-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4166688,
+   "name": "Бумага Liberhaus жиронепроницаемая силиконизированная в листах 38х42см 16шт",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1408687-main/320x320.jpeg?updated_at=2025-11-15T17:12:24.529Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1408687-main/800x800.jpeg?updated_at=2025-11-15T17:12:24.529Z"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.96,
+    "rates_count": 2825
+   },
+   "promo": null,
+   "prices": {
+    "regular": "145.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "Выгодно",
+     "icon_url": null,
+     "bg_color": "#FFA500",
+     "text_color": "#ffffff"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "16 шт",
+   "has_age_restriction": false,
+   "stock_limit": "3.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1408687-main/320x320.jpeg?updated_at=2025-11-15T17:12:24.529Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1408687-main/800x800.jpeg?updated_at=2025-11-15T17:12:24.529Z"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 70,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 48655,
+   "name": "Капуста Брокколи",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1158313-main/320x320.jpeg?updated_at=2025-07-04T09:36:24.798Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1158313-main/800x800.jpeg?updated_at=2025-07-04T09:36:24.798Z"
+    ]
+   },
+   "uom": "кг",
+   "step": "0.5",
+   "rating": {
+    "rating_average": 4.91,
+    "rates_count": 9066
+   },
+   "promo": null,
+   "prices": {
+    "regular": "359.99",
+    "discount": "293.99",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-18%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "Цена за 1 кг",
+   "has_age_restriction": false,
+   "stock_limit": "11.40",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1158313-main/320x320.jpeg?updated_at=2025-07-04T09:36:24.798Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1158313-main/800x800.jpeg?updated_at=2025-07-04T09:36:24.798Z"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "0.5",
+   "min_weight": "0.5",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 60526,
+   "name": "Апельсины",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1158597-main/320x320.jpeg?updated_at=2026-08-26T11:53:29.566Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1158597-main/800x800.jpeg?updated_at=2026-08-26T11:53:29.566Z",
+     "https://catalog-images.x5static.net/product/4aab951ac9c56b32be0ed1b0fbad31f6-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/6bd3427326420333c57456466c01879d-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "кг",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.87,
+    "rates_count": 84524
+   },
+   "promo": null,
+   "prices": {
+    "regular": "129.99",
+    "discount": "119.99",
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "-8%",
+     "bg_color": "#FFD700",
+     "text_color": "#302E33"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "Цена за 1 кг",
+   "has_age_restriction": false,
+   "stock_limit": "193.62",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1158597-main/320x320.jpeg?updated_at=2026-08-26T11:53:29.566Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1158597-main/800x800.jpeg?updated_at=2026-08-26T11:53:29.566Z",
+      "https://catalog-images.x5static.net/product/4aab951ac9c56b32be0ed1b0fbad31f6-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/6bd3427326420333c57456466c01879d-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": null,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 4066289,
+   "name": "Семена Джинн подсолнечника жареные соленые 100г",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1206308-main/320x320.jpeg"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1206308-main/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/3231856155566d517ccf7d26332fc498-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.95,
+    "rates_count": 21115
+   },
+   "promo": null,
+   "prices": {
+    "regular": "109.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": [
+    {
+     "label": "Выгодно",
+     "icon_url": null,
+     "bg_color": "#FFA500",
+     "text_color": "#ffffff"
+    }
+   ],
+   "cpd_labels": null,
+   "property_clarification": "100 г",
+   "has_age_restriction": false,
+   "stock_limit": "22.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1206308-main/320x320.jpeg"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1206308-main/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/3231856155566d517ccf7d26332fc498-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 70,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  },
+  {
+   "plu": 2147548,
+   "name": "Масло подсолнечное Слобода рафинированное 1.8л",
+   "image_links": {
+    "small": [
+     "https://catalog-images.x5static.net/product/1161201-main/320x320.jpeg?updated_at=2025-02-24T08:00:32.339Z"
+    ],
+    "normal": [
+     "https://catalog-images.x5static.net/product/1161201-main/800x800.jpeg?updated_at=2025-02-24T08:00:32.339Z",
+     "https://catalog-images.x5static.net/product/77101a5f9c1523ad89f76c15db116624-additional/800x800.jpeg",
+     "https://catalog-images.x5static.net/product/48e6ba24053b624cd49323d2256dffc2-additional/800x800.jpeg"
+    ]
+   },
+   "uom": "шт",
+   "step": "1.0",
+   "rating": {
+    "rating_average": 4.97,
+    "rates_count": 15565
+   },
+   "promo": null,
+   "prices": {
+    "regular": "269.99",
+    "discount": null,
+    "cpd_promo_price": null,
+    "cpd_promo_price_from_sum_cart": null,
+    "markdown": null
+   },
+   "labels": null,
+   "cpd_labels": null,
+   "property_clarification": "1.8 л",
+   "has_age_restriction": false,
+   "stock_limit": "30.00",
+   "median_price": null,
+   "media": {
+    "image_links": {
+     "small": [
+      "https://catalog-images.x5static.net/product/1161201-main/320x320.jpeg?updated_at=2025-02-24T08:00:32.339Z"
+     ],
+     "normal": [
+      "https://catalog-images.x5static.net/product/1161201-main/800x800.jpeg?updated_at=2025-02-24T08:00:32.339Z",
+      "https://catalog-images.x5static.net/product/77101a5f9c1523ad89f76c15db116624-additional/800x800.jpeg",
+      "https://catalog-images.x5static.net/product/48e6ba24053b624cd49323d2256dffc2-additional/800x800.jpeg"
+     ]
+    },
+    "vertical_image_links": {
+     "product_card": null
+    },
+    "video_links": null
+   },
+   "promo_progressive_labels": null,
+   "badges": [],
+   "initial_weight_step": "1.0",
+   "min_weight": "1.0",
+   "max_qty_per_order": null,
+   "orange_loyalty_points": 140,
+   "is_available": true,
+   "price_piece_unit": null,
+   "stickers": null,
+   "features": null,
+   "stock_limit_md": null,
+   "labels_md": null,
+   "orange_loyalty_points_md": null,
+   "badge_groups": null
+  }
+ ]
+}

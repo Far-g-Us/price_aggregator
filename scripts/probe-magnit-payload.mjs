@@ -5,7 +5,7 @@ const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ locale: 'ru-RU' });
 try {
   await ctx.addCookies([
-    { name: 'shopCode', value: '"473996"', domain: 'magnit.ru', path: '/' },
+    { name: 'shopCode', value: '"303857"', domain: 'magnit.ru', path: '/' },
   ]);
   const page = await ctx.newPage();
   await page.goto('https://magnit.ru/catalog/4998-ryba_moreprodukty', {
