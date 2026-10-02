@@ -6,17 +6,18 @@ import { fileURLToPath } from 'node:url';
 import {
   OUR_CATEGORIES,
   classifyOurCategories,
-  hasOurChildren,
   matchesOurCategory,
   ourCategoryById,
-  ourChildCategories,
-  visibleOurCategories,
+  rootShelves,
+  type OurCategoryView,
 } from '../src/shared/taxonomy.js';
 import { formatPrice } from '../src/shared/format.js';
 import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
-import { closeDb, openDb, persistDb, savePriceIfChanged, saveProductCategory } from '../src/main/db/db.js';
+import { closeDb, openDb, persistDb, savePriceIfChanged, saveProductCategory } from '../src/core/db/db.js';
+import { fileStorageAt } from '../electron/node-files.js';
+import { SCHEMA } from '../src/core/db/schema.js';
 
-assert.ok(OUR_CATEGORIES.length >= 10, 'дерево категорий непустое');
+assert.ok(OUR_CATEGORIES.length >= 10, 'список полок непустой');
 const ids = new Set(OUR_CATEGORIES.map((c) => c.id));
 assert.equal(ids.size, OUR_CATEGORIES.length, 'id категорий уникальны');
 for (const c of OUR_CATEGORIES) {
@@ -26,48 +27,59 @@ for (const c of OUR_CATEGORIES) {
     (c.include?.length ?? 0) > 0,
     `у категории есть слова include для автораскладки: ${c.id}`,
   );
-  if (c.parentId !== null) {
-    assert.ok(ids.has(c.parentId), `родитель существует: ${c.id} -> ${c.parentId}`);
-    const parent = ourCategoryById(c.parentId);
-    assert.ok(parent, `родитель найден: ${c.parentId}`);
-  }
   const queries = new Set(c.queries);
   assert.equal(queries.size, c.queries.length, `запросы уникальны в ${c.id}`);
 }
-assert.ok(ourChildCategories(null).length >= 8, 'есть корневые категории');
-assert.equal(ourChildCategories('dairy').length, 4, 'у «Молочное и яйца» четыре подкатегории');
+// Плоский список — осознанное решение (вложенность снята в пользу плиток, как
+// у витрины сети). Проверяем данные, а не функции дерева: those уже удалены,
+// и проверка через них была бы зелёной по коду, которого в приложении нет.
+assert.ok(
+  OUR_CATEGORIES.every((c) => c.parentId === null),
+  'все полки корневые: список плоский, вложенности нет',
+);
 assert.equal(ourCategoryById('нет-такой'), undefined);
-
-// Раскрытие дерева — та же логика, что рисует рендерер. Раньше шеврон
-// жил на ребёнке, а ребёнок виден только у раскрытого родителя, и дерево
-// не раскрывалось вообще — тест на это и закрывает.
-assert.ok(hasOurChildren('dairy'), 'у «Молочное и яйца» есть вложенные');
-assert.ok(!hasOurChildren('dairy-milk'), 'у листовой категории вложенных нет');
 const toView = (c: (typeof OUR_CATEGORIES)[number]) => ({
   id: c.id,
   name: c.name,
   parentId: c.parentId,
   queryCount: c.queries.length,
   storeCount: 1,
+  virtual: false,
 });
-const roots = visibleOurCategories({}, OUR_CATEGORIES.map(toView));
+const all = OUR_CATEGORIES.map(toView);
+const roots = rootShelves(all);
 assert.ok(roots.length > 0, 'без раскрытия видны корни');
-assert.ok(roots.every((c) => c.parentId === null), 'без раскрытия детей не видно');
-const opened = visibleOurCategories({ dairy: true }, OUR_CATEGORIES.map(toView));
-assert.ok(
-  opened.some((c) => c.id === 'dairy-milk'),
-  'раскрытый родитель показывает детей',
-);
-assert.equal(opened.length, roots.length + 4, 'раскрыли ровно четырёх детей «Молочное и яйца»');
+assert.ok(roots.every((c) => c.parentId === null), 'в списке только корневые полки');
 assert.equal(
-  visibleOurCategories({ 'нет-такого': true }, OUR_CATEGORIES.map(toView)).length,
   roots.length,
-  'неизвестный ключ раскрытия ничего не открывает',
+  all.length,
+  'плоский список показывает все полки, а не только корни дерева',
+);
+const withVirtual: OurCategoryView = {
+  id: '__unassigned__',
+  name: 'Не разложено',
+  parentId: null,
+  queryCount: 0,
+  storeCount: 1,
+  virtual: true,
+};
+assert.ok(
+  rootShelves([...all, withVirtual]).every((c) => c.virtual !== true),
+  'виртуальная полка не рисуется в общем списке',
+);
+// Фильтр rootShelves обязан быть покрыт НЕ-плоским входом: полка с
+// проставленным родителем иначе молча исчезла бы из списка — без ошибки и без
+// диагностики, то есть полка просто не показывалась бы.
+const withNested = { ...withVirtual, id: 'x-nested', name: 'Х', parentId: 'dairy' };
+assert.equal(
+  rootShelves([...all, withNested]).length,
+  all.length,
+  'полка с проставленным родителем отфильтровывается, а не показывается',
 );
 
 // Дерево в БД совпадает с кодом — иначе раскладка молча разъедется.
 const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pa-tax-')), 't.db');
-const db = await openDb(file);
+const db = await openDb(fileStorageAt(file));
 const rows = db.exec('SELECT id, name, parent_id FROM our_categories ORDER BY position')?.[0]?.values ?? [];
 assert.equal(rows.length, OUR_CATEGORIES.length, 'все наши категории засеяны');
 const byId = new Map(OUR_CATEGORIES.map((c) => [c.id, c]));
@@ -77,6 +89,19 @@ for (const [id, name, parentId] of rows) {
   assert.equal(name, c?.name, `имя совпадает: ${String(id)}`);
   assert.equal(parentId === null ? null : String(parentId), c?.parentId ?? null, `родитель совпадает: ${String(id)}`);
 }
+
+// Пересев поверх ПРОТУХШЕГО parent_id. Свежая база проверяет только значения
+// сида; у реального пользователя в файле осталась старая иерархия, и чинить её
+// обязана повторная инициализация схемы при каждом открытии БД. Приём взят из
+// test-db (там так же пересевается stores).
+db.run("UPDATE our_categories SET parent_id = 'dairy' WHERE id IN ('dairy-milk', 'bakery-bread')");
+db.exec(SCHEMA);
+const afterReseed = db.exec('SELECT COUNT(*) FROM our_categories WHERE parent_id IS NOT NULL')?.[0]?.values[0]?.[0];
+assert.equal(
+  Number(afterReseed ?? 0),
+  0,
+  'повторная инициализация схемы чинит протухшую иерархию в существующей базе',
+);
 
 for (const city of CITIES) {
   for (const s of CITY_STORES[city.id] ?? []) {

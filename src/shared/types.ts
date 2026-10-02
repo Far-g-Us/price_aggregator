@@ -43,6 +43,16 @@ export interface ScrapedProduct extends PricePoint {
   description?: string;
 }
 
+// Контекст опроса одного товара. `name` — название из нашей БД: адаптерам, у
+// которых нет карточки по id (Лента, api-gateway закрыт WAF), он нужен, чтобы
+// найти товар поиском по названию. Необязательный: сетевой карточке по id он не
+// нужен, и её поведение не меняется.
+export interface ProductFetchContext {
+  city: CityId;
+  externalStoreId: string;
+  name?: string;
+}
+
 // Адаптер под каждую сеть. Реализации: Playwright / fetch к скрытому API / Firecrawl / Apify
 export interface StoreCategory {
   id: string;
@@ -54,12 +64,19 @@ export interface StoreCategory {
 export interface StoreAdapter {
   readonly storeId: Store['id'];
   search(query: string, ctx: { city: CityId; externalStoreId: string }): Promise<ScrapedProduct[]>;
-  fetchProduct(canonicalId: string, ctx: { city: CityId; externalStoreId: string }): Promise<ScrapedProduct>;
+  fetchProduct(canonicalId: string, ctx: ProductFetchContext): Promise<ScrapedProduct>;
   fetchCategories?(ctx: { city: CityId; externalStoreId: string }): Promise<StoreCategory[]>;
   fetchCategoryProducts?(
     categoryUrl: string,
     ctx: { city: CityId; externalStoreId: string },
   ): Promise<ScrapedProduct[]>;
+  /**
+   * Отсеивает чужие ссылки на полки. Нужен, потому что один и тот же URL
+   * раньше уходил ВСЕМ сетям города: клик по полке Пятёрки ронял Магнит
+   * ошибкой «categoryUrl вне каталога». Кто умеет `fetchCategoryProducts`, но
+   * не узнаёт ссылку — считается претендентом только на свои.
+   */
+  canHandleCategoryUrl?(categoryUrl: string): boolean;
 }
 
 // Правило обновления: сеть опрашиваем (poll), а в БД пишем только если цена изменилась.

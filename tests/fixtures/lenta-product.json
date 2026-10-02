@@ -1,0 +1,37 @@
+{
+ "_source": "GET /api-gateway/v1/catalog/items/716637 (форма ответа, 2026-09-29)",
+ "id": 716637,
+ "name": "Печенье сдобное DELISSE Орешек со вкусом вареной сгущенки, 500г",
+ "slug": "pechene-sdobnoe-oreshek-s-nach-so-vk-var-sgushch-rossiya-500g",
+ "storeId": 3090,
+ "count": 20,
+ "isBlockedForSale": false,
+ "prices": {
+  "cost": 16499,
+  "costRegular": 23999,
+  "isLoyaltyCardPrice": true,
+  "isPromoactionPrice": true,
+  "isQuantPrice": false,
+  "price": 16499,
+  "priceRegular": 23999
+ },
+ "weight": {
+  "package": "500г"
+ },
+ "images": [
+  {
+   "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/716637/c71f992b-dbc8-470b-a203-ee711df0e8c8.png",
+   "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/716637/c71f992b-dbc8-470b-a203-ee711df0e8c8.png"
+  }
+ ],
+ "attributes": [
+  {
+   "alias": "brand",
+   "value": "DELISSE"
+  },
+  {
+   "alias": "description",
+   "value": "Печенье сдобное Орешек со вкусом вареной сгущенки от торговой марки DELISSE – традиционный десерт, который никого не оставит равнодушным. В составе классическое тающее тесто и настоящая вареная сгущенка. Это секрет вкусного лакомства для взрослых и детей. Мягкие нежные орешки идеально подойдут для чаепития в кругу семьи."
+  }
+ ]
+}

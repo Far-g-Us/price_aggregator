@@ -1,0 +1,491 @@
+{
+ "_source": "GET https://lenta.com/api-gateway/v1/region/list, 2026-09-29",
+ "_note": "Публичный справочник регионов магазина (id/slug/name), без персональных данных. Нужен, потому что region/list — GET, и с дата-центровой сети его режет Qrator. Обновляется: LENTA_REGIONS=1 node scripts/gen-lenta-regions.mjs из домашней сети.",
+ "regions": [
+  {
+   "id": 1,
+   "slug": "moscow",
+   "name": "Москва и МО"
+  },
+  {
+   "id": 3,
+   "slug": "spb",
+   "name": "Санкт-Петербург и область"
+  },
+  {
+   "id": 5,
+   "slug": "ufa",
+   "name": "Уфа"
+  },
+  {
+   "id": 7,
+   "slug": "nnov",
+   "name": "Нижний Новгород"
+  },
+  {
+   "id": 9,
+   "slug": "ekb",
+   "name": "Екатеринбург"
+  },
+  {
+   "id": 11,
+   "slug": "kzn",
+   "name": "Казань"
+  },
+  {
+   "id": 13,
+   "slug": "krsk",
+   "name": "Красноярск"
+  },
+  {
+   "id": 15,
+   "slug": "ksdr",
+   "name": "Краснодар"
+  },
+  {
+   "id": 17,
+   "slug": "volgograd",
+   "name": "Волгоград"
+  },
+  {
+   "id": 19,
+   "slug": "nsk",
+   "name": "Новосибирск"
+  },
+  {
+   "id": 21,
+   "slug": "omsk",
+   "name": "Омск"
+  },
+  {
+   "id": 23,
+   "slug": "rnd",
+   "name": "Ростов-на-Дону"
+  },
+  {
+   "id": 25,
+   "slug": "chel",
+   "name": "Челябинск"
+  },
+  {
+   "id": 27,
+   "slug": "vrn",
+   "name": "Воронеж"
+  },
+  {
+   "id": 29,
+   "slug": "perm",
+   "name": "Пермь"
+  },
+  {
+   "id": 31,
+   "slug": "smr",
+   "name": "Самара"
+  },
+  {
+   "id": 33,
+   "slug": "arhangelsk",
+   "name": "Архангельск"
+  },
+  {
+   "id": 35,
+   "slug": "astrakhan",
+   "name": "Астрахань"
+  },
+  {
+   "id": 37,
+   "slug": "barnaul",
+   "name": "Барнаул"
+  },
+  {
+   "id": 39,
+   "slug": "belgorod",
+   "name": "Белгород"
+  },
+  {
+   "id": 41,
+   "slug": "bryansk",
+   "name": "Брянск"
+  },
+  {
+   "id": 43,
+   "slug": "vnovgorod",
+   "name": "Великий Новгород"
+  },
+  {
+   "id": 45,
+   "slug": "vladimir",
+   "name": "Владимир"
+  },
+  {
+   "id": 47,
+   "slug": "vologda",
+   "name": "Вологда"
+  },
+  {
+   "id": 49,
+   "slug": "grozniy",
+   "name": "Грозный"
+  },
+  {
+   "id": 51,
+   "slug": "ivanovo",
+   "name": "Иваново"
+  },
+  {
+   "id": 53,
+   "slug": "izhevsk",
+   "name": "Ижевск"
+  },
+  {
+   "id": 55,
+   "slug": "irkutsk",
+   "name": "Иркутск"
+  },
+  {
+   "id": 57,
+   "slug": "yo",
+   "name": "Йошкар-Ола"
+  },
+  {
+   "id": 59,
+   "slug": "kaluga",
+   "name": "Калуга"
+  },
+  {
+   "id": 61,
+   "slug": "kemerovo",
+   "name": "Кемерово"
+  },
+  {
+   "id": 63,
+   "slug": "kostroma",
+   "name": "Кострома"
+  },
+  {
+   "id": 65,
+   "slug": "kurgan",
+   "name": "Курган"
+  },
+  {
+   "id": 67,
+   "slug": "kursk",
+   "name": "Курск"
+  },
+  {
+   "id": 69,
+   "slug": "lipetsk",
+   "name": "Липецк"
+  },
+  {
+   "id": 71,
+   "slug": "maykop",
+   "name": "Майкоп"
+  },
+  {
+   "id": 73,
+   "slug": "murmansk",
+   "name": "Мурманск"
+  },
+  {
+   "id": 75,
+   "slug": "orel",
+   "name": "Орёл"
+  },
+  {
+   "id": 77,
+   "slug": "orenburg",
+   "name": "Оренбург"
+  },
+  {
+   "id": 79,
+   "slug": "penza",
+   "name": "Пенза"
+  },
+  {
+   "id": 81,
+   "slug": "noyabrsk",
+   "name": "Ноябрьск"
+  },
+  {
+   "id": 83,
+   "slug": "petrozavodsk",
+   "name": "Петрозаводск"
+  },
+  {
+   "id": 85,
+   "slug": "pskov",
+   "name": "Псков"
+  },
+  {
+   "id": 87,
+   "slug": "ryazan",
+   "name": "Рязань"
+  },
+  {
+   "id": 89,
+   "slug": "saransk",
+   "name": "Саранск"
+  },
+  {
+   "id": 91,
+   "slug": "saratov",
+   "name": "Саратов"
+  },
+  {
+   "id": 93,
+   "slug": "smolensk",
+   "name": "Смоленск"
+  },
+  {
+   "id": 95,
+   "slug": "stavropol",
+   "name": "Ставрополь"
+  },
+  {
+   "id": 97,
+   "slug": "stk",
+   "name": "Сыктывкар"
+  },
+  {
+   "id": 99,
+   "slug": "tver",
+   "name": "Тверь"
+  },
+  {
+   "id": 101,
+   "slug": "tomsk",
+   "name": "Томск"
+  },
+  {
+   "id": 103,
+   "slug": "tula",
+   "name": "Тула"
+  },
+  {
+   "id": 105,
+   "slug": "tyumen",
+   "name": "Тюмень"
+  },
+  {
+   "id": 107,
+   "slug": "ulyanovsk",
+   "name": "Ульяновск"
+  },
+  {
+   "id": 109,
+   "slug": "hm",
+   "name": "Ханты-Мансийск"
+  },
+  {
+   "id": 113,
+   "slug": "cheb",
+   "name": "Чебоксары"
+  },
+  {
+   "id": 115,
+   "slug": "cherkessk",
+   "name": "Черкесск"
+  },
+  {
+   "id": 117,
+   "slug": "yar",
+   "name": "Ярославль"
+  },
+  {
+   "id": 119,
+   "slug": "almetevsk",
+   "name": "Альметьевск"
+  },
+  {
+   "id": 121,
+   "slug": "armavir",
+   "name": "Армавир"
+  },
+  {
+   "id": 123,
+   "slug": "balakovo",
+   "name": "Балаково"
+  },
+  {
+   "id": 125,
+   "slug": "biysk",
+   "name": "Бийск"
+  },
+  {
+   "id": 127,
+   "slug": "bratsk",
+   "name": "Братск"
+  },
+  {
+   "id": 129,
+   "slug": "volzhskiy",
+   "name": "Волжский"
+  },
+  {
+   "id": 131,
+   "slug": "dimitrovgrad",
+   "name": "Димитровград"
+  },
+  {
+   "id": 133,
+   "slug": "zheleznovodsk",
+   "name": "Железноводск"
+  },
+  {
+   "id": 135,
+   "slug": "kuralskiy",
+   "name": "Каменск-Уральский"
+  },
+  {
+   "id": 137,
+   "slug": "magnitogorsk",
+   "name": "Магнитогорск"
+  },
+  {
+   "id": 139,
+   "slug": "nchelny",
+   "name": "Набережные Челны"
+  },
+  {
+   "id": 141,
+   "slug": "nvt",
+   "name": "Нижневартовск"
+  },
+  {
+   "id": 143,
+   "slug": "niz",
+   "name": "Нижнекамск"
+  },
+  {
+   "id": 145,
+   "slug": "ntg",
+   "name": "Нижний Тагил"
+  },
+  {
+   "id": 147,
+   "slug": "nkz",
+   "name": "Новокузнецк"
+  },
+  {
+   "id": 149,
+   "slug": "novorossiysk",
+   "name": "Новороссийск"
+  },
+  {
+   "id": 151,
+   "slug": "novocherkassk",
+   "name": "Новочеркасск"
+  },
+  {
+   "id": 153,
+   "slug": "obninsk",
+   "name": "Обнинск"
+  },
+  {
+   "id": 155,
+   "slug": "orsk",
+   "name": "Орск"
+  },
+  {
+   "id": 157,
+   "slug": "prk",
+   "name": "Прокопьевск"
+  },
+  {
+   "id": 159,
+   "slug": "sterlitamak",
+   "name": "Стерлитамак"
+  },
+  {
+   "id": 161,
+   "slug": "surgut",
+   "name": "Сургут"
+  },
+  {
+   "id": 163,
+   "slug": "tgr",
+   "name": "Таганрог"
+  },
+  {
+   "id": 165,
+   "slug": "tobolsk",
+   "name": "Тобольск"
+  },
+  {
+   "id": 167,
+   "slug": "tolyatti",
+   "name": "Тольятти"
+  },
+  {
+   "id": 169,
+   "slug": "shakhty",
+   "name": "Шахты"
+  },
+  {
+   "id": 171,
+   "slug": "engels",
+   "name": "Энгельс"
+  },
+  {
+   "id": 173,
+   "slug": "yurga",
+   "name": "Юрга"
+  },
+  {
+   "id": 175,
+   "slug": "novoshakhtinsk",
+   "name": "Новошахтинск"
+  },
+  {
+   "id": 177,
+   "slug": "achinsk",
+   "name": "Ачинск"
+  },
+  {
+   "id": 179,
+   "slug": "cher",
+   "name": "Череповец"
+  },
+  {
+   "id": 181,
+   "slug": "vladikavkaz",
+   "name": "Владикавказ"
+  },
+  {
+   "id": 183,
+   "slug": "tambov",
+   "name": "Тамбов"
+  },
+  {
+   "id": 187,
+   "slug": "Ulan-Ude",
+   "name": "Улан-Удэ"
+  },
+  {
+   "id": 189,
+   "slug": "anapa",
+   "name": "Анапа"
+  },
+  {
+   "id": 191,
+   "slug": "nefteugansk",
+   "name": "Нефтеюганск"
+  },
+  {
+   "id": 193,
+   "slug": "salehard",
+   "name": "Салехард"
+  },
+  {
+   "id": 195,
+   "slug": "chita",
+   "name": "Чита"
+  },
+  {
+   "id": 197,
+   "slug": "nmaktama",
+   "name": "Нижняя Мактама"
+  }
+ ]
+}

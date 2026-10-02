@@ -5,8 +5,9 @@ node_modules/
 .claude/
 opencode.json
 
-# build (electron-builder кладёт установщик в dist/)
+# build (electron-builder кладёт установщик и portable в dist/)
 dist/
+build-renderer/
 dist-electron/
 out/
 *.tsbuildinfo
@@ -42,3 +43,9 @@ Thumbs.db
 
 # Playwright: браузеры качаются ТОЛЬКО в проект
 .playwright-browsers/
+# Сетевые дампы содержат живые токены сессии (Passport-*, qrator_*),
+# их нельзя коммитить в публичный репозиторий.
+*.har
+*.har.json
+# Скриншоты проверок интерфейса (Playwright, dev-сервер :5173).
+shots/

@@ -1,8 +1,16 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = process.cwd();
+// Корень репозитория ищем от своего же файла, а не от process.cwd(): запуск из
+// чужого каталога не должен собирать чужое и не должен падать.
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// Чистим выходной каталог: tsc не удаляет файлы, которых больше нет в исходниках.
+// После переезда каталогов (src/main -> src/core) в electron-builder уехали бы
+// оба дерева, и в exe попал бы мёртвый код.
+fs.rmSync(path.join(root, 'dist-electron'), { recursive: true, force: true });
 
 function run(cmd) {
   execSync(cmd, { stdio: 'inherit', cwd: root, shell: true });

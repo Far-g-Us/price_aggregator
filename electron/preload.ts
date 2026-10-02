@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { PricesQuery, RendererApi, SchedulerDone } from '../src/shared/api.js';
+import type { PricesQuery, RendererApi, SchedulerDone, ShelfScope, SplitPair } from '../src/shared/api.js';
 
 const api: RendererApi = {
   ping: () => ipcRenderer.invoke('ping'),
@@ -10,10 +10,20 @@ const api: RendererApi = {
   getCategory: (args: { city?: string; url?: string }) => ipcRenderer.invoke('category:get', args),
   getOurCategories: (args: { city?: string }) => ipcRenderer.invoke('ourcategories:get', args),
   getOurCategory: (args: { city?: string; id?: string }) => ipcRenderer.invoke('ourcategory:get', args),
+  getShelves: (args: ShelfScope) => ipcRenderer.invoke('shelves:get', args),
+  setShelves: (args: ShelfScope & { categoryIds: string[] }) => ipcRenderer.invoke('shelves:set', args),
+  releaseShelves: (args: ShelfScope) => ipcRenderer.invoke('shelves:release', args),
+  getFavorites: (args: { city: string }) => ipcRenderer.invoke('favorites:get', args),
+  setFavorite: (args: ShelfScope & { targetPrice: number | null }) => ipcRenderer.invoke('favorites:set', args),
+  removeFavorite: (args: ShelfScope) => ipcRenderer.invoke('favorites:remove', args),
+  splitProducts: (args: SplitPair) => ipcRenderer.invoke('splits:set', args),
+  removeSplit: (args: SplitPair) => ipcRenderer.invoke('splits:remove', args),
+  getSplitPairs: (args: { city: string }) => ipcRenderer.invoke('splits:pairs', args),
   getHistory: (args: { canonicalId: string; storeId: string; city: string }) =>
     ipcRenderer.invoke('history:get', args),
   getSchedulerStatus: () => ipcRenderer.invoke('scheduler:status'),
-  runScheduler: () => ipcRenderer.invoke('scheduler:run'),
+  runScheduler: (args?: { city?: string }) => ipcRenderer.invoke('scheduler:run', args),
+  setCurrentCity: (city: string) => ipcRenderer.invoke('city:set', { city }),
   onSchedulerProgress: (cb: (done: number, total: number) => void) => {
     const h = (_e: unknown, v: unknown) => {
       const o = v as { done: unknown; total: unknown };

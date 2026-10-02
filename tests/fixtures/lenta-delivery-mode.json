@@ -1,0 +1,12 @@
+{
+ "_source": "GET /api-gateway/v1/delivery/mode (форма ответа, 2026-09-29)",
+ "storeId": 4161,
+ "type": "pickup",
+ "userStores": [
+  {
+   "id": 4161,
+   "alias": "3090",
+   "selected": true
+  }
+ ]
+}

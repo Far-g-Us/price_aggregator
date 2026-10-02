@@ -1,0 +1,211 @@
+{
+  "_source": "lenta jrpc/searchItems, storeId 4161, 2026-10-01",
+  "result": {
+    "total": 84,
+    "items": [
+      {
+        "id": 626150,
+        "name": "Тушка цыпленка-бройлера ПЕТЕЛИНКА 1 сорт, потрошеная, весовая",
+        "count": 2,
+        "slug": "cyplenok-brojjler-tushka-1-sort-potroshjnaya-vu-ohl-ves-rossiya",
+        "prices": {
+          "price": 53198,
+          "priceRegular": 53198,
+          "cost": 27999,
+          "costRegular": 27999,
+          "isLoyaltyCardPrice": false,
+          "isPromoactionPrice": false
+        },
+        "images": [
+          {
+            "id": 626150,
+            "position": 1,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/626150/catalog-image/1d985ffb-e23d-49f4-965b-af55880eade8.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/626150/catalog-image/1d985ffb-e23d-49f4-965b-af55880eade8.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/626150/catalog-image/1d985ffb-e23d-49f4-965b-af55880eade8.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/626150/catalog-image/1d985ffb-e23d-49f4-965b-af55880eade8.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/626150/catalog-image/1d985ffb-e23d-49f4-965b-af55880eade8.png"
+          }
+        ],
+        "rating": {
+          "rate": 4.3,
+          "votes": 131
+        },
+        "badges": {
+          "image": [],
+          "discount": []
+        },
+        "chipsPrices": [],
+        "saleLimit": {
+          "maxSaleQuantity": 2,
+          "minSaleQuantity": 1,
+          "foldQuantity": 1
+        },
+        "features": {
+          "isPromo": false,
+          "isPurchased": false,
+          "isFavorite": false,
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isAdult": false,
+          "isMercurial": true,
+          "isBlockedForSale": false,
+          "isWeight": true,
+          "isSellersSku": false,
+          "isPartner": false
+        },
+        "unitName": "кг",
+        "netWeight": 1900,
+        "package": "",
+        "quantityDiscount": []
+      },
+      {
+        "id": 766317,
+        "name": "Печень куриная ПЕТЕЛИНКА, 450г",
+        "count": 1,
+        "slug": "pechen-cyplenka-brojjlera-ohl-rossiya-450g",
+        "prices": {
+          "price": 21999,
+          "priceRegular": 21999,
+          "cost": 21999,
+          "costRegular": 21999,
+          "isLoyaltyCardPrice": false,
+          "isPromoactionPrice": false
+        },
+        "images": [
+          {
+            "id": 766317,
+            "position": 1,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/766317/catalog-image/78e050bf-6ae6-401d-8fcd-5a5e49c50519.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/766317/catalog-image/78e050bf-6ae6-401d-8fcd-5a5e49c50519.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/766317/catalog-image/78e050bf-6ae6-401d-8fcd-5a5e49c50519.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/766317/catalog-image/78e050bf-6ae6-401d-8fcd-5a5e49c50519.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/766317/catalog-image/78e050bf-6ae6-401d-8fcd-5a5e49c50519.png"
+          },
+          {
+            "id": 766317,
+            "position": 2,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/766317/catalog-image/d54ee5bd-1842-4926-96bd-06b897afc3bf.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/766317/catalog-image/d54ee5bd-1842-4926-96bd-06b897afc3bf.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/766317/catalog-image/d54ee5bd-1842-4926-96bd-06b897afc3bf.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/766317/catalog-image/d54ee5bd-1842-4926-96bd-06b897afc3bf.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/766317/catalog-image/d54ee5bd-1842-4926-96bd-06b897afc3bf.png"
+          },
+          {
+            "id": 766317,
+            "position": 99,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/766317/catalog-image/21e77961-c586-4736-ae63-7c0add6fe17d.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/766317/catalog-image/21e77961-c586-4736-ae63-7c0add6fe17d.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/766317/catalog-image/21e77961-c586-4736-ae63-7c0add6fe17d.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/766317/catalog-image/21e77961-c586-4736-ae63-7c0add6fe17d.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/766317/catalog-image/21e77961-c586-4736-ae63-7c0add6fe17d.png"
+          }
+        ],
+        "rating": {
+          "rate": 5,
+          "votes": 1
+        },
+        "badges": {
+          "image": [],
+          "discount": []
+        },
+        "chipsPrices": [],
+        "saleLimit": {
+          "maxSaleQuantity": 1,
+          "minSaleQuantity": 1,
+          "foldQuantity": 1
+        },
+        "features": {
+          "isPromo": false,
+          "isPurchased": false,
+          "isFavorite": false,
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isAdult": false,
+          "isMercurial": true,
+          "isBlockedForSale": false,
+          "isWeight": false,
+          "isSellersSku": false,
+          "isPartner": false
+        },
+        "unitName": "шт",
+        "netWeight": 0,
+        "package": "450г",
+        "quantityDiscount": []
+      },
+      {
+        "id": 692573,
+        "name": "Голень куриная с кожей, весовая",
+        "count": 9,
+        "slug": "golen-cb-s-kozhejj-ohl-fas-ves-rossiya",
+        "prices": {
+          "price": 19999,
+          "priceRegular": 22799,
+          "cost": 24999,
+          "costRegular": 28499,
+          "isLoyaltyCardPrice": true,
+          "isPromoactionPrice": true
+        },
+        "images": [
+          {
+            "id": 692573,
+            "position": 1,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/692573/1f82efcd-08bb-4154-bbeb-bfaa0c0ca5db.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/692573/1f82efcd-08bb-4154-bbeb-bfaa0c0ca5db.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/692573/1f82efcd-08bb-4154-bbeb-bfaa0c0ca5db.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/692573/1f82efcd-08bb-4154-bbeb-bfaa0c0ca5db.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/692573/1f82efcd-08bb-4154-bbeb-bfaa0c0ca5db.png"
+          },
+          {
+            "id": 692573,
+            "position": 2,
+            "original": "https://cdn.api.lenta.com/resample/0x0/photo/692573/5271075b-0e8e-4b60-8a0c-c46eda83c2ef.png",
+            "large": "https://cdn.api.lenta.com/resample/900x900/photo/692573/5271075b-0e8e-4b60-8a0c-c46eda83c2ef.png",
+            "medium": "https://cdn.api.lenta.com/resample/500x500/photo/692573/5271075b-0e8e-4b60-8a0c-c46eda83c2ef.png",
+            "preview": "https://cdn.api.lenta.com/resample/250x250/photo/692573/5271075b-0e8e-4b60-8a0c-c46eda83c2ef.png",
+            "icon": "https://cdn.api.lenta.com/resample/100x100/photo/692573/5271075b-0e8e-4b60-8a0c-c46eda83c2ef.png"
+          }
+        ],
+        "rating": {
+          "rate": 3.5,
+          "votes": 112
+        },
+        "badges": {
+          "image": [],
+          "discount": [
+            {
+              "title": "-12%",
+              "backgroundColor": "#ef4544",
+              "tooltip": {
+                "description": ""
+              }
+            }
+          ]
+        },
+        "chipsPrices": [],
+        "saleLimit": {
+          "maxSaleQuantity": 9,
+          "minSaleQuantity": 1,
+          "foldQuantity": 1
+        },
+        "features": {
+          "isPromo": false,
+          "isPurchased": false,
+          "isFavorite": false,
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isAdult": false,
+          "isMercurial": true,
+          "isBlockedForSale": false,
+          "isWeight": true,
+          "isSellersSku": false,
+          "isPartner": false
+        },
+        "unitName": "кг",
+        "netWeight": 800,
+        "package": "",
+        "quantityDiscount": []
+      }
+    ]
+  }
+}

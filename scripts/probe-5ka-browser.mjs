@@ -1,4 +1,4 @@
-import { browserCategories, browserSearch, close5kaBrowser } from '../src/main/adapters/5ka-browser.js';
+import { browserCategories, browserSearch, close5kaBrowser } from '../src/core/adapters/5ka-browser.js';
 
 const SAP = process.env.SAP ?? '35XY';
 const QUERY = process.env.QUERY ?? 'молоко';

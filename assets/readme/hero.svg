@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-labelledby="heroTitle heroDesc">
+  <title id="heroTitle">PriceAggregator — локальный агрегатор цен Пятёрочки, Магнита и Ленты</title>
+  <desc id="heroDesc">Слева название и суть проекта: цены по конкретному магазину и городу, 3 сети, 15 городов, 16 полок. Справа фрагмент интерфейса: дерево наших полок с иконками, цены по сетям, зачёркнутая старая цена и спарклайн истории.</desc>
+
+  <!-- Палитра и геометрия взяты из самого приложения (src/renderer/index.css):
+       фон-кремовый, карточка белая, primary #059669, линия #d8efe8, чернила
+       #0f172a, приглушённый #475569. Ничего изобразительного: это те же цвета
+       и тот же радиус, что видит пользователь в окне. -->
+  <rect width="1200" height="420" fill="#ecfdf5"/>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+    <!-- ЛЕВАЯ КОЛОНКА: кто это и зачем -->
+    <text x="60" y="84" font-family="'SF Mono', 'Cascadia Mono', Consolas, monospace" font-size="16" fill="#475569" letter-spacing="0.6">ЛОКАЛЬНЫЙ АГРЕГАТОР ЦЕН · ELECTRON · WINDOWS</text>
+
+    <text x="60" y="164" font-size="64" font-weight="700" fill="#0f172a" letter-spacing="-1.6">PriceAggregator</text>
+    <rect x="60" y="188" width="64" height="6" rx="3" fill="#059669"/>
+
+    <text x="60" y="224" font-size="22" fill="#475569">Цены Пятёрочки, Магнита и Ленты —</text>
+    <text x="60" y="254" font-size="22" fill="#475569">по конкретному магазину и городу,</text>
+    <text x="60" y="284" font-size="22" fill="#475569">а не «в среднем по городу».</text>
+
+    <!-- Три факта вместо обещаний: сети, города, полки -->
+    <g>
+      <text x="60" y="332" font-size="34" font-weight="700" fill="#059669">3</text>
+      <text x="60" y="354" font-size="18" fill="#475569">сети</text>
+
+      <text x="176" y="332" font-size="34" font-weight="700" fill="#059669">15</text>
+      <text x="176" y="354" font-size="18" fill="#475569">городов</text>
+
+      <text x="304" y="332" font-size="34" font-weight="700" fill="#059669">16</text>
+      <text x="304" y="354" font-size="18" fill="#475569">полок</text>
+    </g>
+
+    <!-- Коды магазинов — настоящая техническая деталь проекта, а не украшение -->
+    <text x="60" y="384" font-family="'SF Mono', 'Cascadia Mono', Consolas, monospace" font-size="18" fill="#475569">Москва: 35XY · 303857 · 4161 — коды магазинов в сетях</text>
+  </g>
+
+  <!-- ПРАВАЯ КОЛОНКА: реальный фрагмент интерфейса.
+       Иконки полок — те же пути, что в src/renderer/CategoryIcon.tsx,
+       масштабированы с 24 на 32. -->
+  <g>
+    <rect x="612" y="36" width="548" height="348" rx="18" fill="#ffffff" stroke="#d8efe8" stroke-width="2"/>
+
+    <!-- Шапка карточки: город и сети -->
+    <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+      <text x="640" y="76" font-size="20" font-weight="600" fill="#0f172a">Новосибирск</text>
+      <g>
+        <rect x="882" y="56" width="72" height="30" rx="15" fill="#ffffff" stroke="#d8efe8" stroke-width="2"/>
+        <text x="918" y="77" font-size="18" fill="#047857" text-anchor="middle">Магнит</text>
+        <rect x="962" y="56" width="62" height="30" rx="15" fill="#ffffff" stroke="#d8efe8" stroke-width="2"/>
+        <text x="993" y="77" font-size="18" fill="#047857" text-anchor="middle">Лента</text>
+        <rect x="1032" y="56" width="100" height="30" rx="15" fill="#ffffff" stroke="#d8efe8" stroke-width="2"/>
+        <text x="1082" y="77" font-size="18" fill="#475569" text-anchor="middle">Пятёрочка</text>
+      </g>
+      <line x1="640" y1="102" x2="1132" y2="102" stroke="#d8efe8" stroke-width="2"/>
+    </g>
+
+    <!-- Строка полки: иконка, название, цены по сетям.
+         Иконка рисуется через <g transform="translate(x,y) scale(1.3333)"> —
+         24 юнита исходника превращаются в 32 (h-8 w-8 в приложении). Смещение
+         translate подобрано так, чтобы оптический центр иконки совпадал с
+         визуальным центром строки текста (baseline − 0.35·fontsize). -->
+    <!-- 1. Молочное -->
+    <g transform="translate(640,129) scale(1.3333)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.8 4.6h4.4v2.2c0 1.7 4.8 2.6 4.8 6.2v4.2a1.6 1.6 0 0 1-1.6 1.6H6.6A1.6 1.6 0 0 1 5 17.2V13c0-3.6 4.8-4.5 4.8-6.2V4.6z" fill="#059669" fill-opacity="0.16" stroke="#059669" stroke-width="1.6"/>
+      <path d="M9.8 4.6h4.4M5 12.4h14" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <path d="M6.6 15.4h10.8" fill="none" stroke="#059669" stroke-width="1.6" opacity="0.45"/>
+    </g>
+    <text x="690" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#0f172a">Молочное и яйца</text>
+    <text x="1010" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#475569" text-anchor="end">Магнит</text>
+    <text x="1132" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="end">79,99 ₽</text>
+    <line x1="640" y1="168" x2="1132" y2="168" stroke="#d8efe8" stroke-width="1.5"/>
+
+    <!-- 2. Хлеб и выпечка -->
+    <g transform="translate(640,183) scale(1.3333)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.2 12.4a7.8 7.8 0 0 1 15.6 0v5a1.8 1.8 0 0 1-1.8 1.8H6a1.8 1.8 0 0 1-1.8-1.8v-5z" fill="#059669" fill-opacity="0.16" stroke="#059669" stroke-width="1.6"/>
+      <path d="M4.2 12.4a7.8 7.8 0 0 1 15.6 0" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <path d="M8.4 8.6c2.4 1.4 4.8 1.4 7.2 0M9.2 12.2c1.8 1.1 3.8 1.1 5.6 0" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <path d="M4.6 15.6h14.8" fill="none" stroke="#059669" stroke-width="1.6" opacity="0.45"/>
+    </g>
+    <text x="690" y="206" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#0f172a">Хлеб и выпечка</text>
+    <text x="1010" y="206" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#475569" text-anchor="end">Лента</text>
+    <text x="1132" y="206" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="end">42,90 ₽</text>
+    <line x1="640" y1="222" x2="1132" y2="222" stroke="#d8efe8" stroke-width="1.5"/>
+
+    <!-- 3. Мясо: снижение цены. Строка собрана как в приложении (App.tsx:1839-1844):
+         подпись сети прижата к 1010, старая цена зачёркнута приглушённым и мелким
+         кеглем, новая — жирными чернилами. Бейджа в приложении нет, и белым по
+         primary он был бы 3.77:1 — ниже AA, поэтому цена здесь ink, не зелёная. -->
+    <g transform="translate(640,237) scale(1.3333)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.7 8.5c1.9-2 4.2-3 6.3-3s4.4 1 6.3 3c1.3 1.4 2 3 2 4.8 0 2.9-2.6 5.2-6.4 5.2S4.7 16.1 4.7 13.3c0-1.8 0-3.4 0-4.8z" fill="#059669" fill-opacity="0.16" stroke="#059669" stroke-width="1.6"/>
+      <path d="M4.7 8.5c2.6 1 4.3 1.4 6.3 1.4s3.7-.4 6.3-1.4" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <circle cx="7.9" cy="14.1" r="1.8" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <path d="M12.3 15.5h3.2" fill="none" stroke="#059669" stroke-width="1.6" opacity="0.45"/>
+    </g>
+    <text x="690" y="260" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#0f172a">Мясо и птица</text>
+    <text x="1010" y="260" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#475569" text-anchor="end">Магнит</text>
+    <text x="1064" y="260" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#475569" text-anchor="end" text-decoration="line-through">349 ₽</text>
+    <text x="1132" y="260" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="700" fill="#0f172a" text-anchor="end">299 ₽</text>
+    <line x1="640" y1="276" x2="1132" y2="276" stroke="#d8efe8" stroke-width="1.5"/>
+
+    <!-- 4. Овощи и фрукты -->
+    <g transform="translate(640,291) scale(1.3333)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19.9c.5-1.6.9-2.6 1.6-3.4 1.4-1.6 2.2-3.3 2.2-5.4 0-3-1.7-4.8-3.8-4.8s-3.8 1.8-3.8 4.8c0 2.1.8 3.8 2.2 5.4.7.8 1.1 1.8 1.6 3.4z" fill="#059669" fill-opacity="0.16" stroke="#059669" stroke-width="1.6"/>
+      <path d="M10.4 6.7V4.5M12 6.9V4.1M13.6 6.7V4.5" fill="none" stroke="#059669" stroke-width="1.6"/>
+      <path d="M9.6 11.7h1.6M13 14.7h1.6" fill="none" stroke="#059669" stroke-width="1.6" opacity="0.45"/>
+    </g>
+    <text x="690" y="314" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#0f172a">Овощи</text>
+    <text x="1010" y="314" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#475569" text-anchor="end">Магнит</text>
+    <text x="1132" y="314" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="end">129,99 ₽</text>
+    <line x1="640" y1="330" x2="1132" y2="330" stroke="#d8efe8" stroke-width="1.5"/>
+
+    <!-- Подвал карточки: правило записи в историю и график.
+         Спарклайн нарисован реальными точками: чем ровнее линия, тем меньше
+         записей — ровно то поведение, которое отличает проект от
+         «пишем каждый опрос». -->
+    <g>
+      <text x="640" y="364" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="18" fill="#475569">в историю — только при изменении</text>
+      <polyline points="944,366 971,356 998,362 1025,348 1052,354 1079,342 1106,348 1128,342"
+        fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="1128" cy="342" r="6" fill="#059669"/>
+    </g>
+  </g>
+</svg>

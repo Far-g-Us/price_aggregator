@@ -1,0 +1,156 @@
+{
+ "_source": "POST https://lenta.com/jrpc/searchItems, params {query:\"молоко\",count:6,offset:0,filters:[]} (2026-09-29)",
+ "total": 85,
+ "items": [
+  {
+   "id": 359472,
+   "name": "Молоко пастеризованное ПРАВИЛЬНОЕ МОЛОКО 3,2–4%, без змж, 2000мл",
+   "slug": "moloko-past-pitevoe-32-4-bez-zmzh-rossiya-2000ml",
+   "count": 5,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 22999,
+    "priceRegular": 26499,
+    "cost": 22999,
+    "costRegular": 26499,
+    "isLoyaltyCardPrice": true,
+    "isPromoactionPrice": true
+   },
+   "package": "2000мл",
+   "saleLimit": {
+    "maxSaleQuantity": 5
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/359472/1fc05f9e-22f8-46b5-a6f4-bf1552769c2c.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/359472/1fc05f9e-22f8-46b5-a6f4-bf1552769c2c.png"
+    }
+   ]
+  },
+  {
+   "id": 512835,
+   "name": "Молоко ультрапастеризованное ЭКОНИВА 2,5%, без змж, 1000мл",
+   "slug": "moloko-upaster-25-bez-zmzh-rossiya-1000ml",
+   "count": 18,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 10999,
+    "priceRegular": 11999,
+    "cost": 10999,
+    "costRegular": 11999,
+    "isLoyaltyCardPrice": true,
+    "isPromoactionPrice": true
+   },
+   "package": "1000мл",
+   "saleLimit": {
+    "maxSaleQuantity": 18
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/512835/catalog-image/636f8fe8-bae2-46e3-9c54-12de2d4208dc.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/512835/catalog-image/636f8fe8-bae2-46e3-9c54-12de2d4208dc.png"
+    }
+   ]
+  },
+  {
+   "id": 512875,
+   "name": "Молоко ультрапастеризованное ЭКОНИВА 3,2%, без змж, 1000мл",
+   "slug": "moloko-upaster-32-bez-zmzh-rossiya-1000ml",
+   "count": 9,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 11499,
+    "priceRegular": 12999,
+    "cost": 11499,
+    "costRegular": 12999,
+    "isLoyaltyCardPrice": true,
+    "isPromoactionPrice": true
+   },
+   "package": "1000мл",
+   "saleLimit": {
+    "maxSaleQuantity": 9
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/512875/catalog-image/721b68ec-095b-4076-b59d-425a09152a5a.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/512875/catalog-image/721b68ec-095b-4076-b59d-425a09152a5a.png"
+    }
+   ]
+  },
+  {
+   "id": 536685,
+   "name": "Молоко ультрапастеризованное МУ-У 3,2%, без змж, 925мл",
+   "slug": "moloko-upast-32-bez-zmzh-rossiya-925ml",
+   "count": 22,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 9999,
+    "priceRegular": 11999,
+    "cost": 9999,
+    "costRegular": 11999,
+    "isLoyaltyCardPrice": true,
+    "isPromoactionPrice": true
+   },
+   "package": "925мл",
+   "saleLimit": {
+    "maxSaleQuantity": 5
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/536685/164cd549-d862-42e1-8291-63ea2206dab4.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/536685/164cd549-d862-42e1-8291-63ea2206dab4.png"
+    }
+   ]
+  },
+  {
+   "id": 906748,
+   "name": "Молоко пастеризованное АНФИСКИНО 2,5%, без змж, 900г",
+   "slug": "moloko-pitevoe-pasterizovannoe-25-but-bez-zmzh-rossiya-900g",
+   "count": 9,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 7499,
+    "priceRegular": 7499,
+    "cost": 7499,
+    "costRegular": 7499,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false
+   },
+   "package": "900г",
+   "saleLimit": {
+    "maxSaleQuantity": 9
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/906748/catalog-image/3f5f6353-360f-4ed3-9147-48bc3d2e14be.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/906748/catalog-image/3f5f6353-360f-4ed3-9147-48bc3d2e14be.png"
+    }
+   ]
+  },
+  {
+   "id": 80424,
+   "name": "Молоко пастеризованное ПРОСТОКВАШИНО 2,5%, без змж, 930мл",
+   "slug": "moloko-past-pitevoe-25-pet-bez-zmzh-rossiya-930ml",
+   "count": 6,
+   "isBlockedForSale": false,
+   "prices": {
+    "price": 8499,
+    "priceRegular": 8499,
+    "cost": 8499,
+    "costRegular": 8499,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false
+   },
+   "package": "930мл",
+   "saleLimit": {
+    "maxSaleQuantity": 5
+   },
+   "images": [
+    {
+     "large": "https://cdn.api.lenta.com/resample/900x900/photo/80424/catalog-image/b3359e15-00e8-46d3-a300-b2e3bd2fb3fe.png",
+     "preview": "https://cdn.api.lenta.com/resample/250x250/photo/80424/catalog-image/b3359e15-00e8-46d3-a300-b2e3bd2fb3fe.png"
+    }
+   ]
+  }
+ ]
+}

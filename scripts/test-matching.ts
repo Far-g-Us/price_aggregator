@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { groupByProduct, normalizeName, sameProduct } from '../src/shared/matching.js';
+import { groupByProduct, matchSplitKey, normalizeName, parseSplitKey, sameProduct, splitPairKey } from '../src/shared/matching.js';
 import type { ScrapedProduct } from '../src/shared/types.js';
 
 function item(over: Partial<ScrapedProduct> & { name: string }): ScrapedProduct {
@@ -77,4 +77,111 @@ assert.equal(
   'дубль canonicalId не сеет вторую цену',
 );
 
+// --- Ручной разрыв склейки ----------------------------------------------
+// Сценарий, из-за которого разрыв и нужен: у Пятёрки и Магнита нет общего
+// штрих-кода, и Jaccard не отличает «Сыр сливочный 200г» от «Сыр сливочный
+// 200г в упаковке» — названия совпадают почти целиком.
+// Именно этот случай пользователь и увидит в интерфейсе: два разных сыра в
+// одной карточке, где цены сравнивать бессмысленно.
+{
+  const cheeseA = item({ canonicalId: 'magnit-500', name: 'Сыр сливочный 200г', unit: '200г' });
+  const cheeseB = item({ canonicalId: '5ka-501', storeId: 'pyaterochka', name: 'Сыр сливочный 200г в упаковке', unit: '200г' });
+  assert.equal(sameProduct(cheeseA, cheeseB), true, 'эвристика считает их одним товаром');
+
+  assert.equal(groupByProduct([cheeseA, cheeseB]).length, 1, 'без разрыва склейка есть');
+  const split = new Set([matchSplitKey('magnit-500', '5ka-501')]);
+  const after = groupByProduct([cheeseA, cheeseB], split);
+  assert.equal(after.length, 2, 'с разрывом это два товара');
+  assert.equal(
+    after.reduce((n, g) => n + g.offers.length, 0),
+    2,
+    'оба товара на месте после разрыва',
+  );
+
+  // Ключ симметричен: разрыв в любом порядке даёт тот же результат.
+  assert.equal(
+    matchSplitKey('a', 'b'),
+    matchSplitKey('b', 'a'),
+    'ключ разрыва не зависит от порядка',
+  );
+  assert.equal(
+    groupByProduct([cheeseA, cheeseB], new Set([matchSplitKey('5ka-501', 'magnit-500')])).length,
+    2,
+    'разрыв в обратном порядке работает так же',
+  );
+
+  // Разрыв чужой пары ничего не меняет.
+  assert.equal(
+    groupByProduct([cheeseA, cheeseB], new Set([matchSplitKey('x-1', 'y-2')])).length,
+    1,
+    'чужая пара не влияет на склейку',
+  );
+  assert.equal(
+    groupByProduct([cheeseA, cheeseB], new Set()).length,
+    1,
+    'пустой набор разрывов = обычное поведение',
+  );
+
+// Третий магазин в той же связке: после разрыва между A и B третий остаётся
+  // с B, и карточка делится неровно — это нормально, терять нечего.
+  const cheeseC = item({ canonicalId: 'lenta-502', storeId: 'lenta', name: 'Сыр сливочный 200г', unit: '200г' });
+
+  // Флага «в группе есть разрыв» не существует: разрыв разводит пару до того,
+  // как группа собрана, помечать нечего. Проверяем инвариант напрямую — внутри
+  // группы не должно остаться разведённой пары ни при каком порядке офферов.
+  const cheeseAAlt = item({ canonicalId: 'magnit-500', name: 'Сыр сливочный 200г', unit: '200г' });
+  for (const items of [
+    [cheeseAAlt, cheeseB, cheeseC],
+    [cheeseB, cheeseAAlt, cheeseC],
+  ]) {
+    const grouped = groupByProduct(items, split);
+    for (const one of grouped) {
+      for (let i = 0; i < one.offers.length; i++) {
+        for (let j = i + 1; j < one.offers.length; j++) {
+          assert.notEqual(
+            matchSplitKey(one.offers[i]!.product.canonicalId, one.offers[j]!.product.canonicalId),
+            matchSplitKey('magnit-500', '5ka-501'),
+            'в группе не осталось разведённой пары',
+          );
+        }
+      }
+    }
+  }
+
+  const partial = groupByProduct([cheeseA, cheeseB, cheeseC], split);
+  assert.equal(partial.length, 2, 'разрыв развёл пару, третий остался с одним из них');
+  assert.equal(
+    partial.reduce((n, g) => n + g.offers.length, 0),
+    3,
+    'ни один товар не потерялся при разрыве',
+  );
+  assert.equal(
+    partial.some(
+      (g) =>
+        g.offers.length === 2 &&
+        g.offers.map((o) => o.product.canonicalId).sort().join(',') === 'lenta-502,magnit-500',
+    ),
+    true,
+    'один из разведённых остался склеен с третьим товаром',
+  );
+
+  // Три товара в одной группе: все предложения сохраняются в карточке.
+  const three = groupByProduct([cheeseA, cheeseB, cheeseC]);
+  assert.equal(three.length, 1, 'три одинаковых названия склеились');
+  assert.equal(three[0]?.offers.length, 3, 'все три предложения в карточке');
+}
+
 console.log('matching: ALL GREEN');
+
+// parseSplitKey: контракт сменился на nullable, а теста не было. Round-trip и
+// отказ на непарсимом ключе обязаны быть зафиксированы, иначе смена сигнатуры
+// проходит незамеченной.
+const pairs: [string, string][] = [['magnit-123', '5ka-456'], ['5ka-1', 'magnit-2'], ['5ka-9', 'lenta-8']];
+for (const [a, b] of pairs) {
+  const pair = parseSplitKey(splitPairKey(a, b));
+  assert.deepEqual(pair ? [...pair].sort() : null, [a, b].sort(), 'round-trip ' + a + '/' + b);
+}
+assert.equal(parseSplitKey('nospace'), null, 'ключ без разделителя');
+assert.equal(parseSplitKey('one two three'), null, 'лишний разделитель');
+assert.equal(parseSplitKey(' leading'), null, 'пустая вторая часть');
+assert.equal(parseSplitKey('trailing '), null, 'пустая первая часть');

@@ -1,30 +1,42 @@
 {
   "name": "price-aggregator",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Локальный агрегатор цен продуктовых магазинов (Пятёрочка / Магнит / Лента). Open source, для личного пользования.",
   "main": "dist-electron/electron/main.js",
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.mjs",
+    "gen:schema": "node scripts/gen-schema.mjs",
     "5ka:store": "node scripts/5ka-store.mjs",
-    "magnit:store": "node scripts/magnit-store.mjs",
+    "magnit:store": "npx tsx scripts/magnit-store.ts",
+    "lenta:store": "npx tsx scripts/lenta-store.ts",
     "test:magnit": "npx tsx scripts/test-magnit.ts",
     "test:5ka": "npx tsx scripts/test-5ka.ts",
+    "test:lenta": "npx tsx scripts/test-lenta.ts",
     "test:taxonomy": "npx tsx scripts/test-taxonomy.ts",
+    "test:taxonomy-matcher": "npx tsx scripts/test-taxonomy-matcher.ts",
     "test:matching": "npx tsx scripts/test-matching.ts",
     "test:db": "npx tsx scripts/test-db.ts",
     "test:scheduler": "npx tsx scripts/test-scheduler.ts",
-    "test": "npm run test:5ka --silent && npm run test:magnit --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:db --silent && npm run test:scheduler --silent",
+    "test": "npm run test:core --silent && npm run test:5ka --silent && npm run test:magnit --silent && npm run test:lenta --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:db --silent && npm run test:scheduler --silent",
     "predev": "npm run version:sync",
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "dev:vite": "vite",
-    "dev:electron": "node scripts/build-electron.mjs && electron .",
-    "build:electron": "node scripts/build-electron.mjs",
+    "dev:electron": "npm run build:electron --silent && electron .",
+    "build:electron": "npm run gen:schema --silent && node scripts/build-electron.mjs",
     "prebuild": "npm run version:sync",
-    "build": "npm run build:electron && vite build && electron-builder",
+    "build": "npm run build:electron && vite build && npm run check:browser && npm run build:exe",
+    "check:browser": "node scripts/check-browser-bundle.mjs",
+    "build:exe": "node scripts/build-exe.mjs",
     "release:win": "npm run build -- --win nsis --publish always",
-    "build:win": "npm run build -- --win nsis",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
+    "build:win": "npm run build -- --win nsis portable",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "lenta:regions": "node scripts/gen-lenta-regions.mjs",
+    "lenta:probe": "npx tsx scripts/probe-lenta.ts",
+    "lenta:poll": "npx tsx scripts/probe-lenta-poll.ts",
+    "lenta:browser": "npx tsx scripts/probe-lenta-browser.mjs",
+    "test:core": "npx tsx scripts/test-core.ts",
+    "test:icons": "npx tsx scripts/test-icons.ts"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -36,7 +48,6 @@
     "concurrently": "^10.0.5",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
-    "playwright": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
@@ -48,7 +59,8 @@
     "electron-updater": "^6.8.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "sql.js": "^1.14.2"
+    "sql.js": "^1.14.2",
+    "playwright": "^1.63.0"
   },
   "build": {
     "appId": "com.example.priceaggregator",
@@ -71,14 +83,27 @@
       "artifactName": "${productName}-${version}-portable.${ext}"
     },
     "files": [
-      "dist/index.html",
-      "dist/assets/**/*",
+      "build-renderer/**/*",
       "dist-electron/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": ".playwright-browsers",
+        "to": "browsers",
+        "filter": [
+          "firefox-*/**",
+          "winldd-*/**"
+        ]
+      }
+    ],
     "nsis": {
       "oneClick": false,
-      "perMachine": false
-    }
+      "perMachine": false,
+      "artifactName": "${productName}-${version}-setup.${ext}"
+    },
+    "asarUnpack": [
+      "**/node_modules/sql.js/dist/*.wasm"
+    ]
   }
 }

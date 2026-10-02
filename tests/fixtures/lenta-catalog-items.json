@@ -1,0 +1,610 @@
+{
+ "_source": "lenta.com POST /api-gateway/v1/catalog/items, раздел 25176, магазин 4161, 2026-10-01 (HAR юзера, секреты вырезаны)",
+ "_request": {
+  "categoryId": 25176,
+  "limit": 40,
+  "offset": 0,
+  "sort": {
+   "type": "popular",
+   "order": "desc"
+  },
+  "filters": {
+   "checkbox": [],
+   "multicheckbox": [],
+   "range": []
+  }
+ },
+ "total": 10,
+ "items": [
+  {
+   "id": 301593,
+   "name": "Виноград Киш-миш черный, весовой",
+   "count": 24,
+   "prices": {
+    "cost": 17999,
+    "costRegular": 17999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 9000,
+    "priceRegular": 9000
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 500,
+    "net": 500,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 24,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/301593/catalog-image/a4fd5acf-67dc-4d40-87ec-b2d9a073f788.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/301593/catalog-image/a4fd5acf-67dc-4d40-87ec-b2d9a073f788.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/301593/catalog-image/a4fd5acf-67dc-4d40-87ec-b2d9a073f788.png"
+    }
+   ]
+  },
+  {
+   "id": 301596,
+   "name": "Виноград Шайн Мускат, весовой",
+   "count": 6,
+   "prices": {
+    "cost": 29999,
+    "costRegular": 29999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 35999,
+    "priceRegular": 35999
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 1200,
+    "net": 1200,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 6,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/301596/catalog-image/410138a7-d648-4e14-8fdd-31cd22786f9f.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/301596/catalog-image/410138a7-d648-4e14-8fdd-31cd22786f9f.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/301596/catalog-image/410138a7-d648-4e14-8fdd-31cd22786f9f.png"
+    }
+   ]
+  },
+  {
+   "id": 43796,
+   "name": "Тыква Баттернат новый урожай, весовая",
+   "count": 7,
+   "prices": {
+    "cost": 9999,
+    "costRegular": 9999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": false,
+    "price": 16998,
+    "priceRegular": 16998
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 1700,
+    "net": 1700,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 7,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/43796/catalog-image/204d910d-4f81-4c23-ab69-350a27043c5f.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/43796/catalog-image/204d910d-4f81-4c23-ab69-350a27043c5f.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/43796/catalog-image/204d910d-4f81-4c23-ab69-350a27043c5f.png"
+    }
+   ]
+  },
+  {
+   "id": 54795,
+   "name": "Виноград Дамский пальчик, весовой",
+   "count": 7,
+   "prices": {
+    "cost": 16999,
+    "costRegular": 22999,
+    "isLoyaltyCardPrice": true,
+    "isPromoactionPrice": true,
+    "isQuantPrice": true,
+    "price": 11899,
+    "priceRegular": 16099
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 700,
+    "net": 700,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 7,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/54795/5d448eff-c632-439e-acf2-6a8e4b2c5954.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/54795/5d448eff-c632-439e-acf2-6a8e4b2c5954.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/54795/5d448eff-c632-439e-acf2-6a8e4b2c5954.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/54795/82010b27-2bf5-401e-83c9-7c54e906a8cd.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/54795/82010b27-2bf5-401e-83c9-7c54e906a8cd.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/54795/82010b27-2bf5-401e-83c9-7c54e906a8cd.png"
+    }
+   ]
+  },
+  {
+   "id": 111135,
+   "name": "Виноград Тайфи, весовой",
+   "count": 25,
+   "prices": {
+    "cost": 14999,
+    "costRegular": 14999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 7500,
+    "priceRegular": 7500
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 500,
+    "net": 500,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 25,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/111135/pos-image/e00ec67d-efc0-4e0b-8816-0ebccf5d2362.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/111135/pos-image/e00ec67d-efc0-4e0b-8816-0ebccf5d2362.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/111135/pos-image/e00ec67d-efc0-4e0b-8816-0ebccf5d2362.png"
+    }
+   ]
+  },
+  {
+   "id": 713803,
+   "name": "Инжир свежий, весовой",
+   "count": 11,
+   "prices": {
+    "cost": 89999,
+    "costRegular": 89999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 22500,
+    "priceRegular": 22500
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 250,
+    "net": 250,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 11,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/713803/43065a4d-c44c-4790-937b-8dcdfdb06fb2.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/713803/43065a4d-c44c-4790-937b-8dcdfdb06fb2.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/713803/43065a4d-c44c-4790-937b-8dcdfdb06fb2.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/713803/ac09d3a2-d7ff-4682-a89b-4e59fa833781.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/713803/ac09d3a2-d7ff-4682-a89b-4e59fa833781.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/713803/ac09d3a2-d7ff-4682-a89b-4e59fa833781.png"
+    }
+   ]
+  },
+  {
+   "id": 249264,
+   "name": "Манго спелое, весовое",
+   "count": 2,
+   "prices": {
+    "cost": 34999,
+    "costRegular": 34999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 27999,
+    "priceRegular": 27999
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 800,
+    "net": 800,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 2,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/249264/a5fe9f51-b30d-444c-aa88-7508b32f31ee.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/249264/a5fe9f51-b30d-444c-aa88-7508b32f31ee.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/249264/a5fe9f51-b30d-444c-aa88-7508b32f31ee.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/249264/6f95124f-83dd-49e0-bac3-0c41cc099913.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/249264/6f95124f-83dd-49e0-bac3-0c41cc099913.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/249264/6f95124f-83dd-49e0-bac3-0c41cc099913.png"
+    }
+   ]
+  },
+  {
+   "id": 11461,
+   "name": "Грейпфруты, весовые",
+   "count": 25,
+   "prices": {
+    "cost": 13999,
+    "costRegular": 13999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 11199,
+    "priceRegular": 11199
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 800,
+    "net": 800,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 25,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/11461/catalog-image/b07351f8-4f59-4a12-8579-7ea5cdb50e3f.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/11461/catalog-image/b07351f8-4f59-4a12-8579-7ea5cdb50e3f.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/11461/catalog-image/b07351f8-4f59-4a12-8579-7ea5cdb50e3f.png"
+    }
+   ]
+  },
+  {
+   "id": 116797,
+   "name": "Кокос молочный питьевой, шт",
+   "count": 5,
+   "prices": {
+    "cost": 34999,
+    "costRegular": 34999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": false,
+    "price": 34999,
+    "priceRegular": 34999
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 1220,
+    "net": 0,
+    "package": "1шт"
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 5,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": false,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/116797/catalog-image/f73191f7-b9cf-45e5-8ace-e070ab1d84ca.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/116797/catalog-image/f73191f7-b9cf-45e5-8ace-e070ab1d84ca.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/116797/catalog-image/f73191f7-b9cf-45e5-8ace-e070ab1d84ca.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/116797/catalog-image/0106c632-7124-46d7-ad7d-2fe482208f0d.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/116797/catalog-image/0106c632-7124-46d7-ad7d-2fe482208f0d.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/116797/catalog-image/0106c632-7124-46d7-ad7d-2fe482208f0d.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/116797/catalog-image/f1995485-148c-4e66-b8a2-9d64c9ed4d4b.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/116797/catalog-image/f1995485-148c-4e66-b8a2-9d64c9ed4d4b.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/116797/catalog-image/f1995485-148c-4e66-b8a2-9d64c9ed4d4b.png"
+    }
+   ]
+  },
+  {
+   "id": 638739,
+   "name": "Авокадо, весовой",
+   "count": 4,
+   "prices": {
+    "cost": 38999,
+    "costRegular": 38999,
+    "isLoyaltyCardPrice": false,
+    "isPromoactionPrice": false,
+    "isQuantPrice": true,
+    "price": 15600,
+    "priceRegular": 15600
+   },
+   "package": "",
+   "netWeight": 0,
+   "unitName": "",
+   "weight": {
+    "gross": 400,
+    "net": 400,
+    "package": ""
+   },
+   "saleLimit": {
+    "foldQuantity": 1,
+    "maxSaleQuantity": 4,
+    "minSaleQuantity": 1
+   },
+   "features": {
+    "isAdult": false,
+    "isAlcohol": false,
+    "isBlockedForSale": false,
+    "isFavorite": false,
+    "isFd": false,
+    "isIndividualAcc": false,
+    "isMarkType": false,
+    "isMercurial": false,
+    "isOnlyPickup": false,
+    "isPartner": false,
+    "isPersonalPrice": false,
+    "isPinned": false,
+    "isPromo": false,
+    "isPurchased": false,
+    "isQuantityDiscount": false,
+    "isReviewable": false,
+    "isSizeChartVisible": false,
+    "isTobacco": false,
+    "isWeight": true,
+    "markType": ""
+   },
+   "images": [
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/638739/catalog-image/4ba0bdc7-366f-45a0-aab6-26593f69b237.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/638739/catalog-image/4ba0bdc7-366f-45a0-aab6-26593f69b237.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/638739/catalog-image/4ba0bdc7-366f-45a0-aab6-26593f69b237.png"
+    },
+    {
+     "original": "https://cdn.api.lenta.com/resample/webp/0x0/photo/638739/fea61381-b01f-4c78-bda4-addf7166b8a2.png",
+     "large": "https://cdn.api.lenta.com/resample/webp/900x900/photo/638739/fea61381-b01f-4c78-bda4-addf7166b8a2.png",
+     "preview": "https://cdn.api.lenta.com/resample/webp/250x250/photo/638739/fea61381-b01f-4c78-bda4-addf7166b8a2.png"
+    }
+   ]
+  }
+ ]
+}

@@ -38,8 +38,51 @@ function assertShopCode(shopCode: string): void {
   if (!/^\d+$/.test(shopCode)) throw new Error(`magnit: bad shopCode ${shopCode}`);
 }
 
+/**
+ * Ответ принадлежит именно этому магазину.
+ *
+ * Одного «есть строка `shopCode=<код>` в HTML» НЕДОСТАТОЧНО: пейлоад повторяет
+ * там куку — то есть наш собственный код — даже если такого магазина нет.
+ * Проверено живьём 2026-10-01 на коде 111111: строка на месте, а ссылки на
+ * товары ведут в 992301 (магазин по умолчанию). Прежняя проверка принимала любой
+ * код, и цены чужой точки уехали бы в историю.
+ *
+ * Настоящий признак — shopCode в ссылках на товары: они ведут в тот магазин,
+ * цены которого показаны. Если в ссылках чужой код, а нашего нет, ответ
+ * отбрасывается: иначе в историю уедут цены чужой точки (инвариант домена).
+ */
+/**
+ * Коды магазинов из ссылок на товары.
+ *
+ * Ссылки лежат в ДВУХ формах: буквальной (`/product/…`) в отрендеренном HTML
+ * и экранированной (`\u002Fproduct\u002F…`) в пейлоаде Nuxt. Ловить только
+ * первую было бы тихо: на странице поиска её в ответе нет вовсе.
+ *
+ * ВНИМАНИЕ к группам: все части ДО `(\d+)` сделаны незахватывающими. Иначе
+ * код магазина съезжает с `m[1]` на `m[2]`, и сверка тихо ломается — такое
+ * уже было в этой функции и в зонде.
+ *
+ * Экспортируется для зонда `scripts/magnit-store.ts`, чтобы правило сверки
+ * жило в одном месте, а не копировалось в скрипт без тестов.
+ */
+export function shopCodesInProductLinks(html: string): string[] {
+  return [
+    ...new Set(
+      [
+        ...html.matchAll(
+          /(?:\/product\/|u002Fproduct\\u002F)[^"']*?shopCode=\\?(?:u0022|%22|\\?"|")?(\d+)(?!\d)/g,
+        ),
+      ].map((m) => m[1] ?? ''),
+    ),
+  ];
+}
+
 export function hasShopCode(html: string, shopCode: string): boolean {
   assertShopCode(shopCode);
+  const inLinks = shopCodesInProductLinks(html);
+  // Ссылки есть, но нашего кода среди них нет — ответ чужого магазина.
+  if (inLinks.length > 0) return inLinks.includes(shopCode);
+  // Ссылок нет (страница без товаров): проверить нечем, и мы не выдумываем вины.
   return new RegExp(`shopCode=(%22|")?${shopCode}(%22|"|&|$)`).test(html);
 }
 
@@ -256,8 +299,11 @@ export function parseMagnitSearchGoods(html: string, shopCode: string): MagnitGo
   assertOwnStore(html, shopCode);
   const script = nuxtScript(html);
   const out = goodsFromScript(script, 32);
-  if (out.length === 0 && /\/product\//.test(script)) {
-    throw new Error('magnit: search-парсер пуст при живых /product/ (смена вёрстки?)');
+  // Ссылки в пейлоаде лежат экранированными (`\u002Fproduct\u002F`), поэтому
+  // проверка только буквального `/product/` на странице поиска всегда ложна и
+  // «смена вёрстки» этим guard'ом не ловилась —LOUD-ошибка не доходила.
+  if (out.length === 0 && /(?:\/product\/|u002Fproduct\\u002F)/.test(script)) {
+    throw new Error('magnit: search-парсер пуст при живых ссылках на товары (смена вёрстки?)');
   }
   return out;
 }
@@ -287,6 +333,46 @@ async function assertPageUsable(
   }
   if (!html.includes(`"${shopCode}"`)) {
     throw new Error(`magnit: страница без следов shopCode=${shopCode} (чужой магазин?)`);
+  }
+}
+
+/**
+ * Строгая сверка магазина по ссылкам карточек.
+ *
+ * Для путей Playwright проверки по эху куки в DOM было мало: эхо доказывает,
+ * что кука дошла, а не что магазин тот. Раньше это был единственный путь, где
+ * цены чужой точки могли уехать в историю молча (fetch-пути давно сверяются по
+ * `hasShopCode`).
+ *
+ * Ссылки на карточках у нас есть всегда — `readCards` отдаёт `href` вида
+ * `/product/111-a?shopCode=1`, поэтому сверка бесплатна.
+ *
+ * Правило ровно как у `hasShopCode`: коды есть и нашего среди них нет —
+ * чужой магазин; кодов нет вовсе (проверять нечем) — не выдумываем вины;
+ * наш код есть среди чужих — принимаем: смешанная страница с промо-блоком
+ * реальна, и ложный отказ ударил бы по всей полке города сильнее, чем риск
+ * подмены на одной карточке.
+ */
+export function assertCardsOwnStore(cards: RawCard[], shopCode: string): void {
+  // Считаем только непустые ссылки: карточка без href — это «сверять нечем»,
+  // а не «сеть сменила формат». Разные вещи, и путать их нельзя.
+  const hrefs = cards.map((c) => c.href.trim()).filter((h) => h.length > 0);
+  if (hrefs.length === 0) return;
+  const codes = shopCodesInProductLinks(hrefs.join(' '));
+  if (codes.length === 0) {
+    // Тихий возврат здесь опасен: если сеть уберёт shopCode из ссылок, проверка
+    // превратится в пустышку и Playwright-путь молча вернётся к сверке по эху
+    // куки — той самой, что уже доказала негодность (код `111111`: эхо на
+    // месте, ссылки в чужой магазин). Ссылки есть, а сверить нечем — это повод
+    // сказать вслух, а не сделать вид, что всё проверили.
+    throw new Error(
+      'magnit: в ссылках карточек нет shopCode — свервать магазин нечем (смена формата ссылок?)',
+    );
+  }
+  if (!codes.includes(shopCode)) {
+    throw new Error(
+      `magnit: ответ от чужого магазина (ссылки ведут в ${codes.join(', ')}, а настроен ${shopCode})`,
+    );
   }
 }
 
@@ -320,17 +406,27 @@ async function readCards(
 export function parseMagnitCategories(html: string, shopCode: string): MagnitCategory[] {
   const script = html.match(/<script[^>]*__NUXT_DATA__[^>]*>(.*?)<\/script>/s)?.[1] ?? '';
   assertOwnStore(script, shopCode);
+  // Порядок полей записи категории в __NUXT_DATA__ (проверен на живом ответе):
+  //   id, числовой id, название, код, КАРТИНКА, ссылка на категорию.
+  // Картинка — пятое поле, ссылка — шестое. Раньше пятое отбрасывалось, и
+  // плитки категорий оставались без картинок, хотя сеть её отдаёт.
   const re = /"g(\d+)","\d+","((?:[^"\\]|\\.)*)","(testmm[a-z0-9_]+)","((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)"/g;
   const seen = new Map<string, MagnitCategory>();
   let m: RegExpExecArray | null;
   while ((m = re.exec(script)) !== null) {
     const id = m[1];
     const name = m[2];
-    const rawUrl = (m[5] ?? '').replace(/\\u002F/g, '/');
+    const unescape = (s: string | undefined): string => (s ?? '').replace(/\\u002F/g, '/');
+    const rawImage = unescape(m[4]);
+    const rawUrl = unescape(m[5]);
     if (!id || !name || seen.has(id)) continue;
     const pathOnly = rawUrl.split('?')[0];
     if (!pathOnly || !/\/catalog\/\d+-/.test(pathOnly)) continue;
-    seen.set(id, { id, name, url: `https://magnit.ru${pathOnly}` });
+    const category: MagnitCategory = { id, name, url: `https://magnit.ru${pathOnly}` };
+    // Только https и без data:-картинка с не-HTTP схемой в <img> не покажется,
+    // а в data: утекает вес страницы.
+    if (/^https:\/\/\S+$/.test(rawImage) && !rawImage.startsWith('data:')) category.imageUrl = rawImage;
+    seen.set(id, category);
     if (seen.size >= 40) break;
   }
   if (seen.size === 0) throw new Error('magnit: категории не найдены (смена вёрстки?)');
@@ -424,6 +520,7 @@ export class MagnitAdapter implements StoreAdapter {
       }
       await assertPageUsable(page, ctx.externalStoreId);
       const raw = await readCards(page, 12);
+      assertCardsOwnStore(raw, ctx.externalStoreId);
       return cardsToProducts(raw, ctx, 12);
     } finally {
       await browser.close().catch(() => {});
@@ -471,11 +568,15 @@ export class MagnitAdapter implements StoreAdapter {
     return parseMagnitCategories(await res.text(), ctx.externalStoreId);
   }
 
+  canHandleCategoryUrl(categoryUrl: string): boolean {
+    return /^https:\/\/magnit\.ru\/(promo-)?catalog\//.test(categoryUrl);
+  }
+
   async fetchCategoryProducts(
     categoryUrl: string,
     ctx: { city: string; externalStoreId: string },
   ): Promise<ScrapedProduct[]> {
-    if (!/^https:\/\/magnit\.ru\/(promo-)?catalog\//.test(categoryUrl)) {
+    if (!this.canHandleCategoryUrl(categoryUrl)) {
       throw new Error('magnit: categoryUrl вне каталога');
     }
     assertShopCode(ctx.externalStoreId);
@@ -509,7 +610,9 @@ export class MagnitAdapter implements StoreAdapter {
         return [];
       }
       await assertPageUsable(page, ctx.externalStoreId);
-      return cardsToProducts(await readCards(page, 32), ctx, 32);
+      const raw = await readCards(page, 32);
+      assertCardsOwnStore(raw, ctx.externalStoreId);
+      return cardsToProducts(raw, ctx, 32);
     } finally {
       await browser.close().catch(() => {});
     }

@@ -9,6 +9,45 @@ export interface PriceGroup {
   offers: { storeId: string; product: ScrapedProduct }[];
 }
 
+/**
+ * Ручные разрывы склейки, попавшие в выдачу.
+ *
+ * Ключи строит та же функция splitKey, что и слой БД, иначе пара, помеченная
+ * в интерфейсе, продолжила бы склеиваться после перезапуска.
+ */
+export function matchSplitKey(a: string, b: string): string {
+  return splitPairKey(a, b);
+}
+
+/**
+ * Раскладка ключа пары обратно в два id.
+ *
+ * Разделитель — пробел, и это безопасно только потому, что id сетей его не
+ * содержат (`5ka-1234`, `magnit-5678`). Один разбор на разрыв дешевле, чем
+ * пара структур через весь стек БД → IPC → renderer.
+ *
+ * Возвращает `null` вместо исключения: единственный вызывающий в рендере
+ * обходится по данным из БД, но пустой результат в UI — это пропущенная
+ * строка списка, а исключение — падение дерева (error-boundary в renderer
+ * нет, окно открылось бы пустым). Случайный непарсинг не должен ронять
+ * приложение.
+ */
+export function parseSplitKey(key: string): [string, string] | null {
+  const i = key.indexOf(' ');
+  if (i < 0) return null;
+  const a = key.slice(0, i);
+  const b = key.slice(i + 1);
+  // Разделитель — пробел, значит в id пробелов быть не должно. Если вдруг
+  // окажется (будущий адаптер со slug-id), пара не наша: вернуть null лучше,
+  // чем удалить строку, которой нет.
+  if (!a || !b || a.includes(' ') || b.includes(' ')) return null;
+  return [a, b];
+}
+
+export function splitPairKey(a: string, b: string): string {
+  return a < b ? `${a} ${b}` : `${b} ${a}`;
+}
+
 export function normalizeName(raw: string): string {
   return raw
     .toLowerCase()
@@ -39,7 +78,21 @@ export function sameProduct(a: ScrapedProduct, b: ScrapedProduct): boolean {
   return jaccard >= 0.6;
 }
 
-export function groupByProduct(items: ScrapedProduct[]): PriceGroup[] {
+/**
+ * Группирует товары в карточки «один товар в разных сетях».
+ *
+ * splits — пары, которые пользователь пометил как разные товары (ключи из
+ * matchSplitKey). Пара проверяется ДО sameProduct: ручное решение сильнее
+ * эвристики, иначе «разделить» ничего бы не меняло, и пользователь счёл бы
+ * кнопку сломанной.
+ *
+ * Инвариант: внутри группы нет разведённой пары. Он держится по индукции —
+ * база одна offer, а новый товар не встанет в группу, где уже есть его
+ * партнёр по разрыву. Поэтому флага «в группе есть разрыв» не существует и
+ * помечать нечего: либо пара разведена, либо её в группе нет.
+ */
+export function groupByProduct(items: ScrapedProduct[], splits?: ReadonlySet<string>): PriceGroup[] {
+  const isSplit = (a: string, b: string) => (splits ? splits.has(matchSplitKey(a, b)) : false);
   const groups: PriceGroup[] = [];
   for (const item of items) {
     const sameId = groups.some((x) =>
@@ -48,9 +101,11 @@ export function groupByProduct(items: ScrapedProduct[]): PriceGroup[] {
     if (sameId) {
       continue;
     }
+    // 1) Куда новый товар встанет без нарушения разрыва.
     const linked = groups.find(
       (x) =>
         !x.offers.some((o) => o.storeId === item.storeId) &&
+        x.offers.every((o) => !isSplit(o.product.canonicalId, item.canonicalId)) &&
         x.offers.some((o) => sameProduct(o.product, item)),
     );
     if (linked) {

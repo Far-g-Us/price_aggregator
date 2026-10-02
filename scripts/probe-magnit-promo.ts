@@ -1,7 +1,7 @@
 // Снимает живую выдачу Магнита по РЕАЛЬНОМУ поиску (?term=) и кладёт
 // компактную фикстуру. Годится и для проверки скидок.
 import fs from 'node:fs';
-import { parseMagnitSearchGoods, goodsToProducts } from '../src/main/adapters/magnit.js';
+import { parseMagnitSearchGoods, goodsToProducts } from '../src/core/adapters/magnit.js';
 
 const QUERY = process.env.QUERY ?? 'молоко';
 const SHOP = process.env.SHOP ?? '303857';

@@ -1,6 +1,8 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import {
+  assertCardsOwnStore,
+  shopCodesInProductLinks,
   cardsToProducts,
   extractCategoryOffers,
   goodsToProducts,
@@ -12,7 +14,7 @@ import {
   parseMagnitCategoryPromos,
   parseMagnitPrice,
   parseMagnitSearchGoods,
-} from '../src/main/adapters/magnit.js';
+} from '../src/core/adapters/magnit.js';
 
 // Регрессия 2026-09: адаптер ходил на /search?query=, сайт параметр
 // игнорирует и отдаёт популярные товары вместо выдачи. Откат на `query=`
@@ -81,7 +83,17 @@ const cats = parseMagnitCategories(catHtml, '473996');
 assert.equal(cats.length, 3);
 assert.ok(cats[0]?.url.startsWith('https://magnit.ru/catalog/'), 'clean catalog url');
 assert.ok(!cats[0]?.url.includes('?'), 'no query leak');
-assert.equal(cats[0]?.imageUrl, undefined, 'category images are not pulled');
+// Регрессия 2026-09-30: пятое поле записи категории в __NUXT_DATA__ — это
+// ссылка на картинку, а не мусор. Раньше оно отбрасывалось, и плитки категорий
+// оставались без картинок, хотя сеть её отдаёт.
+assert.equal(
+  cats[0]?.imageUrl,
+  'https://images-foodtech.magnit.ru/fDaCzEYETDNF1ti6B3iGkHCIYCRiD9pBxwHkcX92jpA/rs:fit:318:384/plain/s3://img-dostavka/pim/category/65247/gallery/a6b485186af77c86d5683c0585d4c54b.png@webp',
+  'картинка категории берётся из пятого поля и с \\u002F разэкранируется',
+);
+const noImage = parseMagnitCategories(catHtml.replace(/images-foodtech[^"]*/, ''), '473996');
+assert.equal(noImage[0]?.imageUrl, undefined, 'без ссылки на картинку полка остаётся без неё');
+assert.ok(noImage[0]?.url.startsWith('https://magnit.ru/catalog/'), 'ссылка на категорию не пострадала');
 assert.throws(() => parseMagnitCategories(catHtml, '000000'), /чужого магазина/);
 
 const promoHtml = fs.readFileSync('tests/fixtures/magnit-category-promo.html', 'utf-8');
@@ -152,9 +164,80 @@ assert.ok(
   'фикстура — реальный ответ поиска, а не популярные товары',
 );
 
+// Страница без ссылок на товары: проверить нечем, доверяем эху URL.
 assert.equal(hasShopCode('x?shopCode=473996&y', '473996'), true);
 assert.equal(hasShopCode('x?shopCode=4739961&y', '473996'), false);
 assert.equal(hasShopCode('noshop', '473996'), false);
+// Регрессия 2026-10-01: эха URL недостаточно. Сайт подставляет строку с нашим
+// кодом даже для несуществующего кода, и ссылки при этом ведут в чужой магазин.
+// Прежняя проверка такой случай принимала — цены чужой точки уехали бы в
+// историю (инвариант домена: успешный ответ ≠ наш магазин).
+const foreign = `<a href="/product/1-moloko?shopCode=992301&amp;shopType=dostavka">x</a>`;
+assert.equal(
+  hasShopCode(`shopCode=473996 ${foreign}`, '473996'),
+  false,
+  'чужой магазин в ссылках не проходит, даже если код есть в HTML',
+);
+const own = `<a href="/product/1-moloko?shopCode=473996&amp;shopType=dostavka">x</a>`;
+assert.equal(hasShopCode(`shopCode=473996 ${own}`, '473996'), true, 'наш магазин в ссылках проходит');
+// Экранированная форма из пейлоада Nuxt: на странице поиска буквальных
+// ссылок `/product/` нет вовсе, и проверка, ловившая только её, молча уходила
+// в фолбэк, который принимает любой код. ВНИМАНИЕ: обратный слэш обязателен —
+// в пейлоаде именно `\u002F`, а не `u002F` без слеша. С такой опечаткой тест
+// проходил бы вовсе не по той ветке, которую проверяет.
+// В обычном строковом литерале `\\u002F` даёт именно «слеш + u002F».
+const nuxtLink = (code: string) => `\\u002Fproduct\\u002F1-moloko?shopCode=${code}`;
+assert.equal(
+  hasShopCode(nuxtLink('473996'), '473996'),
+  true,
+  'экранированная ссылка на наш магазин, даже когда строки с кодом в HTML нет',
+);
+// Ловушка на откат правки: тут в HTML нет НИКАКОГО упоминания нашего кода,
+// поэтому фолбэк по куке не может выручить — если удалить экранированную
+// альтернативу из regex, тест обязан покраснеть.
+const onlyForeign = nuxtLink('992301');
+assert.ok(!onlyForeign.includes('473996'), 'фикстура не должна содержать наш код');
+assert.equal(
+  hasShopCode(onlyForeign, '473996'),
+  false,
+  'ссылки только на чужой магазин отвергаются без опоры на куку',
+);
+// Граница числа: 4739961 — это другой магазин, а не наш с хвостом.
+assert.equal(
+  hasShopCode(nuxtLink('4739961'), '473996'),
+  false,
+  'код с лишней цифрой не считается нашим',
+);
+// Смешанная выдача: наш код среди чужих ссылок — наш магазин.
+assert.equal(
+  hasShopCode(`${nuxtLink('992301')} ${nuxtLink('473996')}`, '473996'),
+  true,
+  'наш магазин среди прочих ссылок принимается',
+);
+// JSON-эскейп внутри пейлоада: `shopCode=\"473996\"` — после `=` идёт слэш.
+// Именно этот случай единственный, где старый фолбэк по куке бессилен (он не
+// понимает `\"`), поэтому только он доказывает, что работает ИМЕННО новая
+// ветка, а не фолбэк. Ниже — самопроверка невакуумности этой фикстуры.
+const escapedQuoted = '\\u002Fproduct\\u002F1-moloko?shopCode=\\"473996\\"';
+assert.equal(
+  hasShopCode(escapedQuoted, '473996'),
+  true,
+  'экранированная ссылка с эскейпленными кавычками',
+);
+// Доказательство, что фикстура выше не проходит «по старому пути»: в ней нет
+// ни буквальной ссылки `/product/`, ни строки, которую поймал бы фолбэк по
+// куке. Если эти две проверки перестанут выполняться, тест выше стал бы
+// проверять не то исправление, ради которого написан.
+assert.equal(
+  /\/product\/[^"']*?shopCode=(%22|")?(\d+)(?!\d)/g.test(escapedQuoted),
+  false,
+  'в фикстуре нет буквальных ссылок — старая проверка её не увидит',
+);
+assert.equal(
+  new RegExp(`shopCode=(%22|")?473996(%22|"|&|$)`).test(escapedQuoted),
+  false,
+  'фикстура недоступна фолбэку по куке — зелёный тест не может идти по нему',
+);
 
 const cards = cardsToProducts(
   [
@@ -192,3 +275,62 @@ assert.equal(noBadgePromos('Только у нас').size, 0, 'подпись б
 assert.equal(noBadgePromos('4.7').size, 0, 'рейтинг не принимается за старую цену');
 
 console.log('magnit normalize: ALL GREEN');
+
+// Общий экспорт сверки (его же использует зонд npm run magnit:store) —
+// ветви, добавленные в этом круге, обязаны быть покрыты, иначе зонд может
+// разойтись с адаптером молча.
+assert.deepEqual(
+  shopCodesInProductLinks('/product/1?shopCode=%22473996%22'),
+  ['473996'],
+  'URL-кодированные кавычки в ссылке',
+);
+assert.deepEqual(
+  shopCodesInProductLinks('\\u002Fproduct\\u002F1?shopCode=\\u0022473996\\u0022'),
+  ['473996'],
+  'эскейп \u0022 в ссылке',
+);
+assert.deepEqual(
+  shopCodesInProductLinks('/product/1?shopCode=4739961 /product/2?shopCode=303857'),
+  ['4739961', '303857'],
+  'литеральные ссылки: (?!\\d) и порядок не важны',
+);
+assert.deepEqual(
+  shopCodesInProductLinks(nuxtLink('473996')),
+  ['473996'],
+  'экранированная ссылка без кавычек',
+);
+assert.deepEqual(
+  shopCodesInProductLinks('shopCode=473996'),
+  [],
+  'одна кука сама по себе ссылкой на товар не является',
+);
+
+// Сверка по ссылкам карточек — единственная защита в Playwright-путях, где
+// сверять можно только по href (эхо куки в DOM доказывает лишь, что кука
+// дошла). Правило повторяет hasShopCode: нет кодов — не выдумываем вины,
+// есть чужие и нет нашего — отказ.
+const card = (href: string) => ({ name: 'x', href, img: '', texts: [] as string[] });
+assertCardsOwnStore([card('/product/1-moloko?shopCode=473996')], '473996');
+assertCardsOwnStore([card('')], '473996');
+// Ссылки есть, но кода в них нет — это уже не «нечем сверять», а смена
+// формата ссылок, и сказать об этом надо вслух.
+assert.throws(
+  () => assertCardsOwnStore([card('/product/1-moloko'), card('/product/2-kefir')], '473996'),
+  /нет shopCode/,
+  'ссылки без shopCode — громкая ошибка, а не тихий пропуск',
+);
+assertCardsOwnStore(
+  [card('/product/1?shopCode=992301'), card('/product/2?shopCode=473996')],
+  '473996',
+),
+'наш среди чужих принимается (смешанная страница)';
+assert.throws(
+  () => assertCardsOwnStore([card('/product/1?shopCode=992301')], '473996'),
+  /чужого магазина/,
+  'только чужие ссылки — отказ',
+);
+assert.throws(
+  () => assertCardsOwnStore([card('/product/1?shopCode=4739961')], '473996'),
+  /чужого магазина/,
+  'код с лишней цифрой — тоже чужой',
+);

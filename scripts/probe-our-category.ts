@@ -1,8 +1,8 @@
 // Проверяем живьём: слова-фильтры в наших категориях, офлайн-кэш и
 // «Не разложено». Сеть трогаем по-настоящему.
-import { MagnitAdapter } from '../src/main/adapters/magnit.js';
-import { PyaterochkaAdapter } from '../src/main/adapters/pyaterochka.js';
-import { close5kaBrowser } from '../src/main/adapters/5ka-browser.js';
+import { MagnitAdapter } from '../src/core/adapters/magnit.js';
+import { PyaterochkaAdapter } from '../src/core/adapters/pyaterochka.js';
+import { close5kaBrowser } from '../src/core/adapters/5ka-browser.js';
 import { ourCategoryById, matchesOurCategory } from '../src/shared/taxonomy.js';
 import { formatPrice } from '../src/shared/format.js';
 

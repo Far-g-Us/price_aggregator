@@ -14,5 +14,5 @@
     "types": ["node"],
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["electron/**/*", "src/shared/**/*", "src/main/**/*"]
+  "include": ["electron/**/*", "src/shared/**/*", "src/core/**/*"]
 }

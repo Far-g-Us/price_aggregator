@@ -1,4 +1,10 @@
-import type { ScrapedProduct, StoreAdapter } from '../../shared/types.js';
+import type { ScrapedProduct, StoreAdapter , StoreCategory } from '../../shared/types.js';
+import { readEnvFlag } from '../platform.js';
+
+export const categoryIdFromUrl = (url: string): string | null => {
+  const m = url.match(/^https:\/\/5ka\.ru\/catalog\/(?:[^/]+--)?([0-9A-Za-z]+)\/?$/);
+  return m?.[1] ?? null;
+};
 
 const CATALOG = 'https://5d.5ka.ru/api';
 
@@ -47,9 +53,27 @@ export interface SearchItem {
   property_clarification?: string;
   package_quantity?: string;
   is_available?: boolean;
-  image_links?: { normal?: string[] };
+  // small подтверждён живым ответом (зонд 2026-09-30): в выдаче категории
+  // normal иногда нет, и без фолбэка карточки молча теряли бы картинки.
+  image_links?: { normal?: string[]; small?: string[] };
+  // В листинге категории верхний image_links иногда не приходит, а картинка
+  // лежит в media — без фолбэка она молча пропадала бы.
+  media?: { image_links?: { normal?: string[]; small?: string[] } };
   description?: string;
   attributes?: { name?: string; value?: string; uom?: string | null }[];
+}
+
+/**
+ * Лучшая доступная картинка: normal, иначе small. Малый адрес поднимаем до
+ * 800x800: БД отдаёт приоритет новому значению (COALESCE), и без подъёма
+ * клик по полке тихо ухудшил бы уже сохранённую нормальную картинку.
+ */
+function bestImage(links?: { normal?: string[]; small?: string[] }): string | null {
+  const normal = links?.normal?.[0];
+  if (normal) return normal;
+  const small = links?.small?.[0];
+  if (!small) return null;
+  return small.replace(/\/320x320\.jpeg$/, '/800x800.jpeg');
 }
 
 interface PriceParts {
@@ -124,7 +148,10 @@ export function normalize(raw: SearchItem, ctx: { city: string }): ScrapedProduc
     url: `https://5ka.ru/product/${encodeURIComponent(plu)}/`,
     collectedAt: new Date().toISOString(),
   };
-  const img = raw.image_links?.normal?.[0];
+  // normal есть не везде: в выдаче категории встречается только small. Малый
+  // адрес поднимаем до 800x800: БД отдаёт приоритет новому значению (COALESCE),
+  // и без подъёма клик по полке тихо ухудшил бы уже сохранённую картинку.
+  const img = bestImage(raw.image_links) ?? bestImage(raw.media?.image_links);
   if (img) product.imageUrl = img;
   const brand = attribute(raw, 'Бренд');
   if (brand) product.brand = brand;
@@ -142,7 +169,7 @@ export class PyaterochkaAdapter implements StoreAdapter {
   // Основной транспорт — браузерный (X5 режет всё, что не браузер).
   // Прямой fetch оставлен как запасной путь для отладки/экспериментов
   // (PA5KA_TRANSPORT=fetch): он громко падает на WAF-странице.
-  private browser = process.env.PA5KA_TRANSPORT !== 'fetch';
+  private browser = readEnvFlag('PA5KA_TRANSPORT') !== 'fetch';
 
   private headers(): Record<string, string> {
     return {
@@ -217,6 +244,37 @@ export class PyaterochkaAdapter implements StoreAdapter {
     if (norm.canonicalId !== canonicalId) {
       throw new Error(`5ka: ответ по другому товару (${norm.canonicalId} вместо ${canonicalId})`);
     }
-    return norm;
+      return norm;
+    }
+
+    // Категории и товары по ним работают только через браузер: fetch-путь
+    // упирается в WAF, и копировать его параметры (mode, include_restrict)
+    // в код незачем — мы всё равно перехватываем САЙТСКИЙ запрос.
+    canHandleCategoryUrl(categoryUrl: string): boolean {
+      return categoryIdFromUrl(categoryUrl) !== null;
+    }
+
+    async fetchCategories(ctx: { city: string; externalStoreId: string }): Promise<StoreCategory[]> {
+      assertSapCode(ctx.externalStoreId);
+      if (!this.browser) {
+        throw new Error('5ka: категории доступны только в браузерном транспорте (PA5KA_TRANSPORT=fetch)');
+      }
+      const { browserCategories } = await import('./5ka-browser.js');
+      return browserCategories({ externalStoreId: ctx.externalStoreId });
+    }
+
+    async fetchCategoryProducts(
+      categoryUrl: string,
+      ctx: { city: string; externalStoreId: string },
+    ): Promise<ScrapedProduct[]> {
+      assertSapCode(ctx.externalStoreId);
+      if (!this.canHandleCategoryUrl(categoryUrl)) {
+        throw new Error('5ka: categoryUrl вне каталога');
+      }
+      if (!this.browser) {
+        throw new Error('5ka: товары категории доступны только в браузерном транспорте (PA5KA_TRANSPORT=fetch)');
+      }
+      const { browserCategoryProducts } = await import('./5ka-browser.js');
+      return browserCategoryProducts(categoryUrl, ctx);
+    }
   }
-}

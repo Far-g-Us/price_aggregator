@@ -49,6 +49,15 @@ let address = '';
 try {
   const ctx = await browser.newContext({ locale: 'ru-RU' });
   const page = await ctx.newPage();
+  // Код магазина берём из куки ИЛИ из URL запроса каталога: кука ставится не
+  // сразу (замер 2026-10-02 — в одном прогоне её не было через 6 с), а магазин
+  // при этом уже назван. Cookie-only диагностика врала «капча» там, где её нет.
+  const apiWaiter = page
+    .waitForResponse((r) => /^https:\/\/5d\.5ka\.ru\/api\/catalog\/v\d\/stores\/([^/]+)\//.test(r.url()), {
+      timeout: 40000,
+    })
+    .then((r) => /^https:\/\/5d\.5ka\.ru\/api\/catalog\/v\d\/stores\/([^/]+)\//.exec(r.url())[1])
+    .catch(() => null);
   await page.goto('https://5ka.ru/', { waitUntil: 'domcontentloaded', timeout: 60000 });
   const deadline = Date.now() + 40000;
   while (Date.now() < deadline) {
@@ -57,6 +66,7 @@ try {
     if (store) break;
     await new Promise((r) => setTimeout(r, 1000));
   }
+  if (!store) store = await Promise.race([apiWaiter, new Promise((r) => setTimeout(() => r(null), 1000))]);
   if (store) {
     address = await page.evaluate(() => {
       try {
@@ -72,13 +82,14 @@ try {
 }
 
 console.log('\n=== Пятёрочка ===');
-console.log('Магазин от сайта:', store ?? 'не определился (капча или нет сети)');
+console.log('Магазин от сайта:', store ?? 'не определился (ни кука, ни запрос каталога — капча или нет сети)');
 if (address) console.log('Адрес магазина:', address);
 
 const same = g.place.toLowerCase().includes('ульянов');
 console.log('\n=== Вывод ===');
 if (!store) {
-  console.log('Сайт не отдал магазин: включи обычный браузер, проверь капчу.');
+  console.log('Сайт не отдал магазин. Повтори запуск — обычно проходит со второй попытки.');
+  console.log('Если повторяется: включи обычный браузер и проверь капчу.');
 } else if (same && store === '3288') {
   console.log('Гео и магазин совпали с Ульяновском — город можно включать, прокси не нужен.');
 } else if (same) {
