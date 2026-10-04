@@ -185,3 +185,25 @@ assert.equal(parseSplitKey('nospace'), null, 'ключ без разделите
 assert.equal(parseSplitKey('one two three'), null, 'лишний разделитель');
 assert.equal(parseSplitKey(' leading'), null, 'пустая вторая часть');
 assert.equal(parseSplitKey('trailing '), null, 'пустая первая часть');
+
+// Единицы измерения обязаны различать товары: «930мл» и «1л» — это разные
+// покупки, даже когда название совпадает до запятой.
+const unit930 = item({ canonicalId: 'magnit-u1', name: 'Молоко Домик в деревне 3.2% 930мл', unit: '930мл' });
+const unit1l = item({ canonicalId: 'magnit-u2', name: 'Молоко Домик в деревне 3.2% 930мл', unit: '1л' });
+assert.equal(sameProduct(unit930, unit1l), false, 'разные единицы — разные товары');
+const noUnit = item({ canonicalId: 'magnit-u3', name: 'Молоко Домик в деревне 3.2% 930мл' });
+assert.equal(sameProduct(unit930, noUnit), true, 'а если единицы не указана — сравниваем только по названию');
+
+// Имя из одних знаков препинания не должно молча склеивать что-либо с чем-либо.
+const onlySigns = item({ canonicalId: 'magnit-p1', name: '!!!' });
+const realName = item({ canonicalId: 'magnit-p2', name: 'Молоко Домик в деревне' });
+assert.equal(sameProduct(onlySigns, realName), false, 'пустое имя не считается совпадением');
+
+// Группа без картинки остаётся без неё: полка не должна показывать битую
+// иконку, выдуманную из пустого url.
+const noImg = [item({ canonicalId: 'magnit-n1', name: 'Масло сливочное 82% 200г' })];
+assert.equal(groupByProduct(noImg)[0]?.imageUrl, undefined, 'нет картинки — нет и иконки группы');
+const withImg = groupByProduct([
+  item({ canonicalId: 'magnit-n2', name: 'Масло сливочное 82% 200г', imageUrl: 'https://img/масло.jpg' }),
+]);
+assert.equal(withImg[0]?.imageUrl, 'https://img/масло.jpg', 'а картинка из ответа попадает в карточку');

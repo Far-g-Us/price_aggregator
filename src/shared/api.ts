@@ -11,7 +11,8 @@ export interface UpdateCheck {
   current: string;
   latest: string | null;
   available?: boolean;
-  noReleases?: boolean;
+  /** Portable не обновляется сам: только уведомление, ничего не скачивается. */
+  portable?: boolean;
   error?: string;
 }
 
@@ -122,9 +123,11 @@ export interface RendererApi {
   splitProducts: (args: SplitPair) => Promise<void>;
   removeSplit: (args: SplitPair) => Promise<void>;
   /**
-   * Ручные разрывы города готовыми ключами matchSplitKey: renderer отдаёт их в
-   * groupByProduct. Async по существу, а не по оформлению — useMemo синхронный,
-   * поэтому прочитать их иначе нечем.
+   * Ручные разрывы склейки готовыми ключами matchSplitKey: renderer отдаёт их в
+   * groupByProduct. Разрыв — отрицательное правило об идентичности двух SKU,
+   * поэтому он общий для всех городов, а параметр `city` на выборку не влияет.
+   * Async по существу, а не по оформлению — useMemo синхронный, поэтому
+   * прочитать их иначе нечем.
    */
   getSplitPairs: (args: { city: string }) => Promise<string[]>;
   getSchedulerStatus: () => Promise<SchedulerStatus>;

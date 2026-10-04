@@ -662,6 +662,54 @@ db = await openDb(fileStorageAt(file));
   assert.equal(splitPairsFor(db, [a]).size, 0, 'чужая пара не грузится в выдачу');
 }
 
+// Пустые аргументы: без раннего выхода они превратились бы в запрос с
+// невалидным IN () или в лишнюю транзакцию на ровно ноль строк.
+assert.equal(saveNotifiedPrices(db, []), undefined, 'пустой список отметок — без транзакции');
+assert.equal(splitPairsFor(db, []).size, 0, 'пустой список id — пустой набор разрывов');
+assert.equal(latestPrices(db, []).size, 0, 'пустой список ключей — пустая карта');
+assert.equal(
+  splitPairsFor(db, [undefined as unknown as string]).size,
+  0,
+  'непринимаемый id не роняет выборку разрывов',
+);
+
+// Ключ, который SQLite не умеет привязать, обязан быть пропущен, а не уронить
+// весь запрос: одна битая запись в разметке не должна убирать цены у остальных.
+savePriceIfChanged(db, { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow', name: 'Товар', price: 10 });
+const mixed = latestPrices(db, [
+  { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow' },
+  { canonicalId: undefined as unknown as string, storeId: 'magnit', city: 'moscow' },
+]);
+assert.equal(mixed.size, 1, 'принимаемый ключ прочитан, непринимаемый пропущен');
+assert.equal([...mixed.keys()][0], 'magnit:bind-ok:moscow');
+
+// product_links: sku известен, ссылки нет; sku неизвестен, ссылка есть.
+savePriceIfChanged(db, {
+  canonicalId: 'link-a',
+  storeId: 'magnit',
+  city: 'moscow',
+  name: 'Товар A',
+  price: 20,
+  storeSku: 'sku-a',
+});
+savePriceIfChanged(db, {
+  canonicalId: 'link-b',
+  storeId: 'magnit',
+  city: 'moscow',
+  name: 'Товар B',
+  price: 30,
+  url: 'https://shop/p/b',
+});
+const linkRows = db.exec("SELECT canonical_id, store_sku, url FROM product_links WHERE canonical_id IN ('link-a','link-b') ORDER BY canonical_id");
+assert.deepEqual(
+  linkRows[0]?.values.map((v) => v.map(String)),
+  [
+    ['link-a', 'sku-a', 'null'],
+    ['link-b', 'link-b', 'https://shop/p/b'],
+  ],
+  'без sku в ссылку падает id товара, без ссылки — null',
+);
+
 persistDb(db);
 assert.ok(fs.existsSync(file), 'db file persisted');
 closeDb();

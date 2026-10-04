@@ -44,8 +44,10 @@ for (const p of all) {
   assert.ok((p?.price ?? 0) > 0, 'цена положительная');
 }
 
-// Живая акция из фикстуры: 5ka отдаёт её в cpd_promo_price, а discount
-// всегда null. Мультибай («% ко 2-й») в promoPrice не пишется.
+// Живой мультибай из фикстуры 5ka-search.json (plu 4439523): цена «% от 2 шт»
+// лежит в cpd_promo_price, а promo.rebate.units_to_activate = 2 помечает, что
+// это акция на количество. В promoPrice она не пишется. Обычная скидка сети —
+// другое поле, prices.discount (см. фикстуру 5ka-search-promo.json ниже).
 interface RawProduct {
   plu: number;
   name: string;
@@ -58,11 +60,11 @@ const multibuy = normalize(multibuyRaw as never, { city: 'moscow' });
 assert.equal(multibuy?.price, 59.99);
 assert.equal(multibuy?.promoPrice, null, 'мультибай-скидка не выдаётся как цена товара');
 assert.equal(multibuyRaw.prices.cpd_promo_price, '47.99', 'скидка в cpd_promo_price');
-assert.equal(multibuyRaw.prices.discount, null, 'discount в живых данных всегда null');
+assert.equal(multibuyRaw.prices.discount, null, 'у этого мультибай-товара обычной скидки нет — discount null');
 assert.equal(
   normalize({ ...multibuyRaw, promo: null } as never, { city: 'moscow' })?.promoPrice,
   47.99,
-  'обычная скидка без rebate становится promoPrice',
+  'без rebate cpd_promo_price считается обычной акцией и уходит в promoPrice',
 );
 
 assert.equal(normalize({ plu: 1, name: 'X' } as never, { city: 'moscow' }), null, 'нет цены');

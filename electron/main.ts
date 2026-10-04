@@ -12,6 +12,8 @@ import { PyaterochkaAdapter } from '../src/core/adapters/pyaterochka.js';
 import { LentaAdapter } from '../src/core/adapters/lenta.js';
 import { close5kaBrowser } from '../src/core/adapters/5ka-browser.js';
 import { createCore, type Core } from '../src/core/services.js';
+import { MAX_FEED_BYTES, RELEASES_PAGE_URL, isNewerVersion, readFeedVersion } from '../src/core/release-check.js';
+import { isExternalAllowed, urlForLog } from './external-links.js';
 import type { CoreDeps } from '../src/core/platform.js';
 import type { StoreAdapter } from '../src/shared/types.js';
 import { CITIES } from '../src/shared/catalog.js';
@@ -88,18 +90,16 @@ async function createWindow(): Promise<void> {
   }
 }
 
-// Политика безопасности ссылок: открывать можно только сайты сетей. Проверка
-// остаётся в оболочке, потому что openExternal — привилегия оболочки.
-const EXTERNAL_ALLOW = ['https://magnit.ru/', 'https://5ka.ru/', 'https://lenta.com/'];
-
+// Политика безопасности ссылок — в ./external-links.ts: её используют и IPC из
+// renderer, и клик по уведомлению о portable, поэтому список один.
 ipcMain.handle('ping', () => 'pong');
 
 ipcMain.handle('app:version', () => electronShell.version());
 
 ipcMain.handle('external:open', async (_e, url: unknown) => {
   try {
-    if (typeof url !== 'string' || !EXTERNAL_ALLOW.some((p) => url.startsWith(p))) {
-      log.warn('external blocked', String(url).slice(0, 80));
+    if (!isExternalAllowed(url)) {
+      log.warn('external blocked', urlForLog(url));
       return false;
     }
     await electronShell.openExternal(url);
@@ -114,6 +114,124 @@ log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.autoDownload = false;
 
+// Portable не обновляется сам: `app-update.yml` (адрес провайдера) electron-builder
+// кладёт только когда в сборке есть nsis, а по ленте portable скачал бы
+// NSIS-установщик и поставил бы приложение рядом вместо обновления копии. Поэтому
+// portable только спрашивает ленту и сообщает. Метку ставит сам electron-builder
+// при распаковке portable-exe. Проверку делает renderer при монтировании через
+// `updates:check`: второй запрос при старте был бы тем же ответом впустую.
+const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_DIR);
+const RELEASE_FEED_TIMEOUT_MS = 10_000;
+const RELEASE_STATE_FILE = 'release-notified.json';
+// Показанную версию помним и в userData: иначе portable, отставший от релиза,
+// получал бы уведомление при каждом запуске. Файл рядом с базой и в репозиторий
+// не попадает. Чтение обёрнуто: недоступный или битый файл не должен ронять
+// старт приложения — хуже всего лишнее повторное уведомление, а не тишина.
+const releaseState = jsonStore(userDataDir());
+let notifiedRelease: string | null = readNotifiedRelease();
+
+function readNotifiedRelease(): string | null {
+  try {
+    return releaseState.read(RELEASE_STATE_FILE);
+  } catch (err) {
+    log.warn('release state unreadable', err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
+
+async function fetchFeedText(url: string): Promise<string> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(RELEASE_FEED_TIMEOUT_MS) });
+  // 404 — не поломка: адрес `/releases/latest/` не отдаёт pre-release, а
+  // latest.yml кладут в релиз при публикации. Пишем в лог, чтобы «почему нет
+  // уведомления» находилось по журналу, а не гаданием.
+  if (!res.ok) {
+    void res.body?.cancel();
+    log.warn(`release feed ${res.status}: ${urlForLog(url)}`);
+    throw new Error(`release feed ${res.status}`);
+  }
+  const declared = Number(res.headers.get('content-length') ?? '0');
+  if (Number.isFinite(declared) && declared > MAX_FEED_BYTES) {
+    // Тело не читаем, но соединение закрываем: иначе сокет висит до сборки мусора.
+    void res.body?.cancel();
+    log.warn(`release feed ${declared} байт, лимит ${MAX_FEED_BYTES}`);
+    throw new Error('release feed too big');
+  }
+  // Тело читается потоком с обрывом по лимиту, а не скачивается целиком: база
+  // живёт в памяти, и страница на сотни мегабайт от прокси уронила бы процесс
+  // вместе с несохранённой историей. Таймаут покрывает и чтение.
+  const body = res.body as unknown as AsyncIterable<Uint8Array> | null;
+  if (!body) return await res.text();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of body) {
+    total += chunk.length;
+    if (total > MAX_FEED_BYTES) {
+      log.warn(`release feed больше ${MAX_FEED_BYTES} байт, чтение прервано`);
+      throw new Error('release feed too big');
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+type PortableCheck = {
+  packaged: boolean;
+  current: string;
+  latest: string | null;
+  available: boolean;
+  portable: boolean;
+};
+
+// Результат переиспользуется в пределах запуска: запуск даёт и обращение от
+// renderer при монтировании, и возможные повторы — им ходить на GitHub заново
+// незачем.
+//
+// Мемоизируется только успех: `readFeedVersion` глотает и сетевую ошибку, и
+// неожиданное тело, поэтому отказ приходит как `null` и исключение не бросается.
+// Если бы `null` тоже запоминался, portable, запущенный без сети, молчал бы до
+// конца сеанса — а процесс живёт днями. Повтор на ту же версию, что уже
+// показана, тоже не запоминается: сначала попробуем, уведомление не повторится.
+let portableCheck: Promise<PortableCheck> | null = null;
+
+async function runPortableCheck(): Promise<PortableCheck> {
+  const current = electronShell.version();
+  const latest = await readFeedVersion(fetchFeedText);
+  // `readFeedVersion` глотает и сетевую ошибку, и неожиданное тело, поэтому
+  // молчание ленты фиксируется здесь: иначе офлайн и «200 с HTML» в журнале
+  // не оставляли бы следа.
+  if (latest === null) {
+    log.warn('лента релизов недоступна: ответ не похож на latest.yml, слишком велик или сети нет');
+  }
+  const available = latest !== null && isNewerVersion(latest, current);
+  if (available && notifiedRelease !== latest) {
+    notifiedRelease = latest;
+    releaseState.write(RELEASE_STATE_FILE, latest);
+    electronShell.notify(
+      `Вышла версия ${latest}. Portable сам не обновляется — скачай его заново`,
+      RELEASES_PAGE_URL,
+    );
+  }
+  return { packaged: true, current, latest, available, portable: true };
+}
+
+const checkPortableRelease = (): Promise<PortableCheck> => {
+  if (portableCheck) return portableCheck;
+  const pending = runPortableCheck();
+  portableCheck = pending;
+  void pending.then(
+    (result) => {
+      // Неудача не запоминается: иначе офлайн на старте молчал бы до конца
+      // сеанса, а процесс живёт днями. Успех с новой версией — тоже: повторный
+      // вызов в том же сеансе всё равно не показал бы второе уведомление.
+      if (result.latest === null || result.available) portableCheck = null;
+    },
+    () => {
+      portableCheck = null;
+    },
+  );
+  return pending;
+};
+
 autoUpdater.on('update-available', (info) => {
   electronShell.notify(`Доступна версия ${info.version}, скачиваю…`);
   win?.webContents.send('updates:available', info.version);
@@ -125,25 +243,58 @@ autoUpdater.on('update-downloaded', (info) => {
   win?.webContents.send('updates:downloaded', info.version);
 });
 
+// «Релизов ещё нет» — это не поломка. Пока на GitHub нет обычного релиза
+// (есть только pre-release), GitHub отвечает на `/releases/latest` редиректом
+// на список релизов, а тот на запрос electron-updater'а с
+// `Accept: application/json` отдаёт 406 с пустым телом. Текст этой ошибки —
+// простыня заголовков и стеков, и в интерфейсе ей не место: обновляться просто
+// неоткуда. В журнал она пишется как есть.
+const NO_RELEASES_CODE = 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND';
+
+function isNoReleasesError(err: unknown, message: string): boolean {
+  if ((err as { code?: unknown } | null)?.code === NO_RELEASES_CODE) return true;
+  // Запасной путь: код есть не во всех сборках electron-updater.
+  return /406/.test(message) || /ensure a production release exists/.test(message);
+}
+
 autoUpdater.on('error', (err) => {
   const msg = String(err?.message ?? err);
   log.error('updater error', err);
-  if (/404/.test(msg)) return;
+  if (/404/.test(msg) || isNoReleasesError(err, msg)) return;
   win?.webContents.send('updates:error', msg);
 });
+
+// Установленная сборка: апдейтер. Результат переиспользуется, потому что запуск
+// даёт два обращения к проверке — своя при whenReady и от renderer при
+// монтировании, а ответ у них один и тот же.
+let updaterCheck: Promise<unknown> | null = null;
+const runUpdaterCheck = (): Promise<unknown> => {
+  updaterCheck ??= autoUpdater.checkForUpdates().catch((err: unknown) => {
+    updaterCheck = null;
+    throw err;
+  });
+  return updaterCheck;
+};
 
 ipcMain.handle('updates:check', async () => {
   const current = electronShell.version();
   if (isDev()) return { packaged: false, current, latest: null };
+  if (isPortable) return checkPortableRelease();
   try {
-    const result = await autoUpdater.checkForUpdates();
-    const latest = result?.updateInfo.version ?? null;
-    const available = latest !== null && latest !== current;
+    const result = (await runUpdaterCheck()) as { updateInfo?: { version?: string } } | null;
+    const latest = result?.updateInfo?.version ?? null;
+    // Сравнение строгое, как у portable: тег-откат («v1.2.1» на месте 1.2.2)
+    // обновлением не считается.
+    const available = latest !== null && isNewerVersion(latest, current);
     return { packaged: true, current, latest, available };
   } catch (err) {
     const msg = String(err);
     log.error('check failed', err);
-    if (/404/.test(msg)) return { packaged: true, current, latest: null, noReleases: true };
+    // Релизов ещё нет (404 или 406 от списка релизов) — обновляться неоткуда, и
+    // это не поломка: показывать в интерфейсе нечего.
+    if (/404/.test(msg) || isNoReleasesError(err, msg)) {
+      return { packaged: true, current, latest: null };
+    }
     return { packaged: true, current, latest: null, error: msg };
   }
 });
@@ -242,14 +393,14 @@ if (browsers) {
       },
     ]),
   );
-  if (app.isPackaged) {
-    try {
-      await autoUpdater.checkForUpdates();
-    } catch (err) {
-      log.error('initial check failed', err);
-    }
-  }
-  getCore().startScheduler();
+  // Планировщик стартует до сетевой проверки: иначе медленный интернет откладывал
+// бы первый опрос на всё время ожидания апдейтера.
+getCore().startScheduler();
+if (app.isPackaged && !isPortable) {
+  // Установленная сборка обновляется апдейтером; portable ленту спрашивает по IPC
+  // из renderer (см. комментарий у isPortable).
+  void runUpdaterCheck().catch((err: unknown) => log.error('initial check failed', err));
+}
 });
 
 app.on('window-all-closed', () => {

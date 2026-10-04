@@ -1,6 +1,7 @@
 import type { ScrapedProduct, StoreCategory } from '../../shared/types.js';
 import { readEnvFlag } from '../platform.js';
-import { categoryIdFromUrl, normalize, type SearchItem } from './pyaterochka.js';
+import { injectedPlaywright } from './playwright-port.js';
+import { categoryIdFromUrl, normalize, type SearchItem } from './5ka-parse.js';
 
 const WEB = 'https://5ka.ru/';
 const STORE_COOKIE = '5ka_store_id_store';
@@ -61,11 +62,11 @@ export function storeCodesFromNextData(nextData: string): string[] {
     return [];
   }
   const keys = ['storeId', 'store_id', 'sapCode', 'shopId'];
-  const readCode = (v: unknown): string | null => {
-    if (!v || typeof v !== 'object') return null;
-    const rec = v as Record<string, unknown>;
+  // Сюда попадает уже проверенный объект: тип отсекается на обходе стека.
+  const readCode = (rec: object): string | null => {
+    const values = rec as Record<string, unknown>;
     for (const key of keys) {
-      const val = rec[key];
+      const val = values[key];
       if (typeof val === 'string' && /^[0-9A-Za-z]{3,8}$/.test(val)) return val;
     }
     return null;
@@ -73,8 +74,9 @@ export function storeCodesFromNextData(nextData: string): string[] {
   const found = new Set<string>();
   const stack: { n: unknown; d: number }[] = [{ n: root, d: 0 }];
   while (stack.length > 0) {
-    const cur = stack.pop();
-    if (!cur || !cur.n || typeof cur.n !== 'object' || cur.d > 14) continue;
+    // Стек пуст ровно тогда, когда цикл не идёт: элемент есть всегда.
+    const cur = stack.pop()!;
+    if (!cur.n || typeof cur.n !== 'object' || cur.d > 14) continue;
     if (Array.isArray(cur.n)) {
       for (const v of cur.n) stack.push({ n: v, d: cur.d + 1 });
       continue;
@@ -103,7 +105,8 @@ export function storeCodesFromNextData(nextData: string): string[] {
  */
 export function storeCodeFromNextData(nextData: string): string | null {
   const codes = storeCodesFromNextData(nextData);
-  return codes.length === 1 ? (codes[0] ?? null) : null;
+  // При длине 1 элемент существует по построению, а не «по счастливой case».
+  return codes.length === 1 ? codes[0]! : null;
 }
 
 interface Session {
@@ -119,6 +122,10 @@ let sessionKey = '';
 let inFlight: Promise<Session> | null = null;
 
 async function importPlaywright(): Promise<typeof import('playwright')> {
+  const injected = injectedPlaywright();
+  if (injected) return injected;
+  /* c8 ignore start — см. magnit.ts: в тестах порт подставляет Playwright
+     всегда, а ветка битой установки тестом не воспроизводится. */
   try {
     return await import('playwright');
   } catch {
@@ -126,8 +133,11 @@ async function importPlaywright(): Promise<typeof import('playwright')> {
     // сборку (он в dependencies). Если модуль не грузится — битая установка,
     // лечится переустановкой. Отсутствие Firefox выглядит иначе: до launch
     // дело не доходит, падает firefox.launch() со своим «Executable doesn't exist».
-    throw new Error('5ka: не удалось загрузить playwright из сборки — приложение установлено повреждённо, переустанови его.');
+throw new Error(
+      '5ka: не удалось загрузить playwright из сборки — приложение установлено повреждённо, переустанови его.',
+    );
   }
+  /* c8 ignore stop */
 }
 
 // Признаки блокировки смотрим по заголовку и по факту наличия товаров:
@@ -202,6 +212,13 @@ async function buildSession(sapCode: string): Promise<Session> {
   }
 }
 
+// Опрос без капчи и без блокировки примерно 1 из 4 прогонов не называет магазин:
+// пустая сессия, и всё, что зовёт `getSession`, падает до ручного повтора.
+// Смысл повтора внутри, а не в тексте ошибки: пользователь не должен ни знать
+// про это, ни нажимать «ещё раз» — тем более что в UI повтор был недоступен,
+// и разделы просто не появлялись.
+const STORE_DETECT_ATTEMPTS = 2;
+
 async function getSession(sapCode: string): Promise<Session> {
   if (session && sessionKey === sapCode) return session;
   if (inFlight) {
@@ -209,7 +226,22 @@ async function getSession(sapCode: string): Promise<Session> {
     if (s.sapCode === sapCode) return s;
     await s.close();
   }
-  const pending = buildSession(sapCode);
+  const pending = (async () => {
+    let last: Error = new Error(`5ka: сессия для ${sapCode} не построена`);
+    for (let attempt = 1; attempt <= STORE_DETECT_ATTEMPTS; attempt += 1) {
+      try {
+        return await buildSession(sapCode);
+      } catch (err) {
+        // buildSession бросает только Error, поэтому приведение тут не проверка,
+        // а договорённость: строкой Throwable отсюда не пойдёт.
+        last = err as Error;
+        if (!isStoreDetectFailure(last)) throw last;
+        if (attempt === STORE_DETECT_ATTEMPTS) break;
+        await sleep(1500);
+      }
+    }
+    throw last;
+  })();
   inFlight = pending;
   try {
     const built = await pending;
@@ -231,6 +263,14 @@ async function getSession(sapCode: string): Promise<Session> {
 
 /** Сколько ждём, пока сайт назовёт свой магазин. */
 export const STORE_DETECT_MS = 30000;
+
+// Повтор делаем только на «сайт не назвал магазин»: капча, блокировка и чужой
+// магазин после повтора не пройдут, а тратить ещё 30 с на них бессмысленно.
+function isStoreDetectFailure(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('сайт не определил магазин');
+}
+
+const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 
 /**
  * Код магазина: кука ИЛИ ответ каталога.
@@ -353,7 +393,12 @@ export async function browserSearch(
   await input.fill(query);
   await input.press('Enter');
   const response = await waiter;
-  const data = (await response.json()) as ProductListResponse;
+  let data: ProductListResponse;
+  try {
+    data = (await response.json()) as ProductListResponse;
+  } catch {
+    throw new Error(`5ka: ответ на ${response.url().slice(0, 80)} не JSON (смена вёрстки?)`);
+  }
   return (data.products ?? [])
     .map((p) => normalize(p, ctx))
     .filter((x): x is ScrapedProduct => x !== null);
@@ -598,9 +643,8 @@ async function readProductFromNextData(
         { node: root, path: '', depth: 0 },
       ];
       while (stack.length > 0) {
-        const cur = stack.pop();
-        if (!cur) break;
-        const { node, path, depth } = cur;
+        // Стек пуст ровно тогда, когда цикл не идёт: элемент есть всегда.
+        const { node, path, depth } = stack.pop()!;
         if (depth > 12 || !node || typeof node !== 'object') continue;
         if (Array.isArray(node)) {
           node.forEach((v, i) => stack.push({ node: v, path: `${path}[${i}]`, depth: depth + 1 }));
@@ -654,7 +698,9 @@ async function readProductFromNextData(
     throw new Error(`5ka: товар ${plu} не появился в данных страницы за ${Math.round(PRODUCT_WAIT_MS / 1000)} с`);
   }
   const data = raw as unknown as SearchItem;
-  const product = normalize({ ...data, plu: data.plu ?? plu }, ctx);
+  // Снимок отдаёт запись только когда plu в ней совпал с запрошенным, значит
+  // plu там есть по построению: подставлять запрошенный id руками не нужно.
+  const product = normalize(data, ctx);
   if (!product) throw new Error(`5ka: ответ по товару ${plu} без цены (пустой prices?)`);
   return product;
 }

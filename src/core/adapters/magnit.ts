@@ -1,4 +1,5 @@
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../../shared/types.js';
+import { injectedPlaywright } from './playwright-port.js';
 
 interface MagnitOffer {
   name?: string;
@@ -25,8 +26,10 @@ export function parseMagnitPrice(raw: string): number | null {
   const clean = raw.replace(/[\s\u00a0\u2009]/g, '');
   const withRub = clean.match(/(-?\d+(?:[.,]\d+)?)\s*₽/);
   const m = withRub ?? clean.match(/(-?\d+(?:[.,]\d+)?)/);
-  if (!m || m[1] === undefined) return null;
-  const v = Number(m[1].replace(',', '.'));
+  if (!m) return null;
+  // Группа (-?\d+(?:[.,]\d+)?) участвует в любом совпадении, поэтому m[1] —
+  // строка, а не «может отсутствовать».
+  const v = Number(m[1]!.replace(',', '.'));
   return Number.isFinite(v) ? v : null;
 }
 
@@ -38,19 +41,6 @@ function assertShopCode(shopCode: string): void {
   if (!/^\d+$/.test(shopCode)) throw new Error(`magnit: bad shopCode ${shopCode}`);
 }
 
-/**
- * Ответ принадлежит именно этому магазину.
- *
- * Одного «есть строка `shopCode=<код>` в HTML» НЕДОСТАТОЧНО: пейлоад повторяет
- * там куку — то есть наш собственный код — даже если такого магазина нет.
- * Проверено живьём 2026-10-01 на коде 111111: строка на месте, а ссылки на
- * товары ведут в 992301 (магазин по умолчанию). Прежняя проверка принимала любой
- * код, и цены чужой точки уехали бы в историю.
- *
- * Настоящий признак — shopCode в ссылках на товары: они ведут в тот магазин,
- * цены которого показаны. Если в ссылках чужой код, а нашего нет, ответ
- * отбрасывается: иначе в историю уедут цены чужой точки (инвариант домена).
- */
 /**
  * Коды магазинов из ссылок на товары.
  *
@@ -72,11 +62,27 @@ export function shopCodesInProductLinks(html: string): string[] {
         ...html.matchAll(
           /(?:\/product\/|u002Fproduct\\u002F)[^"']*?shopCode=\\?(?:u0022|%22|\\?"|")?(\d+)(?!\d)/g,
         ),
-      ].map((m) => m[1] ?? ''),
+      // Группы регулярки всегда участвуют в совпадении, поэтому m[1] здесь
+      // строка, а не «может отсутствовать».
+      ].map((m) => m[1]!),
     ),
   ];
 }
 
+/**
+ * Ответ принадлежит именно этому магазину.
+ *
+ * Одного «есть строка `shopCode=<код>` в HTML» НЕДОСТАТОЧНО: пейлоад повторяет
+ * там куку — то есть наш собственный код — даже если такого магазина нет.
+ * Проверено живьём 2026-10-01 на коде 111111: строка на месте, а ссылки на
+ * товары ведут в 992301 (магазин по умолчанию). Прежняя проверка принимала любой
+ * код, и цены чужой точки уехали бы в историю.
+ *
+ * Настоящий признак — shopCode в ссылках на товары (shopCodesInProductLinks
+ * выше): они ведут в тот магазин, цены которого показаны. Если в ссылках чужой
+ * код, а нашего нет, ответ отбрасывается: иначе в историю уедут цены чужой точки
+ * (инвариант домена).
+ */
 export function hasShopCode(html: string, shopCode: string): boolean {
   assertShopCode(shopCode);
   const inLinks = shopCodesInProductLinks(html);
@@ -174,9 +180,10 @@ function extractJsonLd(html: string): unknown[] {
   const re = /<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
-    if (m[1] === undefined) continue;
     try {
-      out.push(JSON.parse(m[1]));
+      // Группа (.*?) участвует в любом совпадении, даже пустая: пустая строка
+      // честно уходит в catch ниже.
+      out.push(JSON.parse(m[1]!));
     } catch {
       continue;
     }
@@ -200,8 +207,9 @@ export function cardsToProducts(raw: RawCard[], ctx: { city: string }, limit: nu
     const money = r.texts.slice(1).filter((t) => !/[·/]/.test(t));
     const old = money.map(parseMagnitPrice).find((v) => validOldPrice(v, current)) ?? null;
     const unit = r.texts.slice(1).find((t) => /[·/]/.test(t)) ?? null;
+    // Путь без query: id уже извлечён из этой же ссылки регуляркой
+    // /product/(\d+)/, поэтому он непустой и проверять href здесь не нужно.
     const href = r.href.split('?')[0];
-    if (!href) continue;
     const product: ScrapedProduct = {
       canonicalId: `magnit-${id}`,
       storeId: 'magnit',
@@ -222,11 +230,17 @@ export function cardsToProducts(raw: RawCard[], ctx: { city: string }, limit: nu
 }
 
 async function importPlaywright(): Promise<typeof import('playwright')> {
+  const injected = injectedPlaywright();
+  if (injected) return injected;
+  /* c8 ignore start — в тестах сюда не попадаем: порт подставляет Playwright
+     всегда, а без установленного пакета приложение всё равно не запустится.
+     Ветка нужна ровно для битой установки, и её нельзя воспроизвести тестом. */
   try {
     return await import('playwright');
   } catch {
     throw new Error('magnit: Playwright не установлен/не упакован (нужен для клиентского рендера)');
   }
+  /* c8 ignore stop */
 }
 
 function assertNoBlock(html: string, title: string): void {
@@ -279,11 +293,11 @@ function goodsFromScript(script: string, limit: number): MagnitGoodsItem[] {
   const out: MagnitGoodsItem[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(script)) !== null) {
-    const id = m[1];
-    const title = m[2];
-    const link = (m[3] ?? '').replace(/\\u002F/g, '/');
-    const image = (m[4] ?? '').replace(/\\u002F/g, '/');
-    const price = m[5] ?? '';
+    const id = m[1]!;
+    const title = m[2]!;
+    const link = m[3]!.replace(/\\u002F/g, '/');
+    const image = m[4]!.replace(/\\u002F/g, '/');
+    const price = m[5]!;
     if (!id || !title || !price) continue;
     const priceNum = parseMagnitPrice(price);
     const tail = script.slice(m.index + m[0].length, m.index + m[0].length + 160);
@@ -389,8 +403,10 @@ async function readCards(
         const link = a.querySelector('a[title]');
         const img = a.querySelector('img');
         const texts = [...a.querySelectorAll('*')]
-          .filter((e) => e.children.length === 0 && /₽/.test(e.textContent || ''))
-          .map((e) => (e.textContent || '').trim());
+          .filter((e) => e.children.length === 0 && typeof e.textContent === 'string' && e.textContent.includes('₽'))
+          // Фильтр выше оставил только строки: текст здесь точно есть, и trim()
+          // не может получить null из-за узла без содержимого.
+          .map((e) => (e.textContent as string).trim());
         return {
           name: link?.getAttribute('title') || '',
           href: link?.getAttribute('href') || '',
@@ -414,12 +430,13 @@ export function parseMagnitCategories(html: string, shopCode: string): MagnitCat
   const seen = new Map<string, MagnitCategory>();
   let m: RegExpExecArray | null;
   while ((m = re.exec(script)) !== null) {
-    const id = m[1];
-    const name = m[2];
-    const unescape = (s: string | undefined): string => (s ?? '').replace(/\\u002F/g, '/');
-    const rawImage = unescape(m[4]);
-    const rawUrl = unescape(m[5]);
-    if (!id || !name || seen.has(id)) continue;
+    const id = m[1]!;
+    const name = m[2]!;
+    const unescape = (s: string): string => s.replace(/\\u002F/g, '/');
+    const rawImage = unescape(m[4]!);
+    const rawUrl = unescape(m[5]!);
+    // id из регулярки непустой («g» + цифры), проверять остаётся имя и дубль.
+    if (!name || seen.has(id)) continue;
     const pathOnly = rawUrl.split('?')[0];
     if (!pathOnly || !/\/catalog\/\d+-/.test(pathOnly)) continue;
     const category: MagnitCategory = { id, name, url: `https://magnit.ru${pathOnly}` };
@@ -636,4 +653,3 @@ export function extractCategoryOffers(
   }
   return out;
 }
-

@@ -17,6 +17,14 @@ import { closeDb, openDb, persistDb, savePriceIfChanged, saveProductCategory } f
 import { fileStorageAt } from '../electron/node-files.js';
 import { SCHEMA } from '../src/core/db/schema.js';
 
+// Копия категории без ключа include целиком (не include: undefined): так
+// проверяется именно отсутствие фильтра, а не пустой список.
+function dropInclude(c: (typeof OUR_CATEGORIES)[number]): (typeof OUR_CATEGORIES)[number] {
+  const copy: { include?: string[] } = { ...c };
+  delete copy.include;
+  return copy as (typeof OUR_CATEGORIES)[number];
+}
+
 assert.ok(OUR_CATEGORIES.length >= 10, 'список полок непустой');
 const ids = new Set(OUR_CATEGORIES.map((c) => c.id));
 assert.equal(ids.size, OUR_CATEGORIES.length, 'id категорий уникальны');
@@ -209,6 +217,21 @@ assert.ok(
 for (const id of classifyOurCategories('Молоко Простоквашино 2.5% 930мл')) {
   assert.ok(ids.has(id), `автораскладка не выдаёт чужую категорию: ${id}`);
 }
+
+// Категория без include не участвует в автораскладке: иначе «без фильтра»
+  // означало бы «подходит всё подряд».
+assert.deepEqual(
+  classifyOurCategories('Молоко Простоквашино 2.5% 930мл', [
+    dropInclude(OUR_CATEGORIES[0]!),
+    { ...OUR_CATEGORIES[0]!, include: [] },
+  ]),
+  [],
+  'категория без include не раскладывается',
+);
+assert.ok(
+  classifyOurCategories('Молоко Простоквашино 2.5% 930мл', [{ ...OUR_CATEGORIES[0]!, include: ['молоко'] }]).length === 1,
+  'а с include — раскладывается',
+);
 
 saveProductCategory(db, []);
 persistDb(db);

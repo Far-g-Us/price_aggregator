@@ -12,8 +12,11 @@
 // первого раза.
 //
 // Решение: собирать во временный каталог (его система фильтрует иначе) и
-// переносить готовые файлы в dist. Артефакты на выходе те же и лежат там же,
-// поэтому правило проекта про «одну сборку в dist» не нарушается.
+// переносить готовые файлы в dist. Артефакты те же, но разложены по папкам:
+// `dist/setup/` — установщик, его blockmap и `latest.yml` (это то, что едет на
+// GitHub Releases), `dist/portable/` — портативный exe, который в
+// автообновлении не участвует. Папки очищаются перед переносом, иначе рядом
+// с новой версией остаётся предыдущая.
 //
 // Что НЕ делаем: не отключаем проверки безопасности, не добавляем исключения и
 // не правим антивирус. Скрипт не трогает ничего, кроме своей рабочей папки.
@@ -42,13 +45,26 @@ try {
   await run('npx', ['electron-builder', ...args, `--config.directories.output=${staging}`]);
 
   mkdirSync(distDir, { recursive: true });
+  const setupDir = join(distDir, 'setup');
+  const portableDir = join(distDir, 'portable');
+  rmSync(setupDir, { recursive: true, force: true });
+  rmSync(portableDir, { recursive: true, force: true });
+  mkdirSync(setupDir, { recursive: true });
+  mkdirSync(portableDir, { recursive: true });
+
   const produced = readdirSync(staging, { withFileTypes: true })
     .filter((e) => e.isFile())
     .map((e) => e.name);
   if (produced.length === 0) throw new Error('electron-builder не создал ни одного файла');
   for (const name of produced) {
-    copyFileSync(join(staging, name), join(distDir, name));
-    console.log(`[build-exe] в dist: ${name}`);
+    // builder-debug.yml — внутренний дамп electron-builder (раскрытые пути и
+    // шаблоны NSIS). В dist ему не место: там лежат артефакты, которые
+    // выкладывают в релиз. Нужен он только при разборе сборки, и то через
+    // DEBUG=electron-builder, который пишет в консоль.
+    if (name === 'builder-debug.yml') continue;
+    const target = name.includes('-portable.') ? portableDir : setupDir;
+    copyFileSync(join(staging, name), join(target, name));
+    console.log(`[build-exe] ${target === distDir ? 'dist' : target.slice(distDir.length + 1)}: ${name}`);
   }
   console.log(`[build-exe] готово, файлов перенесено: ${produced.length}`);
 } finally {

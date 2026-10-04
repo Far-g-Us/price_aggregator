@@ -1,6 +1,8 @@
 import assert from 'node:assert';
+import { CITY_STORES } from '../src/shared/catalog.js';
 import fs from 'node:fs';
 import {
+
   assertCardsOwnStore,
   shopCodesInProductLinks,
   cardsToProducts,
@@ -15,6 +17,20 @@ import {
   parseMagnitPrice,
   parseMagnitSearchGoods,
 } from '../src/core/adapters/magnit.js';
+
+// Коды магазинов приходят от пользователя строкой, и единственная защита от
+// опечатки (`%22277027%22` вместо `277027`) — рантайм-проверка в адаптере.
+// Держим все коды из конфига валидными на каждом прогоне тестов.
+for (const [city, stores] of Object.entries(CITY_STORES)) {
+  const magnit = stores.find((s) => s.storeId === 'magnit');
+  if (!magnit) continue;
+  assert.match(
+    magnit.externalStoreId,
+    /^\d+$/,
+    `${city}: код магазина Магнита «${magnit.externalStoreId}» — только цифры, без кавычек и %22`,
+  );
+  assert.equal(magnit.ready, true, `${city}: Магнит включен (проверен живым поиском)`);
+}
 
 // Регрессия 2026-09: адаптер ходил на /search?query=, сайт параметр
 // игнорирует и отдаёт популярные товары вместо выдачи. Откат на `query=`

@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import type { AppShell, BackgroundTasks, CoreLogger } from '../src/core/platform.js';
+import { isExternalAllowed, urlForLog } from './external-links.js';
 import { jsonStoreAt, fileStorageAt } from './node-files.js';
 
 export { jsonStoreAt as jsonStore, fileStorageAt as fileStorage };
@@ -105,12 +106,23 @@ export function describeFirefoxProblem(problem?: unknown): string {
 
 export const electronShell: AppShell = {
   version: () => app.getVersion(),
-  notify(text: string): void {
+  notify(text: string, actionUrl?: string): void {
     if (!Notification.isSupported()) return;
-    new Notification({ title: 'PriceAggregator', body: text }).show();
+    const n = new Notification({ title: 'PriceAggregator', body: text });
+    if (actionUrl) {
+      n.on('click', () => {
+        // Клик — это обработчик события: его отказ никто не поймает, а
+        // openExternalChecked бросает и при блокировке, и при отказе самой
+        // системы. Без catch это unhandled rejection в main-процессе.
+        openExternalChecked(actionUrl).catch((err: unknown) =>
+          log.error('notification action failed', err instanceof Error ? err.message : String(err)),
+        );
+      });
+    }
+    n.show();
   },
   openExternal: async (url: string): Promise<void> => {
-    await shell.openExternal(url);
+    await openExternalChecked(url);
   },
 };
 
@@ -134,3 +146,14 @@ export const electronLogger: CoreLogger = {
 export const userDataDir = (): string => app.getPath('userData');
 export const dbFile = (): string => path.join(app.getPath('userData'), 'prices.db');
 export const isDev = (): boolean => !app.isPackaged;
+
+// Открытие браузера всегда через список разрешённых адресов: и клик по
+// уведомлению, и порт для ядра. Список в ./external-links.ts, здесь только
+// исполнение — иначе достаточно одного нового вызова, чтобы обойти политику.
+const openExternalChecked = async (url: string): Promise<void> => {
+  if (!isExternalAllowed(url)) {
+    log.warn('external blocked', urlForLog(url));
+    throw new Error('external blocked');
+  }
+  await shell.openExternal(url);
+};

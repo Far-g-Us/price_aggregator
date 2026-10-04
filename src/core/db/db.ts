@@ -75,7 +75,8 @@ function primaryKey(database: Database, table: string): string[] {
 function tableExists(database: Database, table: string): boolean {
   const stmt = database.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?");
   try {
-    return !!stmt.bind([table]) && stmt.step();
+    stmt.bind([table]);
+    return stmt.step();
   } finally {
     stmt.free();
   }
@@ -209,10 +210,15 @@ export function latestPrices(
   );
   try {
     for (const k of keys) {
-      if (!stmt.bind([k.canonicalId, k.storeId, k.city])) continue;
-      if (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as HistoryPoint;
-        out.set(`${k.storeId}:${k.canonicalId}:${k.city}`, o);
+      try {
+        stmt.bind([k.canonicalId, k.storeId, k.city]);
+        if (stmt.step()) {
+          const o = stmt.getAsObject() as unknown as HistoryPoint;
+          out.set(`${k.storeId}:${k.canonicalId}:${k.city}`, o);
+        }
+      } catch {
+        // Непринимаемое значение пропускаем: одно битое поле не должно
+        // убирать цены у остальных ключей запроса.
       }
     }
   } finally {
@@ -241,43 +247,43 @@ export function getPriceHistory(
 }
 
 export interface TrackedProduct {
-    canonicalId: string;
-    storeId: string;
-    city: string;
-    /**
-     * Название товара из products. Нужно адаптерам, у которых нет карточки по
-     * id и которые ищут товар поиском по названию (Лента). Пустая строка —
-     * «названия нет», это НЕ то же самое, что «товара нет».
-     */
-    name: string;
+  canonicalId: string;
+  storeId: string;
+  city: string;
+  /**
+   * Название товара из products. Нужно адаптерам, у которых нет карточки по
+   * id и которые ищут товар поиском по названию (Лента). Пустая строка —
+   * «названия нет», это НЕ то же самое, что «товара нет».
+   */
+  name: string;
 }
 
 export function listTrackedProducts(database: Database): TrackedProduct[] {
-    // LEFT JOIN, а не JOIN: у prices_history нет внешнего ключа на products, и
-    // INNER JOIN молча выкинул бы из опроса все цели без названия — тихая потеря
-    // истории цены. COALESCE даёт '' вместо null, потому что optional-поле в
-    // exactOptionalPropertyTypes так не передать.
-    const stmt = database.prepare(
-      `SELECT DISTINCT h.canonical_id, h.store_id, h.city, COALESCE(p.name, '') AS name
-       FROM prices_history h
-       LEFT JOIN products p ON p.id = h.canonical_id`,
-    );
-    const rows: TrackedProduct[] = [];
-    try {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as {
-          canonical_id: string;
-          store_id: string;
-          city: string;
-          name: string;
-        };
-        rows.push({ canonicalId: o.canonical_id, storeId: o.store_id, city: o.city, name: o.name });
-      }
-    } finally {
-      stmt.free();
+  // LEFT JOIN, а не JOIN: у prices_history нет внешнего ключа на products, и
+  // INNER JOIN молча выкинул бы из опроса все цели без названия — тихая потеря
+  // истории цены. COALESCE даёт '' вместо null, потому что optional-поле в
+  // exactOptionalPropertyTypes так не передать.
+  const stmt = database.prepare(
+    `SELECT DISTINCT h.canonical_id, h.store_id, h.city, COALESCE(p.name, '') AS name
+     FROM prices_history h
+     LEFT JOIN products p ON p.id = h.canonical_id`,
+  );
+  const rows: TrackedProduct[] = [];
+  try {
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as {
+        canonical_id: string;
+        store_id: string;
+        city: string;
+        name: string;
+      };
+      rows.push({ canonicalId: o.canonical_id, storeId: o.store_id, city: o.city, name: o.name });
     }
-    return rows;
+  } finally {
+    stmt.free();
   }
+  return rows;
+}
 
 export function persistDb(database?: Database): void {
   const target = database ?? db;
@@ -320,16 +326,16 @@ export interface CachedCategoryRow {
   unit: string | null;
   brand: string | null;
   url: string | null;
-    price: number;
-    promoPrice: number | null;
-    oldPrice: number | null;
-    inStock: boolean;
-    collectedAt: string;
-    // Цена за единицу («250 ₽/кг»). Писалась в prices_history, но не выбиралась
-    // ни одним SELECT — из-за этого в UI её не было видно ни на одной полке,
-    // собранной из базы.
-    unitPrice: string | null;
-  }
+  price: number;
+  promoPrice: number | null;
+  oldPrice: number | null;
+  inStock: boolean;
+  collectedAt: string;
+  // Цена за единицу («250 ₽/кг»). Писалась в prices_history, но не выбиралась
+  // ни одним SELECT — из-за этого в UI её не было видно ни на одной полке,
+  // собранной из базы.
+  unitPrice: string | null;
+}
 
 export function listCategoryProducts(
   database: Database,
@@ -352,39 +358,38 @@ export function listCategoryProducts(
   );
   const rows: CachedCategoryRow[] = [];
   try {
-    if (stmt.bind([args.city, args.categoryId, args.limit ?? 300])) {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as {
-          canonical_id: string;
-          store_id: ScrapedProduct['storeId'];
-          name: string;
-          image_url: string | null;
-          unit: string | null;
-          brand: string | null;
-          url: string | null;
-          price: number;
-          promo_price: number | null;
-          old_price: number | null;
-          in_stock: number;
-          collected_at: string;
+    stmt.bind([args.city, args.categoryId, args.limit ?? 300]);
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as {
+        canonical_id: string;
+        store_id: ScrapedProduct['storeId'];
+        name: string;
+        image_url: string | null;
+        unit: string | null;
+        brand: string | null;
+        url: string | null;
+        price: number;
+        promo_price: number | null;
+        old_price: number | null;
+        in_stock: number;
+        collected_at: string;
         unit_price: string | null;
-        };
-        rows.push({
-          canonicalId: o.canonical_id,
-          storeId: o.store_id,
-          name: o.name,
-          imageUrl: o.image_url,
-          unit: o.unit,
-          brand: o.brand,
-          url: o.url,
-          price: o.price,
-          promoPrice: o.promo_price,
-          oldPrice: o.old_price,
-          inStock: o.in_stock !== 0,
-          collectedAt: o.collected_at,
-      unitPrice: o.unit_price,
-        });
-      }
+      };
+      rows.push({
+        canonicalId: o.canonical_id,
+        storeId: o.store_id,
+        name: o.name,
+        imageUrl: o.image_url,
+        unit: o.unit,
+        brand: o.brand,
+        url: o.url,
+        price: o.price,
+        promoPrice: o.promo_price,
+        oldPrice: o.old_price,
+        inStock: o.in_stock !== 0,
+        collectedAt: o.collected_at,
+        unitPrice: o.unit_price,
+      });
     }
   } finally {
     stmt.free();
@@ -417,39 +422,38 @@ export function listUnassignedProducts(
   );
   const rows: CachedCategoryRow[] = [];
   try {
-    if (stmt.bind([args.city, args.limit ?? 300])) {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as {
-          canonical_id: string;
-          store_id: ScrapedProduct['storeId'];
-          name: string;
-          image_url: string | null;
-          unit: string | null;
-          brand: string | null;
-          url: string | null;
-          price: number;
-          promo_price: number | null;
-          old_price: number | null;
-          in_stock: number;
-          collected_at: string;
+    stmt.bind([args.city, args.limit ?? 300]);
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as {
+        canonical_id: string;
+        store_id: ScrapedProduct['storeId'];
+        name: string;
+        image_url: string | null;
+        unit: string | null;
+        brand: string | null;
+        url: string | null;
+        price: number;
+        promo_price: number | null;
+        old_price: number | null;
+        in_stock: number;
+        collected_at: string;
         unit_price: string | null;
-        };
-        rows.push({
-          canonicalId: o.canonical_id,
-          storeId: o.store_id,
-          name: o.name,
-          imageUrl: o.image_url,
-          unit: o.unit,
-          brand: o.brand,
-          url: o.url,
-          price: o.price,
-          promoPrice: o.promo_price,
-          oldPrice: o.old_price,
-          inStock: o.in_stock !== 0,
-          collectedAt: o.collected_at,
-      unitPrice: o.unit_price,
-        });
-      }
+      };
+      rows.push({
+        canonicalId: o.canonical_id,
+        storeId: o.store_id,
+        name: o.name,
+        imageUrl: o.image_url,
+        unit: o.unit,
+        brand: o.brand,
+        url: o.url,
+        price: o.price,
+        promoPrice: o.promo_price,
+        oldPrice: o.old_price,
+        inStock: o.in_stock !== 0,
+        collectedAt: o.collected_at,
+        unitPrice: o.unit_price,
+      });
     }
   } finally {
     stmt.free();
@@ -498,11 +502,10 @@ export function manualShelfIds(database: Database, storeId: string, city: string
   const stmt = database.prepare('SELECT canonical_id FROM product_category_manual WHERE store_id = ? AND city = ?');
   const ids = new Set<string>();
   try {
-    if (stmt.bind([storeId, city])) {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as { canonical_id: string };
-        ids.add(o.canonical_id);
-      }
+    stmt.bind([storeId, city]);
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as { canonical_id: string };
+      ids.add(o.canonical_id);
     }
   } finally {
     stmt.free();
@@ -519,11 +522,10 @@ export function getProductShelves(
   );
   const categoryIds: string[] = [];
   try {
-    if (read.bind([scope.canonicalId, scope.storeId, scope.city])) {
-      while (read.step()) {
-        const o = read.getAsObject() as unknown as { category_id: string };
-        categoryIds.push(o.category_id);
-      }
+    read.bind([scope.canonicalId, scope.storeId, scope.city]);
+    while (read.step()) {
+      const o = read.getAsObject() as unknown as { category_id: string };
+      categoryIds.push(o.category_id);
     }
   } finally {
     read.free();
@@ -533,7 +535,8 @@ export function getProductShelves(
   );
   let manual = false;
   try {
-    manual = !!marker.bind([scope.canonicalId, scope.storeId, scope.city]) && marker.step();
+    marker.bind([scope.canonicalId, scope.storeId, scope.city]);
+    manual = marker.step();
   } finally {
     marker.free();
   }
@@ -645,23 +648,24 @@ function readFavorites(database: Database, where: string, params: (string | numb
   );
   const rows: FavoriteRow[] = [];
   try {
-    if (!params.length || stmt.bind(params)) {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as {
-          canonical_id: string;
-          store_id: string;
-          city: string;
-          target_price: number | null;
-          notified_price: number | null;
-        };
-        rows.push({
-          canonicalId: o.canonical_id,
-          storeId: o.store_id,
-          city: o.city,
-          targetPrice: o.target_price,
-          notifiedPrice: o.notified_price,
-        });
-      }
+    // Пустой список параметров — это запрос «вообще без WHERE», а не отказ
+    // привязки, поэтому bind вызывается безусловно.
+    stmt.bind(params);
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as {
+        canonical_id: string;
+        store_id: string;
+        city: string;
+        target_price: number | null;
+        notified_price: number | null;
+      };
+      rows.push({
+        canonicalId: o.canonical_id,
+        storeId: o.store_id,
+        city: o.city,
+        targetPrice: o.target_price,
+        notifiedPrice: o.notified_price,
+      });
     }
   } finally {
     stmt.free();
@@ -698,7 +702,8 @@ export function isFavorite(database: Database, scope: FavoriteScope): boolean {
     'SELECT 1 FROM favorites WHERE canonical_id = ? AND store_id = ? AND city = ?',
   );
   try {
-    return !!stmt.bind([scope.canonicalId, scope.storeId, scope.city]) && stmt.step();
+    stmt.bind([scope.canonicalId, scope.storeId, scope.city]);
+    return stmt.step();
   } finally {
     stmt.free();
   }
@@ -743,17 +748,6 @@ export function removeFavorite(database: Database, scope: FavoriteScope): void {
 }
 
 /**
- * Ручные разрывы склейки, у которых хотя бы один id встречается в списке.
- *
- * Возвращаем только пары, где хотя бы один id есть в ids: таблица разрывов
- * накапливается месяцами, а выдача — горстка товаров, и тянуть в память все
- * исторические пары незачем.
- *
- * ids обязан быть дедуплицирован вызывающим: он подставляется дважды (left и
- * right), а лимит параметров SQLite — 32766, то есть примерно на 16k
- * значениях запрос перестал бы проходить.
- */
-/**
  * Время последнего успешного опроса города.
  *
  * Нужно, чтобы перезапуск приложения не начинал опрос заново: раньше метка
@@ -763,7 +757,8 @@ export function removeFavorite(database: Database, scope: FavoriteScope): void {
 export function getLastRun(database: Database, city: string): string | null {
   const stmt = database.prepare('SELECT last_run FROM poll_meta WHERE city = ?');
   try {
-    if (!stmt.bind([city]) || !stmt.step()) return null;
+    stmt.bind([city]);
+    if (!stmt.step()) return null;
     const o = stmt.getAsObject() as unknown as { last_run: string | null };
     return o.last_run;
   } finally {
@@ -782,12 +777,23 @@ export function getLastRun(database: Database, city: string): string | null {
  */
 export function saveLastRun(database: Database, city: string, at: string): void {
   database.run(
-  `INSERT OR IGNORE INTO poll_meta (city, last_run) VALUES (?, ?)
+    `INSERT OR IGNORE INTO poll_meta (city, last_run) VALUES (?, ?)
      ON CONFLICT(city) DO UPDATE SET last_run = excluded.last_run`,
-  [city, at],
+    [city, at],
   );
 }
 
+/**
+ * Ручные разрывы склейки, у которых хотя бы один id встречается в списке.
+ *
+ * Возвращаем только пары, где хотя бы один id есть в ids: таблица разрывов
+ * накапливается месяцами, а выдача — горстка товаров, и тянуть в память все
+ * исторические пары незачем.
+ *
+ * ids обязан быть дедуплицирован вызывающим: он подставляется дважды (left и
+ * right), а лимит параметров SQLite — 32766, то есть примерно на 16k
+ * значениях запрос перестал бы проходить.
+ */
 export function splitPairsFor(database: Database, ids: string[]): Set<string> {
   const out = new Set<string>();
   if (ids.length === 0) return out;
@@ -797,11 +803,18 @@ export function splitPairsFor(database: Database, ids: string[]): Set<string> {
      WHERE left_id IN (${placeholders}) OR right_id IN (${placeholders})`,
   );
   try {
-    if (stmt.bind([...ids, ...ids])) {
-      while (stmt.step()) {
-        const o = stmt.getAsObject() as unknown as { left_id: string; right_id: string };
-        out.add(matchSplitKey(o.left_id, o.right_id));
-      }
+    try {
+      // Отказ привязки здесь означает «id не из нашей БД» — теоретически
+      // невозможно (список приходит из listCategoryProducts), и на практике мы
+      // возвращаем пустой набор: разрывов нет — значит, склейка будет обычной.
+      // Лучше тихо показать полку, чем уронить открытие интерфейса.
+      stmt.bind([...ids, ...ids]);
+    } catch {
+      return out;
+    }
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as { left_id: string; right_id: string };
+      out.add(matchSplitKey(o.left_id, o.right_id));
     }
   } finally {
     stmt.free();
@@ -886,17 +899,17 @@ export function savePriceIfChanged(
     );
   }
 
-    const stmt = database.prepare(
-      `SELECT price, promo_price, old_price, in_stock, unit_price FROM prices_history
-       WHERE canonical_id = ? AND store_id = ? AND city = ?
-       ORDER BY collected_at DESC, id DESC LIMIT 1`,
-    );
-    let last:
-      | { price: number; promo_price: number | null; old_price: number | null; in_stock: number; unit_price: string | null }
-      | undefined;
+  const stmt = database.prepare(
+    `SELECT price, promo_price, old_price, in_stock, unit_price FROM prices_history
+     WHERE canonical_id = ? AND store_id = ? AND city = ?
+     ORDER BY collected_at DESC, id DESC LIMIT 1`,
+  );
+  let last:
+    | { price: number; promo_price: number | null; old_price: number | null; in_stock: number; unit_price: string | null }
+    | undefined;
   try {
-    if (stmt.bind([p.canonicalId, p.storeId, p.city]) && stmt.step())
-      last = stmt.getAsObject() as typeof last;
+    stmt.bind([p.canonicalId, p.storeId, p.city]);
+    if (stmt.step()) last = stmt.getAsObject() as typeof last;
   } finally {
     stmt.free();
   }

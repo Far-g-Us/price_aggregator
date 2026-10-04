@@ -1,6 +1,13 @@
 import type { ScrapedProduct, StoreAdapter } from '../../shared/types.js';
-import { CITY_TO_SLUG, lentaRegionBySlug } from '../../shared/lenta-regions.js';
+import { CITY_TO_SLUG, LENTA_REGIONS } from '../../shared/lenta-regions.js';
 import { ProductLookupError } from '../adapter-errors.js';
+
+/** Ответ сети обязан быть про того же товара, о котором просили. */
+export function assertLentaAnswered(canonicalId: string, product: ScrapedProduct): void {
+  if (product.canonicalId !== canonicalId) {
+    throw new Error(`lenta: просили ${canonicalId}, а ответ по ${product.canonicalId}`);
+  }
+}
 
 export const LENTA_ORIGIN = 'https://lenta.com';
 export const LENTA_API = `${LENTA_ORIGIN}/api-gateway/v1`;
@@ -25,10 +32,13 @@ const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 // «spb», Краснодар — «ksdr», Ульяновск — «ulyanovsk». Подставить свой id нельзя,
 // всё кроме Москвы уехало бы в 401. Справочник регионов с живыми id/slug — в
 // src/shared/lenta-regions.ts, его пересобирает scripts/gen-lenta-regions.mjs.
-export function lentaDomain(city: string): string {
+export function lentaDomain(
+  city: string,
+  regions: readonly { slug: string | null }[] = LENTA_REGIONS,
+): string {
   const slug = CITY_TO_SLUG[city];
   if (!slug) throw new Error(`lenta: нет региона для города ${city} (см. lenta-regions.ts)`);
-  if (!lentaRegionBySlug(slug)) {
+  if (!regions.some((r) => r.slug === slug)) {
     throw new Error(`lenta: регион «${slug}» не найден в справочнике (пересобери: npm run lenta:regions)`);
   }
   return slug;
@@ -385,9 +395,20 @@ interface LentaSession {
 }
 
 let lastRequestAt = 0;
+let requestGapMs = REQUEST_GAP_MS;
+
+/**
+ * Ручка для тестов: пауза между запросами к сети. По умолчанию — настоящая
+ * `REQUEST_GAP_MS`, и в приложении она никем не меняется. Тесты выставляют 0,
+ * иначе набор из полусотни запросов ждал бы две минуты впустую, — а отдельный
+ * тест проверяет, что пауза реально выдерживается.
+ */
+export function __setRequestGapMsForTests(ms: number): void {
+  requestGapMs = ms;
+}
 
 async function pace(): Promise<void> {
-  const wait = REQUEST_GAP_MS - (Date.now() - lastRequestAt);
+  const wait = requestGapMs - (Date.now() - lastRequestAt);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastRequestAt = Date.now();
 }
@@ -625,16 +646,15 @@ export class LentaAdapter implements StoreAdapter {
     name: string,
     ctx: { city: string; externalStoreId: string },
   ): Promise<LentaItem> {
-    const seen = new Set<string>();
     const attempts: string[] = [];
     // Различаем «выдача была, нашего товара в ней нет» и «выдачи не было вовсе».
     // Второе — это дрейф формы или сеть/WAF: та же ловушка, что `categoryId: 0`
     // отдаёт 200 с total: 0. Если такое выдать за «переименование», то breaker
     // никогда не сработает, и история цены молча замрёт.
     let sawAnyItems = false;
+    // Запросы от lentaNameQueries попарно различны (полное имя и его укороченные
+    // префиксы), повторять один и тот же запрос смысла нет.
     for (const query of lentaNameQueries(name)) {
-      if (seen.has(query)) continue;
-      seen.add(query);
       const res = await this.request<LentaSearchResponse>(`${LENTA_ORIGIN}/jrpc/searchItems`, {
         method: 'POST',
         session: await this.session(ctx.city),
@@ -686,9 +706,7 @@ export class LentaAdapter implements StoreAdapter {
       // иначе breaker не сработает и история молча замрёт.
       throw new Error('lenta: найденный товар без цены или названия (смена формата ответа?)');
     }
-    if (product.canonicalId !== canonicalId) {
-      throw new Error(`lenta: просили ${canonicalId}, а ответ по ${product.canonicalId}`);
-    }
+    assertLentaAnswered(canonicalId, product);
     return product;
   }
 

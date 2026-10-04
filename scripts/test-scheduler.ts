@@ -4,9 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import type { ScrapedProduct, StoreAdapter } from '../src/shared/types.js';
 import { CITY_STORES } from '../src/shared/catalog.js';
-import { getPriceHistory, openDb } from '../src/core/db/db.js';
+import { closeDb, getPriceHistory, openDb } from '../src/core/db/db.js';
 import { fileStorageAt } from '../electron/node-files.js';
 import { pollOnce } from '../src/core/scheduler.js';
+import { consoleLogger } from '../src/core/platform.js';
 
 const magnitMoscow = CITY_STORES.moscow?.find((s) => s.storeId === 'magnit')?.externalStoreId ?? '';
 
@@ -31,6 +32,22 @@ const fake: StoreAdapter = {
     return p;
   },
 };
+
+// Пустая база и опрос без фильтра по городу: в лог уходит сообщение без
+// «в городе …», а не с пустым хвостом от неиспользованного города. Проверяем
+// первым делом: openDb держит одну базу на процесс и вторую не откроет.
+{
+  const emptyFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pa-sch-empty-')), 'e.db');
+  const emptyDb = await openDb(fileStorageAt(emptyFile));
+  const lines: string[] = [];
+  const empty = await pollOnce(emptyDb, new Map([['magnit', fake]]), {
+    delayMs: 0,
+    log: { ...consoleLogger, info: (m: string) => void lines.push(m) },
+  });
+  assert.deepEqual(empty, { inserted: 0, skipped: 0, failed: 0, notReady: 0, failedStores: [] }, 'пустая база — пустой отчёт');
+  assert.deepEqual(lines, ['опрос: нет отслеживаемых товаров'], 'и сообщение без города, а не с висящим хвостом');
+  closeDb();
+}
 
 const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pa-sch-')), 't.db');
 const db = await openDb(fileStorageAt(file));
@@ -132,5 +149,22 @@ const r3 = await pollOnce(db, new Map([['magnit', failing]]), { delayMs: 0 });
 assert.equal(r3.failed, 1, 'one item error isolated');
 assert.equal(r3.notReady, 1, 'unknown store counted as notReady');
 assert.equal(r3.skipped, 1, 'rest of batch processed');
+
+
+// Неготовая сеть (нет адаптера) обязана двигать прогресс: иначе кнопка опроса
+// на 76 позиций с одной сломанной сетью зависает намертво, пока пользователь
+// ждёт цифру, которая не придёт.
+{
+  const progress: Array<[number, number]> = [];
+  const withProgress = await pollOnce(db, new Map([['magnit', fake]]), {
+    delayMs: 0,
+    onProgress: (done, total) => void progress.push([done, total]),
+  });
+  assert.equal(withProgress.notReady, 1, 'товар без сети посчитан неготовым');
+  assert.ok(
+    progress.some(([done, total]) => done < total),
+    `прогресс дошёл до конца, минуя неготовый товар: ${JSON.stringify(progress)}`,
+  );
+}
 
 console.log('scheduler: ALL GREEN');

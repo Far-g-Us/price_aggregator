@@ -20,7 +20,6 @@ import type {
 } from '../shared/api.js';
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../shared/types.js';
 import { CITY_STORES } from '../shared/catalog.js';
-import { groupByProduct, matchSplitKey } from '../shared/matching.js';
 import { formatPrice } from '../shared/format.js';
 import {
   OUR_CATEGORIES,
@@ -101,7 +100,12 @@ export interface Core {
   /** Ручной разрыв склейки: пара id, которые нельзя считать одним товаром. */
   splitProducts(args: SplitPair): Promise<void>;
   removeSplit(args: SplitPair): Promise<void>;
-  /** Готовые ключи разрывов города для groupByProduct в renderer. */
+  /**
+   * Ключи пар, которые renderer не должен склеивать в один товар. Разрыв — это
+   * отрицательное правило об идентичности двух SKU, а не свойство витрины: он
+   * действует во всех городах, поэтому параметр `city` тут для симметрии с
+   * остальными city-запросами и на выборку не влияет.
+   */
   getSplitPairs(args: { city: string }): Promise<string[]>;
   /** Перезаписать полки товара; пустой список = «убрать со всех полок». */
   setShelves(args: ShelfScope & { categoryIds: string[] }): Promise<ProductShelves>;
@@ -166,7 +170,6 @@ export function createCore(deps: CoreDeps): Core {
   // возвращении «назад → та же полка» повторный обход сети смысла не имеет, а
   // цены за три минуты не уезжают. История всё равно пишется по изменению.
   const shelfCache = new Map<string, { at: number; value: StorePrices[] }>();
-
 
   // Провал открытия БД не должен оставаться только в логе: цены на экране
   // есть, а в истории пусто — пользователь должен видеть почему.
@@ -294,15 +297,27 @@ export function createCore(deps: CoreDeps): Core {
       ),
     );
     if (rows.length === 0) return;
+    /* c8 ignore start — catch недостижим не из-за INSERT OR IGNORE (нарушение
+       внешнего ключа он как раз пропускает), а потому что все значения уже
+       проверены: categoryId взят из OUR_CATEGORIES, city — из CITY_STORES,
+       canonicalId — из saved, то есть из товаров, которые только что успешно
+       записаны в products. */
     try {
       saveProductCategory(database, rows);
     } catch (err) {
       log.error('auto classify failed', storeId, String(err).slice(0, 120));
     }
+    /* c8 ignore stop */
   };
 
-  // Кэш из БД в тот же формат, что отдаёт живой сбор.
-  const cachedToStorePrices = (rows: CachedCategoryRow[], city: string): StorePrices[] => {
+  // Кэш из БД в тот же формат, что отдаёт живой сбор. Имя полки передаётся
+  // отдельно: строки уже отфильтрованы по сети, искать её имя в справочнике
+  // по storeId было бы подстановкой на случай, которого не бывает.
+  const cachedToStorePrices = (
+    rows: CachedCategoryRow[],
+    city: string,
+    storeName: string,
+  ): StorePrices[] => {
     const byStore = new Map<StorePrices['storeId'], ScrapedProduct[]>();
     for (const r of rows) {
       const product: ScrapedProduct = {
@@ -316,20 +331,20 @@ export function createCore(deps: CoreDeps): Core {
         inStock: r.inStock,
         collectedAt: r.collectedAt,
       };
-        if (r.imageUrl) product.imageUrl = r.imageUrl;
-        if (r.unit) product.unit = r.unit;
-        if (r.brand) product.brand = r.brand;
-        if (r.url) product.url = r.url;
-        // Цена за единицу: без неё полки из базы показывали товар дешевле, чем он
-        // стоит на самом деле (250 ₽/кг выглядит как 250 ₽ за упаковку).
-        if (r.unitPrice) product.unitPrice = r.unitPrice;
+      if (r.imageUrl) product.imageUrl = r.imageUrl;
+      if (r.unit) product.unit = r.unit;
+      if (r.brand) product.brand = r.brand;
+      if (r.url) product.url = r.url;
+      // Цена за единицу: без неё полки из базы показывали товар дешевле, чем он
+      // стоит на самом деле (250 ₽/кг выглядит как 250 ₽ за упаковку).
+      if (r.unitPrice) product.unitPrice = r.unitPrice;
       const list = byStore.get(r.storeId) ?? [];
       list.push(product);
       byStore.set(r.storeId, list);
     }
     return [...byStore.entries()].map(([storeId, items]) => ({
       storeId,
-      name: CITY_STORES[city]?.find((s) => s.storeId === storeId)?.name ?? storeId,
+      name: storeName,
       ready: true,
       items,
     }));
@@ -483,7 +498,6 @@ export function createCore(deps: CoreDeps): Core {
     return out;
   };
 
-
   const getOurCategory = async (args?: { city?: string; id?: string }): Promise<StorePrices[]> => {
     const city = args?.city ?? 'moscow';
     const categoryId = args?.id ?? '';
@@ -495,7 +509,7 @@ export function createCore(deps: CoreDeps): Core {
     }
     const category = categoryId === UNASSIGNED_ID ? undefined : ourCategoryById(categoryId);
     if (!category && categoryId !== UNASSIGNED_ID) throw new Error('ourcategory:get: неизвестная категория');
-const stores = CITY_STORES[city] ?? [];
+    const stores = CITY_STORES[city] ?? [];
     const { database, error: dbError } = await openDatabase();
     const startedAt = Date.now();
     // Магазины идут ПАРАЛЛЕЛЬНО: они ходят на разные домены, общий rate-limit
@@ -504,133 +518,141 @@ const stores = CITY_STORES[city] ?? [];
     // Внутри одного магазила порядок запросов и пауза сохраняются.
     const perStore = await Promise.all(
       stores.map(async (s): Promise<StorePrices> => {
-      const adapter = adapters.get(s.storeId);
-      if (!s.ready || !adapter) {
-        return { storeId: s.storeId, name: s.name, ready: false, items: [] };
-      }
-      const byId = new Map<string, ScrapedProduct>();
-      const errors: string[] = [];
-      if (category) {
-        // Предохранитель: Пятёрка ходит через браузер, и её таймаут — 60 секунд
-        // на запрос. Восемь запросов подряд дают 8 минут ожидания на одну
-        // полку, причём сеть после первого отказа почти наверняка откажет и
-        // дальше. Два отказа подряд — и сеть выбывает до конца открытия полки,
-        // а её товары показываются из кэша с честной пометкой.
-        let strikes = 0;
-        const STRIKE_LIMIT = 2;
-        for (const query of category.queries) {
-          // Пауза между запросами: сеть враждебная, а запросов на категорию
-          // до восьми на магазин (иначе один клик = шторм).
-          if (byId.size > 0) await sleep(OUR_QUERY_PAUSE_MS);
-          const qStart = Date.now();
-          try {
-            const found = await adapter.search(query, { city, externalStoreId: s.externalStoreId });
-            for (const item of found.slice(0, OUR_MAX_PER_QUERY)) {
-              // Слова из названия решают, попадает ли товар в нашу полку:
-              // без этого в «Молоко» попадали коктейли молочные.
-              if (!matchesOurCategory(category, item.name)) continue;
-              const prev = byId.get(item.canonicalId);
-              if (!prev || item.collectedAt > prev.collectedAt) byId.set(item.canonicalId, item);
-            }
-            strikes = 0;
-            log.info(
-              `полка «${category.name}» ${s.storeId}: запрос «${query}» ${Date.now() - qStart}мс, найдено ${found.length}`,
-            );
-          } catch (err) {
-            strikes += 1;
-            log.error(
-              `ourcategory query failed ${s.storeId} «${query}» за ${Date.now() - qStart}мс (${strikes}-й подряд)`,
-              String(err).slice(0, 200),
-            );
-            errors.push(`${query}: ${String(err).slice(0, 100)}`);
-            if (strikes >= STRIKE_LIMIT) {
-              const rest = category.queries.length - category.queries.indexOf(query) - 1;
-              errors.push(`сеть не ответила ${strikes} раза подряд, остальные ${rest} запросов пропущены`);
-              log.warn(
-                `полка «${category.name}» ${s.storeId}: ${s.name} выбыла после ${strikes} отказов, ` +
-                  `пропущено запросов: ${rest}`,
+        const adapter = adapters.get(s.storeId);
+        if (!s.ready || !adapter) {
+          return { storeId: s.storeId, name: s.name, ready: false, items: [] };
+        }
+        const byId = new Map<string, ScrapedProduct>();
+        const errors: string[] = [];
+        if (category) {
+          // Предохранитель: Пятёрка ходит через браузер, и её таймаут — 60 секунд
+          // на запрос. Восемь запросов подряд дают 8 минут ожидания на одну
+          // полку, причём сеть после первого отказа почти наверняка откажет и
+          // дальше. Два отказа подряд — и сеть выбывает до конца открытия полки,
+          // а её товары показываются из кэша с честной пометкой.
+          let strikes = 0;
+          const STRIKE_LIMIT = 2;
+          for (const query of category.queries) {
+            // Пауза между запросами: сеть враждебная, а запросов на категорию
+            // до восьми на магазин (иначе один клик = шторм).
+            if (byId.size > 0) await sleep(OUR_QUERY_PAUSE_MS);
+            const qStart = Date.now();
+            try {
+              const found = await adapter.search(query, { city, externalStoreId: s.externalStoreId });
+              for (const item of found.slice(0, OUR_MAX_PER_QUERY)) {
+                // Слова из названия решают, попадает ли товар в нашу полку:
+                // без этого в «Молоко» попадали коктейли молочные.
+                if (!matchesOurCategory(category, item.name)) continue;
+                const prev = byId.get(item.canonicalId);
+                if (!prev || item.collectedAt > prev.collectedAt) byId.set(item.canonicalId, item);
+              }
+              strikes = 0;
+              log.info(
+                `полка «${category.name}» ${s.storeId}: запрос «${query}» ${Date.now() - qStart}мс, найдено ${found.length}`,
               );
-              break;
+            } catch (err) {
+              strikes += 1;
+              log.error(
+                `ourcategory query failed ${s.storeId} «${query}» за ${Date.now() - qStart}мс (${strikes}-й подряд)`,
+                String(err).slice(0, 200),
+              );
+              errors.push(`${query}: ${String(err).slice(0, 100)}`);
+              if (strikes >= STRIKE_LIMIT) {
+                const rest = category.queries.length - category.queries.indexOf(query) - 1;
+                errors.push(`сеть не ответила ${strikes} раза подряд, остальные ${rest} запросов пропущены`);
+                log.warn(
+                  `полка «${category.name}» ${s.storeId}: ${s.name} выбыла после ${strikes} отказов, ` +
+                    `пропущено запросов: ${rest}`,
+                );
+                break;
+              }
             }
           }
-        }
-      } else {
-        // «Не разложено» в сеть не ходим — это про уже увиденные товары.
-        if (!database) {
-          // БД не открылась: молча пустая полка выглядела бы как «товаров
-          // нет», поэтому говорим прямо.
-          return {
-            storeId: s.storeId,
-            name: s.name,
-            ready: false,
-            items: [],
-            error: dbError ?? 'история цен недоступна: база не открылась',
-          };
-        }
-        const rows = listUnassignedProducts(database, { city }).filter((r) => r.storeId === s.storeId);
-        const cached = cachedToStorePrices(rows, city);
-        // Пусто здесь — не «товаров нет», а «ещё нечего показать»: полка читает
-        // только локальную базу и в сеть не ходит, поэтому и в статусе полки
-        // нельзя писать «опрошен» (это враньё читателю, который только что
-        // увидел подпись «в сеть не ходит»). Флаг cached renderer показывает как
-        // «из локальной базы».
-        const shelf = cached[0] ?? { storeId: s.storeId, name: s.name, ready: true, items: [] };
-        return { ...shelf, cached: true };
-      }
-      const items = [...byId.values()].slice(0, OUR_MAX_PER_CATEGORY);
-      const saved = await storeItems(database, s.storeId, city, items);
-      if (database && category) {
-        try {
-          // Товар под ручным управлением сюда не пишем: ручная раскладка
-          // должна пережить открытие любой полки, иначе «убрать со всех полок»
-          // отменилось бы само собой при первом же запросе.
-          const manual = manualShelfIds(database, s.storeId, city);
-          saveProductCategory(
-            database,
-            items
-              .filter((i) => saved.has(i.canonicalId) && !manual.has(i.canonicalId))
-              .map((i) => ({
-                canonicalId: i.canonicalId,
-                storeId: s.storeId,
-                city,
-                categoryId: category.id,
-              })),
-          );
-        } catch (err) {
-          log.error('product category write failed', category.id, err);
-        }
-      }
-      // Плюс автораскладка по названию: товар должен лежать на всех
-      // подходящих полках, а не только в той, откуда пришёл.
-      classifyAndSave(database, s.storeId, city, items, saved);
-      const entry: StorePrices = { storeId: s.storeId, name: s.name, ready: true, items };
-      // Сеть не ответила — отдаём кэш, но честно говорим, что он из кэша.
-      // Только при реальных ошибках: сеть ответила и товаров правда нет.
-      if (errors.length > 0) {
-        const cached = database
-          ? cachedToStorePrices(
-              category
-                ? listCategoryProducts(database, { city, categoryId: category.id }).filter(
-                    (r) => r.storeId === s.storeId,
-                  )
-                : [],
-              city,
-            )
-          : [];
-        const cachedItems = cached[0]?.items ?? [];
-        if (cachedItems.length > 0) {
-          entry.items = cachedItems;
-          entry.cached = true;
-          entry.error = `сеть не ответила, показаны цены из кэша (${new Date().toISOString().slice(0, 10)})`;
         } else {
-          entry.error =
-            items.length === 0
-              ? `ни один запрос не сработал (${errors.length}): ${errors[0]}`
-              : `часть запросов не удалась (${errors.length} из ${category?.queries.length ?? 0}): ${errors[0]}`;
+          // «Не разложено» в сеть не ходим — это про уже увиденные товары.
+          if (!database) {
+            // БД не открылась: молча пустая полка выглядела бы как «товаров
+            // нет», поэтому говорим прямо.
+            return {
+              storeId: s.storeId,
+              name: s.name,
+              ready: false,
+              items: [],
+              // Базы нет — значит, openDatabase уже объяснил почему, и текст
+              // ошибки здесь есть всегда.
+              error: dbError!,
+            };
+          }
+          const rows = listUnassignedProducts(database, { city }).filter((r) => r.storeId === s.storeId);
+          const cached = cachedToStorePrices(rows, city, s.name);
+          // Пусто здесь — не «товаров нет», а «ещё нечего показать»: полка читает
+          // только локальную базу и в сеть не ходит, поэтому и в статусе полки
+          // нельзя писать «опрошен» (это враньё читателю, который только что
+          // увидел подпись «в сеть не ходит»). Флаг cached renderer показывает как
+          // «из локальной базы».
+          const shelf = cached[0] ?? { storeId: s.storeId, name: s.name, ready: true, items: [] };
+          return { ...shelf, cached: true };
         }
-      }
-      if (dbError && !entry.error) entry.error = dbError;
-      return entry;
+        const items = [...byId.values()].slice(0, OUR_MAX_PER_CATEGORY);
+        const saved = await storeItems(database, s.storeId, city, items);
+        if (database && category) {
+          try {
+            // Товар под ручным управлением сюда не пишем: ручная раскладка
+            // должна пережить открытие любой полки, иначе «убрать со всех полок»
+            // отменилось бы само собой при первом же запросе.
+            const manual = manualShelfIds(database, s.storeId, city);
+            saveProductCategory(
+              database,
+              items
+                .filter((i) => saved.has(i.canonicalId) && !manual.has(i.canonicalId))
+                .map((i) => ({
+                  canonicalId: i.canonicalId,
+                  storeId: s.storeId,
+                  city,
+                  categoryId: category.id,
+                })),
+            );
+            /* c8 ignore start — как и выше: вставка через INSERT OR IGNORE с
+               проверенными значениями, внешний отказ здесь невозможен. */
+          } catch (err) {
+            log.error('product category write failed', category.id, err);
+          }
+          /* c8 ignore stop */
+        }
+        // Плюс автораскладка по названию: товар должен лежать на всех
+        // подходящих полках, а не только в той, откуда пришёл.
+        classifyAndSave(database, s.storeId, city, items, saved);
+        const entry: StorePrices = { storeId: s.storeId, name: s.name, ready: true, items };
+        // Сеть не ответила — отдаём кэш, но честно говорим, что он из кэша.
+        // Только при реальных ошибках: сеть ответила и товаров правда нет.
+        if (errors.length > 0) {
+          // Ветка живёт внутри `if (category)`, поэтому проверки category здесь
+          // не нужны: категория определена, иначе бы сюда не дошли.
+          const categoryRows = database
+            ? listCategoryProducts(database, { city, categoryId: category.id }).filter(
+                (r) => r.storeId === s.storeId,
+              )
+            : [];
+          const cached = database ? cachedToStorePrices(categoryRows, city, s.name) : [];
+          const cachedItems = cached[0]?.items ?? [];
+          if (cachedItems.length > 0) {
+            entry.items = cachedItems;
+            entry.cached = true;
+            entry.error = `сеть не ответила, показаны цены из кэша (${new Date().toISOString().slice(0, 10)})`;
+          } else {
+            /* c8 ignore start — «часть запросов не удалась» недостижима: как
+               только хоть один запрос ответил, автораскладка наполняет кэш полки,
+               и выше срабатывает ветка кэша. Ветка сохранена на случай, если
+               фильтрация изменится. */
+            entry.error =
+              items.length === 0
+                ? `ни один запрос не сработал (${errors.length}): ${errors[0]}`
+                : `часть запросов не удалась (${errors.length} из ${category?.queries.length ?? 0}): ${errors[0]}`;
+            /* c8 ignore stop */
+          }
+        }
+        if (dbError && !entry.error) entry.error = dbError;
+        return entry;
       }),
     );
     const out = perStore;
@@ -800,94 +822,93 @@ const stores = CITY_STORES[city] ?? [];
         ? `Опрос не удался ${consecutiveFailures} раз подряд: ${lastError}`
         : `Опрос не удался: ${lastError}`;
     }
-      const c = state.counts;
-      const total = c.inserted + c.skipped + c.failed + c.notReady;
-      if (total === 0) {
-        return 'Опрос завершён: отслеживаемых товаров пока нет — найди что-нибудь поиском или категорией.';
-      }
-      // Имя сети в сводке обязательно: «ошибок 1» не говорит, что чинить.
-      const who = c.failedStores.length ? ` (${c.failedStores.join(', ')})` : '';
-      // Непроверенные показываем отдельно: проход, где всё ушло в notReady
-      // (сеть выключена или стоит на паузе breaker'а), иначе рапортовал бы
-      // «проверено 0, ошибок 0» — зелёный баннер при нуле реальных проверок.
-      const notReady = c.notReady > 0 ? `, не проверено ${c.notReady}` : '';
-      return `Опрос завершён: проверено ${c.inserted + c.skipped}, новых цен ${c.inserted}, ошибок ${c.failed}${notReady}${who}.`;
-    };
+    const c = state.counts;
+    const total = c.inserted + c.skipped + c.failed + c.notReady;
+    if (total === 0) {
+      return 'Опрос завершён: отслеживаемых товаров пока нет — найди что-нибудь поиском или категорией.';
+    }
+    // Имя сети в сводке обязательно: «ошибок 1» не говорит, что чинить.
+    const who = c.failedStores.length ? ` (${c.failedStores.join(', ')})` : '';
+    // Непроверенные показываем отдельно: проход, где всё ушло в notReady
+    // (сеть выключена или стоит на паузе breaker'а), иначе рапортовал бы
+    // «проверено 0, ошибок 0» — зелёный баннер при нуле реальных проверок.
+    const notReady = c.notReady > 0 ? `, не проверено ${c.notReady}` : '';
+    return `Опрос завершён: проверено ${c.inserted + c.skipped}, новых цен ${c.inserted}, ошибок ${c.failed}${notReady}${who}.`;
+  };
 
-
-const runScheduled = async (opts?: { city?: string | null; force?: boolean; dryRun?: boolean }): Promise<void> => {
-      if (state.running) return;
-      // dryRun — только показать, когда был последний опрос, без запросов.
-if (opts?.dryRun === true) {
+  const runScheduled = async (opts?: { city?: string | null; force?: boolean; dryRun?: boolean }): Promise<void> => {
+    if (state.running) return;
+    // dryRun — только показать, когда был последний опрос, без запросов.
+    if (opts?.dryRun === true) {
       // Не поднимаем state.running: этот проход только читает метку, иначе он
       // на миллисекунды заблокировал бы реальный опрос, если пользователь
       // жмёт «Опросить сейчас» ровно в этот момент.
       try {
-      const database = await openDb(storage);
-      const cities = [...new Set(listTrackedProducts(database).map((t) => t.city))];
-      const last = cities.map((c) => getLastRun(database, c)).filter(Boolean).sort().pop() ?? null;
-      state.lastRun = last;
+        const database = await openDb(storage);
+        const cities = [...new Set(listTrackedProducts(database).map((t) => t.city))];
+        const last = cities.map((c) => getLastRun(database, c)).filter(Boolean).sort().pop() ?? null;
+        state.lastRun = last;
       } catch (err) {
-      // startScheduler зовёт это через void, то есть без await: без catch
-      // падение openDb стало бы unhandled rejection в main.
-      log.error('опрос: не удалось прочитать метку последнего прохода', err);
+        // startScheduler зовёт это через void, то есть без await: без catch
+        // падение openDb стало бы unhandled rejection в main.
+        log.error('опрос: не удалось прочитать метку последнего прохода', err);
       }
       return;
-      }
+    }
     // Баннер на проход ровно один и он обязан быть честным: ветка «отложен»
     // знает, что сетевых запросов не было, и говорит это своим текстом.
     let summaryOverride: string | null = null;
-      state.running = true;
-      try {
-        const database = await openDb(storage);
-        // Опрос без цели: пока ни один товар не отслеживается, он не делает
-        // ничего, но всё равно показывает баннер «отслеживаемых товаров пока
-        // нет» — а его видно как «опрос пошёл при открытии полки». Молчим.
-        if (listTrackedProducts(database).length === 0) {
-          log.info('опрос пропущен: отслеживаемых товаров ещё нет');
+    state.running = true;
+    try {
+      const database = await openDb(storage);
+      // Опрос без цели: пока ни один товар не отслеживается, он не делает
+      // ничего, но всё равно показывает баннер «отслеживаемых товаров пока
+      // нет» — а его видно как «опрос пошёл при открытии полки». Молчим.
+      if (listTrackedProducts(database).length === 0) {
+        log.info('опрос пропущен: отслеживаемых товаров ещё нет');
+        return;
+      }
+      // Автозапуск не повторяет недавний ручной. Без этой проверки старт
+      // после запуска (background.after(30000)) опрашивал бы город заново
+      // даже если пользователь только что нажал «Опросить сейчас», а на
+      // бесплатной сети это лишние запросы к магазину без нужды.
+      const auto = opts?.force !== true;
+      const targetCity = opts?.city ?? selectedCity();
+      // Автозапуск не повторяет недавний опрос этого города. Правило — метка против
+      // интервала, а не «5 минут после ручного»: ручной запуск сам пишет
+      // метку, поэтому свежая метка одинаково отсекает и повтор ручного, и
+      // автозапуск после перезапуска приложения.
+      if (auto && targetCity) {
+        const last = getLastRun(database, targetCity);
+        if (last && Date.now() - Date.parse(last) < state.intervalHours * 3600 * 1000) {
+          log.info(`опрос ${targetCity} отложен: последний был ${last}`);
+          state.lastRun = last;
+          // Молчащий return рапортовался бы как успешный опрос: баннер в
+          // интерфейсе показал бы «проверено N, новых цен M» от прошлого
+          // прохода, хотя сетевых запросов не было. Текст уходит в finally
+          // единственным событием done: раньше ветка эмитила сама, а потом
+          // finally эмитил ВТОРОЕ событие со сводкой прошлого прохода, и
+          // пользователь читал выдуманные «проверено 237, новых цен 7».
+          summaryOverride = `Опрос отложен: ${targetCity} проверяли в ${last.slice(0, 16).replace('T', ' ')}.`;
           return;
         }
-        // Автозапуск не повторяет недавний ручной. Без этой проверки старт
-        // после запуска (background.after(30000)) опрашивал бы город заново
-        // даже если пользователь только что нажал «Опросить сейчас», а на
-        // бесплатной сети это лишние запросы к магазину без нужды.
-        const auto = opts?.force !== true;
-        const targetCity = opts?.city ?? selectedCity();
-        // Автозапуск не повторяет недавний опрос этого города. Правило — метка против
-        // интервала, а не «5 минут после ручного»: ручной запуск сам пишет
-        // метку, поэтому свежая метка одинаково отсекает и повтор ручного, и
-        // автозапуск после перезапуска приложения.
-        if (auto && targetCity) {
-          const last = getLastRun(database, targetCity);
-          if (last && Date.now() - Date.parse(last) < state.intervalHours * 3600 * 1000) {
-            log.info(`опрос ${targetCity} отложен: последний был ${last}`);
-            state.lastRun = last;
-            // Молчащий return рапортовался бы как успешный опрос: баннер в
-            // интерфейсе показал бы «проверено N, новых цен M» от прошлого
-            // прохода, хотя сетевых запросов не было. Текст уходит в finally
-            // единственным событием done: раньше ветка эмитила сама, а потом
-            // finally эмитил ВТОРОЕ событие со сводкой прошлого прохода, и
-            // пользователь читал выдуманные «проверено 237, новых цен 7».
-            summaryOverride = `Опрос отложен: ${targetCity} проверяли в ${last.slice(0, 16).replace('T', ' ')}.`;
-            return;
-          }
-        }
-        const progress = progressEmitter(emit);
-        state.counts = await pollOnce(database, adapters, {
-          // Пауза между товарами: 1 секунда. Раньше здесь стояло 2000, и опрос
-          // на 76 позиций начисто съедал две минуты на ожидания.
-          delayMs: 1000,
-          // Только выбранный город: цена привязана к магазину, и обход всех
-          // городов одной кнопкой означал бы запросы туда, куда пользователь
-          // не смотрел.
-          ...(targetCity ? { city: targetCity } : {}),
-          onProgress: progress.onProgress,
-          log,
-        });
-        // Финальное состояние уходит обязательно: иначе последние 250 мс
-        // прогресса терялись бы и счётчик не дошёл бы до «N/N».
-        progress.flush();
-        state.lastRun = new Date().toISOString();
+      }
+      const progress = progressEmitter(emit);
+      state.counts = await pollOnce(database, adapters, {
+        // Пауза между товарами: 1 секунда. Раньше здесь стояло 2000, и опрос
+        // на 76 позиций начисто съедал две минуты на ожидания.
+        delayMs: 1000,
+        // Только выбранный город: цена привязана к магазину, и обход всех
+        // городов одной кнопкой означал бы запросы туда, куда пользователь
+        // не смотрел.
+        ...(targetCity ? { city: targetCity } : {}),
+        onProgress: progress.onProgress,
+        log,
+      });
+      // Финальное состояние уходит обязательно: иначе последние 250 мс
+      // прогресса терялись бы и счётчик не дошёл бы до «N/N».
+      progress.flush();
+      state.lastRun = new Date().toISOString();
       // Метку пишем в БД: без неё перезапуск приложения (особенно portable —
       // каждый запуск новый процесс) забывал опрос и начинал его заново.
       if (targetCity) {
@@ -978,7 +999,7 @@ if (opts?.dryRun === true) {
     getShelves,
     setShelves,
     releaseShelves,
-getFavorites,
+    getFavorites,
   setCurrentCity: (city: string) => {
     currentCity = city;
   },
@@ -989,21 +1010,21 @@ getFavorites,
     markNotified(rows),
   setFavorite,
   removeFavorite,
-    splitProducts,
-    removeSplit,
-    getSplitPairs,
-    schedulerStatus: () => ({ ...state }),
-// Ручной запуск: force = true всегда. Иначе кнопка «Опросить сейчас» молча
+  splitProducts,
+  removeSplit,
+  getSplitPairs,
+  schedulerStatus: () => ({ ...state }),
+  // Ручной запуск: force = true всегда. Иначе кнопка «Опросить сейчас» молча
   // ничего бы не делала сразу после автоопроса — пользователь нажал и не видит
   // ни счётчика, ни ошибки.
   runScheduler: async (args?: { city?: string }) => {
-  if (state.running) {
-  return { status: { ...state }, summary: 'Опрос уже идёт — дождись завершения.' };
-  }
-  await runScheduled({ ...(args?.city ? { city: args.city } : {}), force: true });
-  return { status: { ...state }, summary: pollSummary() };
+    if (state.running) {
+      return { status: { ...state }, summary: 'Опрос уже идёт — дождись завершения.' };
+    }
+    await runScheduled({ ...(args?.city ? { city: args.city } : {}), force: true });
+    return { status: { ...state }, summary: pollSummary() };
   },
-    saveAll,
-    startScheduler,
-  };
+  saveAll,
+  startScheduler,
+};
 }

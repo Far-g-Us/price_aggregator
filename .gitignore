@@ -1,5 +1,6 @@
 # deps
 node_modules/
+.agent/
 .venv/
 .opencode/
 .claude/
@@ -49,3 +50,6 @@ Thumbs.db
 *.har.json
 # Скриншоты проверок интерфейса (Playwright, dev-сервер :5173).
 shots/
+# Отчёты покрытия (npm run test:coverage).
+coverage/
+.nyc_output/

@@ -169,13 +169,13 @@ INSERT OR IGNORE INTO cities (id, name) VALUES
   ('ulyanovsk', 'Ульяновск'),
   ('krasnodar', 'Краснодар'),
   ('irkutsk', 'Иркутск');
-INSERT OR IGNORE INTO stores (id, city, external_store_id, name)
+INSERT INTO stores (id, city, external_store_id, name)
 VALUES
   ('pyaterochka', 'moscow', '35XY', 'Пятёрочка'),
   ('magnit', 'moscow', '303857', 'Магнит'),
   ('lenta', 'moscow', '4161', 'Лента'),
   ('pyaterochka', 'saint-petersburg', '5415', 'Пятёрочка'),
-  ('magnit', 'saint-petersburg', '501478', 'Магнит'),
+  ('magnit', 'saint-petersburg', '277027', 'Магнит'),
   ('lenta', 'saint-petersburg', '3135', 'Лента'),
   -- Десять новых городов Магнита: коды от юзера, подтверждены живым поиском
   -- 2026-10-01 (сверка по ссылкам на товары). Флаг готовности живёт в

@@ -5,6 +5,7 @@ import { CITIES, CITY_STORES } from '../shared/catalog';
 import { groupByProduct, parseSplitKey } from '../shared/matching';
 import { formatPrice } from '../shared/format';
 import { rootShelves } from '../shared/taxonomy';
+import { RELEASES_PAGE_URL } from '../core/release-check';
 import { CategoryIcon } from './CategoryIcon';
 import { PollProgress } from './PollProgress';
 
@@ -17,6 +18,7 @@ declare global {
 type UpdateState =
   | { kind: 'idle' }
   | { kind: 'available'; latest: string }
+  | { kind: 'portable'; latest: string }
   | { kind: 'downloaded'; latest: string }
   | { kind: 'error'; message: string };
 
@@ -91,7 +93,10 @@ function HistoryChart({ points }: { points: HistoryPoint[] }) {
  * умолчанию, а перечисление отказов пришлось бы дополнять при каждом новом.
  */
 function isWarnSummary(summary: string): boolean {
-  return !summary.startsWith('Опрос завершён');
+  // Правило fail-closed: успешна только сводка, начавшаяся с «Опрос завершён»
+  // и при этом не содержащая «товаров пока нет» — тот случай в ядре тоже
+  // оформляется как «Опрос завершён», но проходом он не является.
+  return !summary.startsWith('Опрос завершён') || summary.includes('отслеживаемых товаров пока нет');
 }
 
 function useDismissableMenu(
@@ -124,6 +129,468 @@ function useDismissableMenu(
     };
   }, [open, ref, btnRef, setOpen]);
 }
+
+// Восстановленный блок App.tsx, потерянный правкой 2026-10-02.
+// Собран по скомпилированному бандлу сборки 22:30 (build-renderer/assets/index-*.js):
+// список и порядок состояний, их инициализация, логика эффектов и помощников взяты
+// оттуда, наименования — по выжившей разметке и tsc-инвентаризации.
+
+// Картинка товара. У сетей она может не прийти вовсе или отдаться битой, поэтому
+// вместо пустоты рисуется коробка: карточка не «схлопывается» и товар остаётся
+// узнаваемым по названию и цене.
+function ProductImage({
+  src,
+  name,
+  tall = false,
+}: {
+  src: string | null | undefined;
+  name: string;
+  tall?: boolean;
+}): React.ReactElement {
+  const [failed, setFailed] = React.useState(false);
+  // Карточка переиспользуется React'ом по ключу группы, поэтому после новой
+  // выдачи с прежним битым src заглушка залипла бы навсегда.
+  React.useEffect(() => setFailed(false), [src]);
+  // В модалке картинка не режется по высоте: у товара пропорции важнее рамки,
+  // а отступ до описания задаёт сам блок.
+  const frame = tall ? 'mb-4 max-h-64' : 'h-48';
+  if (!src || failed) {
+    return (
+      <div className={`${frame} w-full rounded-xl bg-cream`} aria-hidden="true">
+        <div className="flex h-full w-full items-center justify-center">
+          <svg viewBox="0 0 24 24" className="h-10 w-10 text-line" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z" strokeLinejoin="round" />
+            <path d="M3.5 7.5 12 12m0 9V12m8.5-4.5L12 12" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      className={`${frame} w-full rounded-xl bg-cream object-contain`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/** Текст ошибки для баннера: без «Error:» и прочей обвязки, с обрезкой. */
+function errText(err: unknown): string {
+  return (typeof err === 'string' ? err : err instanceof Error ? err.message : String(err))
+    .replace(/^(\s*(?:\w*\s*)?Error:\s*)+/i, '')
+    .trim()
+    .slice(0, 200);
+}
+
+const EMPTY_SHELF_PLAIN = 'Категория пуста — попробуй соседнюю или поиск.';
+const EMPTY_SHELF_VIRTUAL =
+  'Полка собирает только уже найденное и в магазины не ходит. Найди что-нибудь в поиске или открой полку любой сети.';
+
+/** Сторож загрузки полки: сеть молчит дольше — показываем текст, а не вечный спиннер. */
+const SHELF_TIMEOUT_MS = 45_000;
+const PAGE_SIZE = 24;
+
+function Spinner({ className = 'h-3.5 w-3.5' }: { className?: string }): React.ReactElement {
+  return (
+    <svg className={`flex-none animate-spin ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Заглушка сетки товаров на время загрузки: форма совпадает с карточкой. */
+function SkeletonCards({ label }: { label: string }): React.ReactElement {
+  return (
+    <div role="status" aria-live="polite">
+      <span className="sr-only">{label}</span>
+      <section className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="animate-pulse rounded-2xl border border-line bg-card p-4">
+            <div className="h-48 w-full rounded-xl bg-line/60" />
+            <div className="mt-3 h-4 w-4/5 rounded bg-line/60" />
+            <div className="mt-1.5 h-4 w-3/5 rounded bg-line/60" />
+            <div className="mt-3 h-8 w-24 rounded-lg bg-line/40" />
+            <div className="mt-3 border-t border-line pt-1.5">
+              <div className="h-5 w-2/3 rounded bg-line/40" />
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+/** Русское склонение: 1 запрос, 2 запроса, 5 запросов. */
+function plural(n: number, one: string, few: string, many: string): string {
+  const i = n % 10;
+  const a = n % 100;
+  return `${n} ${i === 1 && a !== 11 ? one : i >= 2 && i <= 4 && (a < 12 || a > 14) ? few : many}`;
+}
+
+function queriesPhrase(n: number): string {
+  return plural(n, 'запрос', 'запроса', 'запросов');
+}
+
+function storesPhrase(n: number): string {
+  const t = n % 10;
+  const a = n % 100;
+  return t === 1 && a !== 11 ? `в ${n} сети` : `в ${n} сетях`;
+}
+
+function sectionsPhrase(n: number): string {
+  return plural(n, 'раздел', 'раздела', 'разделов');
+}
+
+/** Хвост сводки опроса в подвале: ненулевые счётчики через запятую. */
+function pollCountsText(c: { inserted: number; skipped: number; failed: number }): string {
+  const parts: string[] = [];
+  if (c.inserted > 0) parts.push(`добавлено ${c.inserted}`);
+  if (c.skipped > 0) parts.push(`без изменений ${c.skipped}`);
+  if (c.failed > 0) parts.push(`ошибок ${c.failed}`);
+  return parts.length ? ` (${parts.join(', ')})` : '';
+}
+
+function Chevron({ open }: { open: boolean }): React.ReactElement {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {open ? <path d="M6 9l6 6 6-6" /> : <path d="M9 6l6 6-6 6" />}
+    </svg>
+  );
+}
+
+export default function App(): React.ReactElement {
+  const [status, setStatus] = useState('...');
+  const [version, setVersion] = useState('...');
+  const [update, setUpdate] = useState<UpdateState>({ kind: 'idle' });
+  const [city, setCity] = useState('moscow');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<StorePrices[] | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [catLoading, setCatLoading] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [catalog, setCatalog] = useState<StoreCatalog[] | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [catError, setCatError] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
+  const [storeOn, setStoreOn] = useState<Record<string, boolean>>({});
+  const [promoOnly, setPromoOnly] = useState(false);
+  const [stockOnly, setStockOnly] = useState(false);
+  const [sort, setSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [page, setPage] = useState(1);
+  const [openHist, setOpenHist] = useState<string | null>(null);
+  const [hist, setHist] = useState<Record<string, HistoryPoint[] | 'error'>>({});
+  const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [histLoading, setHistLoading] = useState<Record<string, boolean>>({});
+  const [shelves, setShelves] = useState<Record<string, ProductShelves | 'error'>>({});
+  const [shelfBusy, setShelfBusy] = useState<Record<string, boolean>>({});
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
+
+  // Ключ карточки: магазин + товар + город. Порядок важен только внутри себя —
+  // он же используется как ключ хранения истории, полок и черновиков цены.
+  const histKey = (canonicalId: string, storeId: string, cityCode: string): string =>
+    `${storeId}:${canonicalId}:${cityCode}`;
+  const favKey = histKey;
+  const isFav = (canonicalId: string, storeId: string, cityCode: string): boolean =>
+    favorites.some((f) => f.canonicalId === canonicalId && f.storeId === storeId && f.city === cityCode);
+  const favTarget = (canonicalId: string, storeId: string, cityCode: string): number | null =>
+    favorites.find((f) => f.canonicalId === canonicalId && f.storeId === storeId && f.city === cityCode)
+      ?.targetPrice ?? null;
+
+  const [sched, setSched] = useState<SchedulerStatus | null>(null);
+  const [pollMsg, setPollMsg] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
+  const [storeMenuOpen, setStoreMenuOpen] = useState(false);
+  const [cityMenuOpen, setCityMenuOpen] = useState(false);
+  const [lastAction, setLastAction] = useState<
+    | { kind: 'search'; query: string; city: string }
+    | { kind: 'category'; url: string; city: string }
+    | { kind: 'our'; id: string; city: string }
+    | null
+  >(null);
+  const [source, setSource] = useState<'ours' | 'stores' | 'favorites'>('ours');
+  const [ourCategories, setOurCategories] = useState<OurCategoryInfo[] | null>(null);
+  const [catalogListError, setCatalogListError] = useState<string | null>(null);
+  const [ourError, setOurError] = useState<string | null>(null);
+  const [splits, setSplits] = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favBusy, setFavBusy] = useState<string | null>(null);
+  const [targetDraft, setTargetDraft] = useState<Record<string, string>>({});
+  const [splitBusy, setSplitBusy] = useState<string | null>(null);
+  const [nameCache, setNameCache] = useState<Record<string, string>>({});
+  const [favError, setFavError] = useState<string | null>(null);
+  const [storeOpen, setStoreOpen] = useState<Record<string, boolean>>({});
+
+  const storeMenuRef = useRef<HTMLDivElement | null>(null);
+  const storeMenuBtnRef = useRef<HTMLButtonElement | null>(null);
+  const cityMenuRef = useRef<HTMLDivElement | null>(null);
+  const cityMenuBtnRef = useRef<HTMLButtonElement | null>(null);
+  // Позиция прокрутки перед последним действием: возвращаться назад нужно туда,
+  // а не «наверх», поэтому она снимается до загрузки, а не после.
+  const catScrollRef = useRef(0);
+  // Токен защиты от гонок: пока шёл опрос, полка или новый поиск могли занять
+  // экран, и их данные обновлять уже нельзя.
+  const shelfTokenRef = useRef(0);
+  const [scrollIntent, setScrollIntent] = useState<{ top: number; n: number } | null>(null);
+  const [fatal, setFatal] = useState(false);
+
+  const scrollPage = (top: number): void => {
+    setScrollIntent((prev) => ({ top, n: (prev?.n ?? 0) + 1 }));
+  };
+
+  // Ответ на избранное от ядра приходит с полным списком: сет заменяется, но
+  // только если он пришёл для того же города, иначе подставился бы чужой.
+  const applyFavorites = (next: Favorite[], cityCode: string): void => {
+    if (cityCode === city) setFavorites(next);
+  };
+
+  const toggleFavorite = async (canonicalId: string, storeId: string, cityCode: string): Promise<void> => {
+    if (!window.api) return;
+    const key = histKey(canonicalId, storeId, cityCode);
+    setFavBusy(key);
+    try {
+      if (isFav(canonicalId, storeId, cityCode)) {
+        applyFavorites(await window.api.removeFavorite({ canonicalId, storeId, city: cityCode }), cityCode);
+      } else {
+        applyFavorites(await window.api.setFavorite({ canonicalId, storeId, city: cityCode, targetPrice: null }), cityCode);
+      }
+    } catch (err) {
+      console.error('favorite toggle failed', err);
+      setFavError('Не удалось изменить избранное: ' + errText(err));
+    } finally {
+      setFavBusy(null);
+    }
+  };
+
+  const setTargetPrice = async (
+    canonicalId: string,
+    storeId: string,
+    cityCode: string,
+    target: number | null,
+  ): Promise<void> => {
+    if (!window.api) return;
+    const key = histKey(canonicalId, storeId, cityCode);
+    setFavBusy(key);
+    try {
+      applyFavorites(await window.api.setFavorite({ canonicalId, storeId, city: cityCode, targetPrice: target }), cityCode);
+    } catch (err) {
+      console.error('favorite target failed', err);
+      setFavError('Не удалось сохранить целевую цену: ' + errText(err));
+    } finally {
+      setFavBusy(null);
+    }
+  };
+
+  const undoSplit = async (key: string): Promise<void> => {
+    if (!window.api) return;
+    setSplitBusy(key);
+    try {
+      setFavError(null);
+      const pair = parseSplitKey(key);
+      if (!pair) {
+        setSplitBusy(null);
+        setFavError('Не удалось вернуть товары в одну карточку: нечитаемая пара в списке.');
+        await loadSplits();
+        return;
+      }
+      const [a, b] = pair;
+      await window.api.removeSplit({ canonicalIdA: a, canonicalIdB: b });
+      await loadSplits();
+    } catch (err) {
+      console.error('undo split failed', err);
+      setFavError('Не удалось вернуть товары в одну карточку: ' + errText(err));
+    } finally {
+      setSplitBusy(null);
+    }
+  };
+
+  const nameOf = (canonicalId: string): string => nameCache[canonicalId] ?? canonicalId;
+
+  // Разрыв склейки: пары строятся только между РАЗНЫМИ магазинами — два товара
+  // одной сети с одинаковым названием почти всегда один товар, и делить нечем.
+  const splitGroup = async (g: PriceGroup): Promise<void> => {
+    if (!window.api || g.offers.length < 2) return;
+    setSplitBusy(g.key);
+    try {
+      const pairs: [string, string][] = [];
+      for (let i = 0; i < g.offers.length; i += 1) {
+        for (let j = i + 1; j < g.offers.length; j += 1) {
+          const a = g.offers[i];
+          const b = g.offers[j];
+          if (!a || !b) continue;
+          if (a.storeId !== b.storeId) pairs.push([a.product.canonicalId, b.product.canonicalId]);
+        }
+      }
+      setFavError(null);
+      for (const [a, b] of pairs) {
+        await window.api.splitProducts({ canonicalIdA: a, canonicalIdB: b });
+      }
+      await loadSplits();
+    } catch (err) {
+      console.error('split failed', err);
+      setFavError('Не удалось разделить товары: ' + errText(err));
+    } finally {
+      setSplitBusy(null);
+    }
+  };
+
+  const loadFavorites = useCallback(async (): Promise<void> => {
+    if (!window.api) return;
+    try {
+      setFavorites(await window.api.getFavorites({ city }));
+    } catch (err) {
+      console.error('favorites failed', err);
+    }
+  }, [city]);
+
+  const loadSplits = useCallback(async (): Promise<void> => {
+    if (!window.api) return;
+    try {
+      setSplits(new Set(await window.api.getSplitPairs({ city })));
+    } catch (err) {
+      console.error('splits failed', err);
+    }
+  }, [city]);
+
+  // Ядро само знает выбранный город: автоопрос бьёт только по нему, а не по всем.
+  useEffect(() => {
+    if (window.api) window.api.setCurrentCity(city).catch((e) => console.error('city:set failed', e));
+  }, [city]);
+
+  // Имена товаров копим из выдачи и из избранного: карточка разрыва и «снова
+  // один товар» должны называть товар, а не показывать его id.
+  useEffect(() => {
+    if (!results) return;
+    setNameCache((prev) => {
+      const next = { ...prev };
+      for (const s of results) for (const item of s.items) next[item.canonicalId] = item.name;
+      return next;
+    });
+  }, [results]);
+  useEffect(() => {
+    if (favorites.length === 0) return;
+    setNameCache((prev) => {
+      const next = { ...prev };
+      for (const f of favorites) if (f.name && f.name !== f.canonicalId) next[f.canonicalId] = f.name;
+      return next;
+    });
+  }, [favorites]);
+
+  useEffect(() => {
+    void loadFavorites();
+    void loadSplits();
+  }, [loadFavorites, loadSplits]);
+
+  useDismissableMenu(storeMenuOpen, setStoreMenuOpen, storeMenuRef, storeMenuBtnRef);
+  useDismissableMenu(cityMenuOpen, setCityMenuOpen, cityMenuRef, cityMenuBtnRef);
+
+  // Прокрутка выполняется в эффекте, а не в обработчике: разметка должна
+  // сначала перерисоваться, иначе браузер прокрутит по старой высоте.
+  useEffect(() => {
+    if (!scrollIntent) return;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({ top: Math.min(scrollIntent.top, Math.max(0, max)) });
+  }, [scrollIntent]);
+
+  // Новая выдача всегда начинается с первой страницы: иначе после поиска
+  // пользователь оказывался на пустой странице 7 из 7.
+  useEffect(() => {
+    if (results === null) return;
+    setPage(1);
+    scrollPage(0);
+  }, [results]);
+
+  // Старт приложения: без preload-моста показываем внятную ошибку, а не пустое
+  // окно. События обновлений и сводки опроса снимаются здесь же и снимаются
+  // при размонтировании — иначе подписчик жил бы после ухода экрана.
+  useEffect(() => {
+    if (!window.api) {
+      setFatal(true);
+      return;
+    }
+    window.api.ping().then((p) => setStatus(p)).catch(() => setStatus('no-electron'));
+    window.api.getVersion().then((v) => setVersion(v)).catch(() => setVersion('dev'));
+    const off = window.api.onUpdateEvent((kind, payload) => {
+      if (kind === 'available' || kind === 'downloaded') setUpdate({ kind, latest: String(payload) });
+      else if (kind === 'error') setUpdate({ kind: 'error', message: String(payload) });
+    });
+      window.api
+        .checkUpdates()
+        .then((r) => {
+          if (r.available && r.latest) {
+            setUpdate(r.portable ? { kind: 'portable', latest: r.latest } : { kind: 'available', latest: r.latest });
+          }
+        })
+        .catch(() => {});
+    window.api.getSchedulerStatus().then((s) => setSched(s)).catch(() => {});
+    const offDone = window.api.onSchedulerDone((d) => {
+      setSched(d.status);
+      setPollMsg({ text: d.summary, tone: isWarnSummary(d.summary) ? 'warn' : 'ok' });
+    });
+    return () => {
+      off();
+      offDone();
+    };
+  }, []);
+
+  const fetchHist = (key: string, args: { canonicalId: string; storeId: string; city: string }): void => {
+    setHistLoading((prev) => ({ ...prev, [key]: true }));
+    window.api
+      .getHistory(args)
+      .then((points) => setHist((prev) => ({ ...prev, [key]: points })))
+      .catch(() => setHist((prev) => ({ ...prev, [key]: 'error' })))
+      .finally(() => setHistLoading((prev) => ({ ...prev, [key]: false })));
+  };
+
+  const fetchShelves = (key: string, scope: { canonicalId: string; storeId: string; city: string }): void => {
+    window.api
+      .getShelves(scope)
+      .then((s) => setShelves((prev) => ({ ...prev, [key]: s })))
+      .catch(() => setShelves((prev) => ({ ...prev, [key]: 'error' })));
+  };
+
+  const saveShelves = async (
+    key: string,
+    scope: { canonicalId: string; storeId: string; city: string },
+    categoryIds: string[],
+  ): Promise<void> => {
+    setShelfBusy((prev) => ({ ...prev, [key]: true }));
+    try {
+      const saved = await window.api.setShelves({ ...scope, categoryIds });
+      setShelves((prev) => ({ ...prev, [key]: saved }));
+    } catch (err) {
+      setPollMsg({ text: `Полки не сохранились: ${errText(err)}`, tone: 'warn' });
+    } finally {
+      setShelfBusy((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const releaseShelvesAction = async (
+    key: string,
+    scope: { canonicalId: string; storeId: string; city: string },
+  ): Promise<void> => {
+    setShelfBusy((prev) => ({ ...prev, [key]: true }));
+    try {
+      const after = await window.api.releaseShelves(scope);
+      setShelves((prev) => ({ ...prev, [key]: after }));
+    } catch (err) {
+      setPollMsg({ text: `Не вернулось под автораскладку: ${errText(err)}`, tone: 'warn' });
+    } finally {
+      setShelfBusy((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
 // Причины сбоя загрузки живут РЯДОМ со своим списком, а не в общем баннере
   // pollMsg: тот же баннер показывает сводку опроса, и ошибка списка его
@@ -287,7 +754,7 @@ function useDismissableMenu(
       setCatLoading(false);
       setCatError({ kind: 'error', text: `Магазин не ответил за ${SHELF_TIMEOUT_MS / 1000} секунд — попробуй открыть полку ещё раз.` });
     }, SHELF_TIMEOUT_MS);
-window.api
+    window.api
       .getCategory({ city, url })
       .then((r) => {
         // Токен проверяется ДО записи результата: пока пользователь ждал этой
@@ -358,7 +825,7 @@ window.api
       setCatLoading(false);
       setCatError({ kind: 'error', text: `Магазин не ответил за ${SHELF_TIMEOUT_MS / 1000} секунд — попробуй открыть полку ещё раз.` });
     }, SHELF_TIMEOUT_MS);
-window.api
+    window.api
       .getOurCategory({ city, id })
       .then((r) => {
         // Проверка токена до записи — как в openCategory: пока шла эта полка,
@@ -439,7 +906,7 @@ const groups = useMemo(() => {
             return true;
           }),
     );
-const list = groupByProduct(items, splits);
+    const list = groupByProduct(items, splits);
     const minOf = (g: (typeof list)[number]) =>
       Math.min(...g.offers.map((o) => o.product.promoPrice ?? o.product.price));
     if (sort !== 'none') list.sort((a, b) => (sort === 'asc' ? minOf(a) - minOf(b) : minOf(b) - minOf(a)));
@@ -480,8 +947,12 @@ const list = groupByProduct(items, splits);
     setPage(pageNo);
   }, [pageNo]);
 
-  const storeName = (id: string) =>
-    CITY_STORES[city]?.find((s) => s.storeId === id)?.name ?? id;
+const storeName = (id: string) =>
+      CITY_STORES[city]?.find((s) => s.storeId === id)?.name ?? id;
+
+    // Крестик у баннеров обновления: уведомление приходит само, повторяться не
+    // будет, а перекрывать собой поиск оно не должно.
+    const dismissUpdate = () => setUpdate({ kind: 'idle' });
 
   return (
     <div className="mx-auto max-w-6xl bg-cream px-6 pb-3 text-ink">
@@ -536,7 +1007,7 @@ const list = groupByProduct(items, splits);
               {CITIES.find((c) => c.id === city)?.name ?? city}
               <span aria-hidden="true">▾</span>
             </button>
-{cityMenuOpen && (
+            {cityMenuOpen && (
               // Прокрутка внутри списка: городов уже 15, дальше будет больше, и без
               // неё дно списка уезжает за край окна и недоступно. max-h убран из
               // класса — он задаётся здесь, чтобы высота не зависела от ширины.
@@ -555,7 +1026,7 @@ const list = groupByProduct(items, splits);
                       key={c.id}
                       aria-current={active}
                       className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-cream"
-onClick={() => {
+                      onClick={() => {
                   // Смена города гасит всё, что грузится: без инкремента счётчика
                   // поздний ответ полки старого города проходит проверку токена
                   // и кладёт московские цены под шапкой «Ульяновск». Идентичность
@@ -581,7 +1052,7 @@ onClick={() => {
                           </svg>
                         )}
                       </span>
-<span className="flex-1">{c.name}</span>
+                      <span className="flex-1">{c.name}</span>
                       <span className="text-xs text-muted">
                         {readyStores.length} из {stores.length} сетей
                       </span>
@@ -602,29 +1073,61 @@ onClick={() => {
             если повторяется — сломана сборка dist-electron.
           </div>
         )}
-        {update.kind === 'available' && (
-          <p className="my-3 max-h-36 overflow-y-auto rounded-xl bg-warnbg p-2.5 px-3.5 text-sm break-all" role="status">
-            Доступна версия {update.latest}, скачиваю из GitHub Releases…
-          </p>
-        )}
-        {update.kind === 'downloaded' && (
-          <p className="my-3 max-h-36 overflow-y-auto rounded-xl bg-okbg p-2.5 px-3.5 text-sm break-all" role="status">
-            Версия {update.latest} скачана.
-            <button
-              className="ml-2 min-h-9 cursor-pointer"
-              onClick={() =>
-                window.api.installUpdate().catch(() => setUpdate({ kind: 'error', message: 'не удалось запустить установку' }))
-              }
-            >
-              Установить и перезапустить
-            </button>
-          </p>
-        )}
-        {update.kind === 'error' && (
-          <p className="my-3 max-h-36 overflow-y-auto rounded-xl bg-warnbg p-2.5 px-3.5 text-sm break-all" role="alert">
-            Ошибка обновлений: {update.message}
-          </p>
-        )}
+{update.kind === 'available' && (
+            <div className="my-3 flex items-start gap-2 rounded-xl bg-warnbg p-2.5 px-3.5 text-sm" role="status">
+              <span className="max-h-36 flex-1 overflow-y-auto break-all">
+                Доступна версия {update.latest}, скачиваю из GitHub Releases…
+              </span>
+              <button type="button" className="min-h-9 px-1" onClick={dismissUpdate} aria-label="Скрыть">
+                ×
+              </button>
+            </div>
+          )}
+          {update.kind === 'portable' && (
+            <div className="my-3 flex items-start gap-2 rounded-xl bg-warnbg p-2.5 px-3.5 text-sm" role="status">
+              <span className="max-h-36 flex-1 overflow-y-auto break-all">
+                Вышла версия {update.latest}. Portable не обновляется сам — скачай его заново
+                <button
+                  type="button"
+                  className="cursor-pointer underline"
+                  onClick={() => void window.api.openExternal(RELEASES_PAGE_URL)}
+                >
+                  на странице релизов
+                </button>
+                .
+              </span>
+              <button type="button" className="min-h-9 px-1" onClick={dismissUpdate} aria-label="Скрыть">
+                ×
+              </button>
+            </div>
+          )}
+          {update.kind === 'downloaded' && (
+            <div className="my-3 flex items-start gap-2 rounded-xl bg-okbg p-2.5 px-3.5 text-sm" role="status">
+              <span className="max-h-36 flex-1 overflow-y-auto break-all">
+                Версия {update.latest} скачана.
+                <button
+                  type="button"
+                  className="ml-2 min-h-9 cursor-pointer"
+                  onClick={() =>
+                    window.api.installUpdate().catch(() => setUpdate({ kind: 'error', message: 'не удалось запустить установку' }))
+                  }
+                >
+                  Установить и перезапустить
+                </button>
+              </span>
+              <button type="button" className="min-h-9 px-1" onClick={dismissUpdate} aria-label="Скрыть">
+                ×
+              </button>
+            </div>
+          )}
+          {update.kind === 'error' && (
+            <div className="my-3 flex items-start gap-2 rounded-xl bg-warnbg p-2.5 px-3.5 text-sm" role="alert">
+              <span className="max-h-36 flex-1 overflow-y-auto break-all">Ошибка обновлений: {update.message}</span>
+              <button type="button" className="min-h-9 px-1" onClick={dismissUpdate} aria-label="Скрыть">
+                ×
+              </button>
+            </div>
+          )}
 
         {/* Поиск живёт под иконкой в шапке: на главной он занимал целую полосу ради
             одного поля, а при открытой полке отнимал место у результатов. */}
@@ -742,7 +1245,7 @@ onClick={() => {
                 onClick={() => setSource('stores')}
                 aria-pressed={source === 'stores'}
               >
-Как в магазинах
+              Как в магазинах
               </button>
               <button
                 className={
@@ -865,7 +1368,7 @@ onClick={() => {
                 Все магазины выключены в фильтре «Магазины» — включи хотя бы один.
               </div>
             )}
-{(catalog ?? []).map(
+            {(catalog ?? []).map(
               (s) =>
                 storeOn[s.storeId] !== false &&
                 s.categories.length > 0 && (
@@ -926,7 +1429,7 @@ onClick={() => {
                     )}
                   </div>
                 ),
-)}
+                )}
               </>
             )}
             {source === 'favorites' && (
@@ -1067,7 +1570,7 @@ onClick={() => {
             <SkeletonCards label={searching ? 'Ищу товары' : 'Загружаю товары категории'} />
           </div>
         )}
-{catError && (
+        {catError && (
           <div
             className="mt-3 rounded-xl border border-dashed border-line bg-card p-7 text-center text-muted"
             role={catError.kind === 'error' ? 'alert' : 'status'}
@@ -1091,7 +1594,7 @@ onClick={() => {
             </button>
           </div>
         )}
-{groups && (
+        {groups && (
           <p className="m-0 mb-4 text-[13px] text-muted" aria-live="polite">
             {/* Число найденного объявляется здесь же: строка сетей ниже
                 сообщает только о состоянии запросов, и по ней нельзя понять,
@@ -1184,7 +1687,7 @@ onClick={() => {
             {pagedGroups.map((g) => (
               <article key={g.key} className="rounded-2xl border border-line bg-card p-4">
                 <ProductImage src={g.imageUrl} name={g.name} />
-<h2 className="mb-2 mt-1 text-base font-semibold leading-snug">{g.name}</h2>
+                <h2 className="mb-2 mt-1 text-base font-semibold leading-snug">{g.name}</h2>
                 <div className="mb-2 flex flex-wrap items-center gap-1.5">
                   <button
                     className="min-h-8 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1 text-xs text-ink"
@@ -1369,7 +1872,7 @@ onClick={() => {
         {/* Три колонки, а не flex с justify-between: текст опроса меняет длину
             («(добавлено 1, без изменений 22)»), и при flex кнопка «Опросить
             сейчас» уезжала вбок на 40+ пикселей — футер «танцевал». Первая
-колонка забирает всю свободную ширину, последние две стоят на месте. */}
+            колонка забирает всю свободную ширину, последние две стоят на месте. */}
         <footer className="mt-7 grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>Локально · SQLite · IPC: {status} · запись в историю только при изменении цены</span>
           <span className="whitespace-nowrap tabular-nums">
@@ -1640,8 +2143,3 @@ onClick={() => {
     </div>
   );
 }
-
-
-
-
-

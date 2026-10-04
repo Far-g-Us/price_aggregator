@@ -18,7 +18,8 @@ export interface JsonStore {
 /** То, что умеет только оболочка: версия, уведомление, внешняя ссылка. */
 export interface AppShell {
   version(): string;
-  notify(text: string): void;
+  /** `actionUrl` — куда открывать кликом по уведомлению (страница релиза). */
+  notify(text: string, actionUrl?: string): void;
   openExternal(url: string): Promise<void>;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "price-aggregator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Локальный агрегатор цен продуктовых магазинов (Пятёрочка / Магнит / Лента). Open source, для личного пользования.",
   "main": "dist-electron/electron/main.js",
   "type": "module",
@@ -18,7 +18,7 @@
     "test:matching": "npx tsx scripts/test-matching.ts",
     "test:db": "npx tsx scripts/test-db.ts",
     "test:scheduler": "npx tsx scripts/test-scheduler.ts",
-    "test": "npm run test:core --silent && npm run test:5ka --silent && npm run test:magnit --silent && npm run test:lenta --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:db --silent && npm run test:scheduler --silent",
+    "test": "npm run test:core --silent && npm run test:core-edges --silent && npm run test:5ka --silent && npm run test:5ka-http --silent && npm run test:magnit --silent && npm run test:magnit-http --silent && npm run test:lenta --silent && npm run test:lenta-http --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:release --silent && npm run test:external --silent && npm run test:db --silent && npm run test:db-open --silent && npm run test:services --silent && npm run test:services-degraded --silent && npm run test:browser --silent && npm run test:adapter-edges --silent && npm run test:scheduler --silent",
     "predev": "npm run version:sync",
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "dev:vite": "vite",
@@ -28,7 +28,7 @@
     "build": "npm run build:electron && vite build && npm run check:browser && npm run build:exe",
     "check:browser": "node scripts/check-browser-bundle.mjs",
     "build:exe": "node scripts/build-exe.mjs",
-    "release:win": "npm run build -- --win nsis --publish always",
+    "release:win": "npm run build -- --win nsis portable --publish always",
     "build:win": "npm run build -- --win nsis portable",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "lenta:regions": "node scripts/gen-lenta-regions.mjs",
@@ -36,7 +36,20 @@
     "lenta:poll": "npx tsx scripts/probe-lenta-poll.ts",
     "lenta:browser": "npx tsx scripts/probe-lenta-browser.mjs",
     "test:core": "npx tsx scripts/test-core.ts",
-    "test:icons": "npx tsx scripts/test-icons.ts"
+    "test:icons": "npx tsx scripts/test-icons.ts",
+    "test:release": "npx tsx scripts/test-release-check.ts",
+    "test:external": "npx tsx scripts/test-external-links.ts",
+    "test:coverage": "c8 --reporter=text --reporter=json --all --include src --exclude src/renderer --exclude src/core/db/schema.ts --exclude src/shared/lenta-regions.ts --exclude src/shared/api.ts --exclude src/shared/types.ts npm test",
+    "test:services": "npx tsx scripts/test-services.ts",
+    "test:services-degraded": "npx tsx scripts/test-services-degraded.ts",
+    "test:coverage:check": "c8 --reporter=text --reporter=json --all --include src --exclude src/renderer --exclude src/core/db/schema.ts --exclude src/shared/lenta-regions.ts --exclude src/shared/api.ts --exclude src/shared/types.ts --check-coverage --lines 100 --branches 100 --functions 100 --statements 100 npm test",
+    "test:lenta-http": "npx tsx scripts/test-lenta-http.ts",
+    "test:magnit-http": "npx tsx scripts/test-magnit-http.ts",
+    "test:5ka-http": "npx tsx scripts/test-5ka-http.ts",
+    "test:core-edges": "npx tsx scripts/test-core-edges.ts",
+    "test:browser": "npx tsx scripts/test-browser-transport.ts",
+    "test:adapter-edges": "npx tsx scripts/test-adapter-edges.ts",
+    "test:db-open": "npx tsx scripts/test-db-open-errors.ts"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -45,6 +58,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^6.1.1",
+    "c8": "^12.0.0",
     "concurrently": "^10.0.5",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
@@ -57,10 +71,10 @@
   "dependencies": {
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
+    "playwright": "^1.63.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "sql.js": "^1.14.2",
-    "playwright": "^1.63.0"
+    "sql.js": "^1.14.2"
   },
   "build": {
     "appId": "com.example.priceaggregator",
