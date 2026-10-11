@@ -6,6 +6,7 @@ import path from 'node:path';
 import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
 import {
   closeDb,
+  clearPollChecklist,
   getLastRun,
   getPriceHistory,
   isFavorite,
@@ -14,6 +15,8 @@ import {
   listFavorites,
   listFavoritesAll,
   listTrackedProducts,
+  loadPollChecklist,
+  markPollChecked,
   openDb,
   persistDb,
   removeFavorite,
@@ -709,6 +712,32 @@ assert.deepEqual(
   ],
   'без sku в ссылку падает id товара, без ссылки — null',
 );
+
+// --- Чек-лист цикла опроса --------------------------------------------------
+{
+  assert.deepEqual(loadPollChecklist(db, 'moscow'), new Set(), 'до первого прогона чек-лист пуст');
+  markPollChecked(db, 'moscow', 'magnit', 'magnit-1');
+  markPollChecked(db, 'moscow', 'magnit', 'magnit-2');
+  markPollChecked(db, 'moscow', 'lenta', 'lenta-9');
+  markPollChecked(db, 'ulyanovsk', 'magnit', 'magnit-uly');
+  // Повторная отметка того же товара: INSERT OR IGNORE, иначе UNIQUE роняет опрос.
+  markPollChecked(db, 'moscow', 'magnit', 'magnit-1');
+  const moscow = loadPollChecklist(db, 'moscow');
+  assert.equal(moscow.size, 3, 'повторная отметка не задваивает строку');
+  // Ключ пара «сеть+товар»: склейка была бы не выдумкой, а реальностью — id
+  // товара начинается с названия сети (`lenta-9` против сети `lenta`).
+  assert.ok(moscow.has(`magnit\u0000magnit-1`), 'товар Магнита отмечен');
+  assert.ok(moscow.has(`lenta\u0000lenta-9`), 'товар Ленты отмечен отдельно');
+  assert.equal(moscow.has(`magnit\u0000lenta-9`), false, 'товар одной сети не склеивается с id другой');
+  // Город в ключе: чужой город не подмешивается.
+  assert.equal(loadPollChecklist(db, 'ulyanovsk').size, 1, 'чек-лист пер-городный');
+  clearPollChecklist(db, 'moscow');
+  assert.equal(loadPollChecklist(db, 'moscow').size, 0, 'очистка цикла работает');
+  assert.equal(loadPollChecklist(db, 'ulyanovsk').size, 1, 'очистка одного города не трогает другой');
+  // Несуществующий город — пустой список, а не исключение: город из интерфейса
+  // может не совпасть с сидом (см. комментарий у saveLastRun).
+  assert.deepEqual(loadPollChecklist(db, 'atlantis'), new Set(), 'неизвестный город — пусто');
+}
 
 persistDb(db);
 assert.ok(fs.existsSync(file), 'db file persisted');

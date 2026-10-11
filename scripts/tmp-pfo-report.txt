@@ -1,0 +1,61 @@
+всего точек в списке: 480
+уникальных доменов: 240
+
+--- совпадения по нашим городам ---
+moscow: НЕТ
+saint_petersburg: НЕТ
+perm: 12
+   perm-vas.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Василия Васильева, д 37
+   perm-hasana.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Героев Хасана, д 50
+   perm-kim.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул КИМ, д 75
+   perm.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Магистральная, д 89
+   perm-marsh.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Маршрутная, д 9
+   perm-men.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Менжинского, д 54 к 1
+   perm-nwegayv.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Ново-Гайвинская, д 44
+   perm-ryazan.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Рязанская, стр 105б к 2
+   perm-tramv.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Трамвайная, д 33 к 6
+   perm-yursha.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул Юрша, д 1в
+   perm-avt.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, ул. Автозаводская, д.23Ж
+   perm-kosm.svetoforpfo.ru  |  Магазин СВЕТОФОР город Пермь, шоссе Космонавтов, зд 90а
+ulyanovsk: 13
+   vereschagino2.svetoforpfo.ru  |  Магазин СВЕТОФОР город Верещагино, ул Ульяновская, д 146
+   dimgr.svetoforpfo.ru  |  Магазин СВЕТОФОР город Димитровград, пр-кт Димитрова 1Б
+   dimgr-svirskay.svetoforpfo.ru  |  Магазин СВЕТОФОР город Димитровград, ул Свирская, д 36
+   dimgr-kuy.svetoforpfo.ru  |  Магазин СВЕТОФОР город Димитровград, ул.Куйбышева,д.34
+   newuly.svetoforpfo.ru  |  Магазин СВЕТОФОР город Новоульяновск, Промышленный проезд, д 6
+   uly-dim.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, Димитровградское шоссе 8
+   uly-msk17.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, Московское шоссе, д 17
+   uly-msk.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, Московское шоссе, д 34
+   uly-antonova.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, пр-кт Антонова, д.18
+   uly-gaya.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, пр-т Гая д 69Л
+   uly-marata.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, ул Марата, д 45
+   uly-simb.svetoforpfo.ru  |  Магазин СВЕТОФОР город Ульяновск, ул Симбирская, д 47А
+kazan: 8
+   kazan-mir.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, пер Мира, д 3/1
+   kazan-bir.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, пос. Юдино, ул Бирюзовая, зд 38
+   kazan-bel69.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Беломорская, д 69А
+   kazan-vas.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Васильченко, зд 20В
+   kazan-lipatova.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Липатова, д 4 к 2
+   kazan-rod.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Родины, д 33Ак1
+   kazan-tul.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Тульская, д 54
+   kazan-tec.svetoforpfo.ru  |  Магазин СВЕТОФОР город Казань, ул Тэцевская, зд 175 к 1
+nizhniy_novgorod: 7
+   nn-gagarina.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, пр-кт Гагарина, д 29
+   nn-geologov.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул Геологов, д 2Б
+   nn-gor.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул Гороховецкая, д 1В
+   nn-shmidta.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул Лейтенанта Шмидта, д 1Ак1
+   nn-hizhpech.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул Нижне-Печерская, д 18
+   nn-sputnika.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул Спутника, д 11/1
+   nn-zayceva.svetoforpfo.ru  |  Магазин СВЕТОФОР город Нижний Новгород, ул. Зайцева, 31А,
+chelyabinsk: НЕТ
+ekaterinburg: НЕТ
+novosibirsk: НЕТ
+omsk: НЕТ
+krasnoyarsk: НЕТ
+irkutsk: НЕТ
+barnaul: НЕТ
+kemerovo: НЕТ
+krasnodar: НЕТ
+
+--- сколько всего точек у доменов pfo ---
+480

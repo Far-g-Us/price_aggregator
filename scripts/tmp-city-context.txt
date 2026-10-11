@@ -1,0 +1,43 @@
+=== Ульянов (вхождение 1) ===
+домены рядом: —
+tyle=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//vereschagino.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Верещагино, Очерский тракт, д 10</a></small></td><td><input onclick=document.location='//vereschagino.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td><td style=width:20p
+
+=== Ульянов (вхождение 2) ===
+домены рядом: —
+товская область <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=52;showmapdialog();">Показать регион на карте <i class="fa fa-map-marker" aria-hidden="true"></i></div></td></tr><tr><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:yellow; colspan=3>Удмуртская Республика <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=56;showmapdialog();">Показать регион 
+
+=== Ульянов (вхождение 3) ===
+домены рядом: —
+ style=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//newuly.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Новоульяновск, Промышленный проезд, д 6 </a></small></td><td><input onclick=document.location='//newuly.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></t
+
+=== Перм (вхождение 1) ===
+домены рядом: —
+tion='//zasechny.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//bogoslovka.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР село Богословка, Фабричная ул., зд. 38</a></small></td><td><input onclick=document.location='//bogoslovka.svetoforpfo.ru' type="button
+
+=== Перм (вхождение 2) ===
+домены рядом: —
+;"></td></tr><tr style=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//ochyor.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Очёр, ул.Урицкого, д.33</a></small></td><td><input onclick=document.location='//ochyor.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td
+
+=== Перм (вхождение 3) ===
+домены рядом: —
+style=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//perm-vas.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Пермь, ул Василия Васильева, д 37</a></small></td><td><input onclick=document.location='//perm-vas.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td><t
+
+=== Иркутск (вхождение 1) ===
+домены рядом: —
+ский федеральный округ <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=60;showmapdialog();">Показать регион на карте <i class="fa fa-map-marker" aria-hidden="true"></i></div></td></tr><tr><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:yellow; colspan=3>Алтайский край <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=81;showmapdialog();">Показать регион 
+
+=== Омск (вхождение 1) ===
+домены рядом: —
+асноярский край <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=84;showmapdialog();">Показать регион на карте <i class="fa fa-map-marker" aria-hidden="true"></i></div></td></tr><tr><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:yellow; colspan=3>Новосибирская область <div style="float:right;cursor:pointer;text-decoration:underline;" onclick="geomapStartRegion=85;showmapdialog();">Показать регион 
+
+=== Нижний Новгород (вхождение 1) ===
+домены рядом: —
+tr><tr style=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//lyskovo.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Лысково, ул Мичурина, д 56А </a></small></td><td><input onclick=document.location='//lyskovo.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td><t
+
+=== Нижний Новгород (вхождение 2) ===
+домены рядом: —
+t:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//nn-gagarina.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Нижний Новгород, пр-кт Гагарина, д 29 </a></small></td><td><input onclick=document.location='//nn-gagarina.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></td><t
+
+=== Нижний Новгород (вхождение 3) ===
+домены рядом: —
+yle=height:40px;><td style=width:20px;></td><td style=width:20px;></td><td style=width:20px;></td><td style=background:#eeeeee;text-align:right; colspan=2><small><a href=//nn-geologov.svetoforpfo.ru style='font-size:14px;'>Магазин СВЕТОФОР город Нижний Новгород, ул Геологов, д 2Б</a></small></td><td><input onclick=document.location='//nn-geologov.svetoforpfo.ru' type="button" value="Выбрать магазин" class="button" style="margin:0px auto;"></td></tr><tr style=height:40px;><td style=width:20px;></

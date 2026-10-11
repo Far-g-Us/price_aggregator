@@ -17,6 +17,7 @@ import { closeDb, openDb, saveFavorite, saveNotifiedPrices, setProductShelves } 
 import { createCore } from '../src/core/services.js';
 import { fileStorageAt } from '../electron/node-files.js';
 import type { AppStorage } from '../src/core/platform.js';
+// Тест открывает битую базу и нечитаемое хранилище: приложение об этом кричит,
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pa-open-'));
 

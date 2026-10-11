@@ -1,0 +1,8 @@
+https://uly-msk.svetoforpfo.ru → TypeError за 10722 мс: TypeError: fetch failed
+http://uly-msk.svetoforpfo.ru → 200 за 192 мс, shopid=нет, title="Р”РѕРјРµРЅ svetoforpfo.ru", байт 8740
+https://svetoforpfo.ru → TypeError за 10462 мс: TypeError: fetch failed
+http://svetoforpfo.ru → 200 за 181 мс, shopid=нет, title="Р”РѕРјРµРЅ svetoforpfo.ru", байт 8740
+https://www.svetoforpfo.ru → TypeError за 10461 мс: TypeError: fetch failed
+http://www.svetoforpfo.ru → 200 за 1243 мс, shopid=нет, title="Р”РѕРјРµРЅ svetoforpfo.ru", байт 8740
+https://uly-msk.svetoforonline.ru → 301 за 328 мс, shopid=нет, title="", байт 0
+http://uly-msk.svetoforonline.ru → 301 за 141 мс, shopid=нет, title="", байт 0

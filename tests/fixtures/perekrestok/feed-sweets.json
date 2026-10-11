@@ -1,0 +1,890 @@
+{
+  "content": {
+    "items": [
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 431571,
+        "masterData": {
+          "slug": "batoncik-raw-to-go-sokoladnye-palocki-45g",
+          "plu": "4354935",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 45,
+          "volume": null,
+          "ui4code": "FR1705003",
+          "taxGroup": "HB",
+          "ownProduction": true,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Батончик Raw To Go Шоколадные Палочки, 45г",
+        "primaryCategory": {
+          "id": 432,
+          "title": "Здоровый перекус",
+          "slug": "zdorovyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 253,
+          "title": "Полезный перекус",
+          "slug": "poleznyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2882819,
+          "originName": "remote_upl_6928a0788f1143.62522560",
+          "fileType": "image",
+          "fileSize": 62410,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/22/47/e5c0c7bda41915aafa18dde804c8.jpg",
+          "publicUrl": null,
+          "uuid": "715b43b3-ecad-4ae8-a281-e385454c6c2b"
+        },
+        "rating": 485,
+        "medianPrice": 15899,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 86,
+        "ratingCount": 607,
+        "priceTag": {
+          "price": 15899,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 493667,
+        "masterData": {
+          "slug": "blinciki-s-bananom-i-sokoladno-orehovoj-pastoj-perekrestok-select-160g",
+          "plu": "4445448",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 160,
+          "volume": null,
+          "ui4code": "FR0205003",
+          "taxGroup": "HB",
+          "ownProduction": true,
+          "privateLabel": true,
+          "isMark": false,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Блинчики с бананом и шоколадно-ореховой пастой Перекрёсток Select, 160г",
+        "primaryCategory": {
+          "id": 1619,
+          "title": "Вся готовая еда",
+          "slug": "vsa-gotovaa-eda",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": null,
+        "image": {
+          "id": 3093229,
+          "originName": "remote_upl_698b48774923b6.78862150",
+          "fileType": "image",
+          "fileSize": 73427,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/e7/fe/50d8dabce97543a39f2d1fbb5f89.jpg",
+          "publicUrl": null,
+          "uuid": "5260589b-e1da-46a6-81db-5fa206f7fabf"
+        },
+        "rating": 492,
+        "medianPrice": 24999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 47,
+        "ratingCount": 348,
+        "priceTag": {
+          "price": 24999,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 398596,
+        "masterData": {
+          "slug": "sokolad-snaq-fabriq-molocnyj-so-slivocnoj-nacinkoj-34g",
+          "plu": "4287178",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 34,
+          "volume": null,
+          "ui4code": "FD0611001",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Шоколад Snaq Fabriq молочный со сливочной начинкой, 34г",
+        "primaryCategory": {
+          "id": 433,
+          "title": "Полезные сладости",
+          "slug": "poleznye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 255,
+          "title": "Правильные сладости",
+          "slug": "pravilnye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2559967,
+          "originName": "remote_upl_68dc6121a03d51.98880124",
+          "fileType": "image",
+          "fileSize": 36344,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/fa/e7/4bd0fe7fcba2138aeaed29d66b82.jpg",
+          "publicUrl": null,
+          "uuid": "23a2f4c9-15b4-4a47-9365-4997ea0b5f4f"
+        },
+        "rating": 490,
+        "medianPrice": 5999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 546,
+        "ratingCount": 6151,
+        "priceTag": {
+          "price": 6399,
+          "discountMinimumAmount": 0,
+          "grossPrice": 9799,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-34%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 427284,
+        "masterData": {
+          "slug": "sokolad-alpen-gold-dva-sokolada-80g",
+          "plu": "4329952",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 80,
+          "volume": null,
+          "ui4code": "FD0611002",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Шоколад Alpen Gold Два шоколада 80г",
+        "primaryCategory": {
+          "id": 402,
+          "title": "Шоколад, конфеты",
+          "slug": "sokolad-konfety",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 195,
+          "title": "Шоколад",
+          "slug": "sokolad",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 7608402,
+          "originName": "remote_upl_6a9ed1a08c6f67.08038729",
+          "fileType": "image",
+          "fileSize": 59139,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/a2/f0/a84ab208a4abc349d1398e4e3d81.jpg",
+          "publicUrl": null,
+          "uuid": "ca2d29a0-4725-4298-ae5b-44a68faa7ce6"
+        },
+        "rating": 489,
+        "medianPrice": 17998,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 131,
+        "ratingCount": 2216,
+        "priceTag": {
+          "price": 17998,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [
+            {
+              "type": "red",
+              "text": "2 по цене 1-го"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 391498,
+        "masterData": {
+          "slug": "batoncik-nut-go-mindalno-arahisovyj-s-arahisovoj-pastoj-36g",
+          "plu": "4279290",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 36,
+          "volume": null,
+          "ui4code": "FD0611001",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Батончик Nut&Go миндально-арахисовый с арахисовой пастой, 36г",
+        "primaryCategory": {
+          "id": 433,
+          "title": "Полезные сладости",
+          "slug": "poleznye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 255,
+          "title": "Правильные сладости",
+          "slug": "pravilnye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2673640,
+          "originName": "remote_upl_68f880fd6b3942.83274902",
+          "fileType": "image",
+          "fileSize": 40057,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/5b/b4/76b327a7d053446b662570eb7716.jpg",
+          "publicUrl": null,
+          "uuid": "4a1c8c5c-b062-46e1-bbdc-665cf956d897"
+        },
+        "rating": 496,
+        "medianPrice": 4499,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 325,
+        "ratingCount": 4010,
+        "priceTag": {
+          "price": 4499,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 431572,
+        "masterData": {
+          "slug": "batoncik-raw-to-go-sokoladnyj-s-vanilnoj-nugoj-45g",
+          "plu": "4354936",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 45,
+          "volume": null,
+          "ui4code": "FR1705003",
+          "taxGroup": "HB",
+          "ownProduction": true,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Батончик Raw To Go шоколадный с ванильной нугой, 45г",
+        "primaryCategory": {
+          "id": 432,
+          "title": "Здоровый перекус",
+          "slug": "zdorovyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 253,
+          "title": "Полезный перекус",
+          "slug": "poleznyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2557914,
+          "originName": "remote_upl_68dc60fb1c5e25.38324962",
+          "fileType": "image",
+          "fileSize": 57593,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/0e/c7/e7781e5ca3a40775b04a9ee52a73.jpg",
+          "publicUrl": null,
+          "uuid": "f9bbe2eb-1879-4d42-ad81-165837f2693f"
+        },
+        "rating": 483,
+        "medianPrice": 15900,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 67,
+        "ratingCount": 413,
+        "priceTag": {
+          "price": 15900,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 431569,
+        "masterData": {
+          "slug": "batoncik-raw-to-go-sokoladnyj-kesu-visna-45g",
+          "plu": "4354658",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 45,
+          "volume": null,
+          "ui4code": "FR1705003",
+          "taxGroup": "HB",
+          "ownProduction": true,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Батончик Raw To Go шоколадный кешью-вишня, 45г",
+        "primaryCategory": {
+          "id": 432,
+          "title": "Здоровый перекус",
+          "slug": "zdorovyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 253,
+          "title": "Полезный перекус",
+          "slug": "poleznyj-perekus",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2563909,
+          "originName": "remote_upl_68dc7d1a239310.37418941",
+          "fileType": "image",
+          "fileSize": 67216,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/4e/61/82bebafd8acf9f2c453288e45422.jpg",
+          "publicUrl": null,
+          "uuid": "d26e711e-a62e-4513-a053-2b3a97ffd587"
+        },
+        "rating": 479,
+        "medianPrice": 15900,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 56,
+        "ratingCount": 457,
+        "priceTag": {
+          "price": 15900,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 445210,
+        "masterData": {
+          "slug": "sokolad-alenka-molocnyj-75g",
+          "plu": "4371953",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 75,
+          "volume": null,
+          "ui4code": "FD0611002",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Шоколад Алёнка Молочный, 75г",
+        "primaryCategory": {
+          "id": 402,
+          "title": "Шоколад, конфеты",
+          "slug": "sokolad-konfety",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 195,
+          "title": "Шоколад",
+          "slug": "sokolad",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2565644,
+          "originName": "remote_upl_68dc7d1e0d7be7.66504297",
+          "fileType": "image",
+          "fileSize": 76875,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/64/3a/6540e7b81acc7646bc682a5b5ca8.jpg",
+          "publicUrl": null,
+          "uuid": "2f4ac408-9d05-4303-a48e-3cf6b50b547f"
+        },
+        "rating": 490,
+        "medianPrice": 9999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 155,
+        "ratingCount": 2773,
+        "priceTag": {
+          "price": 9999,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 398597,
+        "masterData": {
+          "slug": "sokolad-snaq-fabriq-molocnyj-sokolad-s-molocno-orehovoj-pastoj-55g",
+          "plu": "4287180",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 55,
+          "volume": null,
+          "ui4code": "FD0611002",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Шоколад Snaq Fabriq молочный шоколад с молочно-ореховой пастой, 55г",
+        "primaryCategory": {
+          "id": 433,
+          "title": "Полезные сладости",
+          "slug": "poleznye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 1676,
+          "title": "Функциональные продукты",
+          "slug": "funkcionalnye-produkty",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2654642,
+          "originName": "remote_upl_68f31ed9254b17.89690373",
+          "fileType": "image",
+          "fileSize": 54309,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/36/d6/e4a0817b5d1bd3f86ebcdfc7a220.jpg",
+          "publicUrl": null,
+          "uuid": "be3e4ccb-6d5b-4a33-a7f1-a41a151e51de"
+        },
+        "rating": 490,
+        "medianPrice": 9999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 405,
+        "ratingCount": 4735,
+        "priceTag": {
+          "price": 10699,
+          "discountMinimumAmount": 0,
+          "grossPrice": 14499,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-26%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 398598,
+        "masterData": {
+          "slug": "sokolad-snaq-fabriq-molocnyj-s-sokoladno-orehovoj-pastoj-55g",
+          "plu": "4287181",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 55,
+          "volume": null,
+          "ui4code": "FD0611002",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": false,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Шоколад Snaq Fabriq молочный с шоколадно-ореховой пастой, 55г",
+        "primaryCategory": {
+          "id": 433,
+          "title": "Полезные сладости",
+          "slug": "poleznye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 1676,
+          "title": "Функциональные продукты",
+          "slug": "funkcionalnye-produkty",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2599354,
+          "originName": "remote_upl_68e4ba7d244287.42458094",
+          "fileType": "image",
+          "fileSize": 54054,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/c4/51/54f171a6db62c0e92a0f091088f3.jpg",
+          "publicUrl": null,
+          "uuid": "ebde4adb-d6fe-46c0-91fe-2193dc4985ec"
+        },
+        "rating": 489,
+        "medianPrice": 9999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 245,
+        "ratingCount": 2843,
+        "priceTag": {
+          "price": 10699,
+          "discountMinimumAmount": 0,
+          "grossPrice": 18499,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-42%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      }
+    ],
+    "paginator": {
+      "step": 10,
+      "current": 1,
+      "nextPageExists": true
+    },
+    "currentSorting": {
+      "orderBy": "relevance",
+      "orderDirection": "desc"
+    },
+    "canonical": false,
+    "orderByInfoItems": [
+      {
+        "orderBy": "relevance",
+        "orderDirection": "desc",
+        "orderByTitle": "По совпадению",
+        "isSelected": true
+      },
+      {
+        "orderBy": "price",
+        "orderDirection": "asc",
+        "orderByTitle": "Сначала дешевле",
+        "isSelected": false
+      },
+      {
+        "orderBy": "price",
+        "orderDirection": "desc",
+        "orderByTitle": "Сначала дороже",
+        "isSelected": false
+      },
+      {
+        "orderBy": "discount",
+        "orderDirection": "desc",
+        "orderByTitle": "По размеру скидки",
+        "isSelected": false
+      },
+      {
+        "orderBy": "rating",
+        "orderDirection": "desc",
+        "orderByTitle": "По рейтингу",
+        "isSelected": false
+      }
+    ],
+    "searchQueryId": null,
+    "searchType": "strict",
+    "catalogs": null,
+    "sapId": "2053"
+  }
+}

@@ -22,13 +22,16 @@ const api: RendererApi = {
   getHistory: (args: { canonicalId: string; storeId: string; city: string }) =>
     ipcRenderer.invoke('history:get', args),
   getSchedulerStatus: () => ipcRenderer.invoke('scheduler:status'),
-  runScheduler: (args?: { city?: string }) => ipcRenderer.invoke('scheduler:run', args),
+  cancelScheduler: () => ipcRenderer.invoke('scheduler:cancel'),
+  runScheduler: (args?: { city?: string; storeIds?: string[] }) => ipcRenderer.invoke('scheduler:run', args),
   setCurrentCity: (city: string) => ipcRenderer.invoke('city:set', { city }),
-  onSchedulerProgress: (cb: (done: number, total: number) => void) => {
+  setCurrentStores: (city: string, storeIds: string[] | null) =>
+    ipcRenderer.invoke('stores:set', { city, storeIds }),
+onSchedulerProgress: (cb: (done: number, total: number, storeId?: string) => void) => {
     const h = (_e: unknown, v: unknown) => {
-      const o = v as { done: unknown; total: unknown };
+      const o = v as { done: unknown; total: unknown; storeId?: unknown };
       if (typeof o.done !== 'number' || typeof o.total !== 'number') return;
-      cb(o.done, o.total);
+      cb(o.done, o.total, typeof o.storeId === 'string' ? o.storeId : undefined);
     };
     ipcRenderer.on('scheduler:progress', h);
     return () => {

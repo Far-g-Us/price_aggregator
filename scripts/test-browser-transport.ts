@@ -1386,6 +1386,40 @@ const withCardDom = (): void => {
   dropDocument();
 }
 
+// ─── Гонка сборки сессии с закрытием ────────────────────────────────────────
+// close5kaBrowser зовётся теперь после КАЖДОГО прогона, а сборка сессии идёт
+// 10–30 с. Без сверки эпох сборка дописывала session ПОСЛЕ обнуления: Firefox
+// оставался живым без ссылки и без close до выхода из приложения — ровно те
+// «лишние процессы», которые мы убираем. Здесь close приходит, пока сборка ещё
+// идёт: сессия обязана закрыться сама, а вызывающий — получить честный отказ.
+{
+  const plu = 4439523;
+  const product = searchFixture.products.find((p) => Number(p.plu) === plu)!;
+  const next = JSON.stringify({
+    props: { pageProps: { props: { productStore: JSON.stringify({ product }) } } },
+    store: { sapCode: '35XY' },
+  });
+  const h = install([{ url: CATALOG('35XY', 'categories'), body: [] }], { cookie: '35XY' });
+  setNextData(next);
+  const pending = browserFetchProduct(String(plu), ctx);
+  // close уходит, пока сборка висе��и на await — без await перед ним.
+  await close5kaBrowser();
+  await assert.rejects(
+    pending,
+    /собрана после закрытия/,
+    'сессия, собранная после close, не отдаётся наружу',
+  );
+  assert.ok(
+    h.browser.closed + h.context.closed >= 1,
+    `собранный Firefox закрыт (browser=${h.browser.closed}, context=${h.context.closed})`,
+  );
+  // Следующий запрос обязан поднять свежую сессию, а не отдавать мёртвую.
+  const again = await browserFetchProduct(String(plu), ctx);
+  assert.equal(again.canonicalId, `5ka-${plu}`, 'после close сеть поднимается заново');
+  await close5kaBrowser();
+  dropDocument();
+}
+
 __setPlaywrightForTests(null);
 console.warn = realWarn;
 globalThis.fetch = realFetch;

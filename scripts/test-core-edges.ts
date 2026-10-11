@@ -17,6 +17,7 @@ import { OUR_CATEGORIES } from '../src/shared/taxonomy.js';
 import { CITY_STORES } from '../src/shared/catalog.js';
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../src/shared/types.js';
 import type { CoreDeps } from '../src/core/platform.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 type SearchCtx = Parameters<StoreAdapter['search']>[1];
 type ProductCtx = Parameters<StoreAdapter['fetchProduct']>[1];

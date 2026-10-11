@@ -9,6 +9,8 @@
 // пробой.
 import assert from 'node:assert';
 import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   cardsToProducts,
   goodsToProducts,
@@ -20,11 +22,14 @@ import {
   parseMagnitPrice,
 } from '../src/core/adapters/magnit.js';
 import { __setPlaywrightForTests } from '../src/core/adapters/playwright-port.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 const html = (name: string): string => fs.readFileSync(`tests/fixtures/${name}`, 'utf8');
 const json = (name: string): unknown => JSON.parse(fs.readFileSync(`tests/fixtures/${name}`, 'utf8'));
 
 const SHOP = '473996';
+/** Магазин, под которым снята живая фикстура главной (tests/fixtures/magnit-home.html). */
+const LIVE_HOME_SHOP = '992301';
 const CTX = { city: 'moscow', externalStoreId: SHOP };
 
 type Reply = { status?: number; body?: string; url?: string };
@@ -138,12 +143,21 @@ const adapter = new MagnitAdapter();
 // --- 8. Каталог магазина: витрина приехала. --------------------------------
 {
   seen.length = 0;
-  reply = { body: html('magnit-categories.html') };
-  const categories = await adapter.fetchCategories(CTX);
+  // Живой ответ главной: снят 2026-10-08, плитки пришли обычными <a> в HTML.
+  // Прежняя фикстура лежала в формате `__NUXT_DATA__` со ссылками `/catalog/…`,
+  // которого в живом ответе больше нет (0 вхождений), поэтому она удалена.
+  const home = readFileSync(resolve(import.meta.dirname, '../tests/fixtures/magnit-home.html'), 'utf8');
+  const liveShop = /shopCode=(\d+)/.exec(home)?.[1] ?? '';
+  reply = { body: home };
+  const categories = await adapter.fetchCategories({ city: 'moscow', externalStoreId: liveShop });
   assert.ok(categories.length > 0, 'каталог непустой');
   assert.ok(
     categories.every((c) => c.url.startsWith('https://magnit.ru/catalog/')),
     'ссылки каталога чистые, без утечки query',
+  );
+  assert.ok(
+    categories.every((c) => /^\d+$/.test(c.id)),
+    'id числовой, как в живых ссылках',
   );
   assert.match(seen[0]?.headers.Cookie ?? '', /shopCode/, 'каталог тоже за своим магазином');
 }
@@ -278,51 +292,129 @@ const adapter = new MagnitAdapter();
   assert.equal(fromNuxt[0]?.oldPrice, 70, 'старая цена из __NUXT_DATA__');
 }
 
-// --- 12. Каталог: NUXT без категорий, битый JSON-LD, дубли, потолок. -------
+// --- 12. Категории: разбор живой плитки, дрейф вёрстки, дубли, потолок. ----
 {
-  // Код магазина обязан быть ВНУТРИ __NUXT_DATA__: сверка идёт по нему, а не по
-  // ссылкам страницы, иначе чужой ответ со ссылкой в меню прошёл бы как свой.
-  const own = (script: string): string =>
-    `<html><body><a href="/catalog/?shopCode=${SHOP}">витрина</a><script id="__NUXT_DATA__" type="application/json">shopCode=${SHOP}&${script}</script></body></html>`;
-
-  // Ответ без __NUXT_DATA__: сверяться не с чем, и код не выдумывает вины —
-  // говорит, что это не наш магазин.
-  reply = { body: `<html><body><a href="/catalog/?shopCode=${SHOP}">витрина</a></body></html>` };
+  // Ответ из другого магазина: сверка идёт по shopCode в теле ответа, иначе
+  // чужой магазин прошёл бы как свой.
+  reply = { body: '<html><body><a href="https://magnit.ru/catalog/1">x</a></body></html>' };
   await assert.rejects(
     () => adapter.fetchCategories(CTX),
     /нет shopCode/,
-    'каталог без данных NUXT не проходит сверку магазина',
+    'ответ без shopCode не проходит сверку магазина',
   );
 
-  // Данные на месте и магазин наш, а категорий в них нет — это дрейф вёрстки,
-  // и сказать об этом нужно прямо, а не молча вернуть пустой каталог.
-  reply = { body: own('{"version":"x"}') };
+  // Свой магазин, а плиток нет — дрейф вёрстки, и сказать надо прямо, а не
+  // молча вернуть пустой каталог.
+  reply = {
+    body: `<html><body><a href="/catalog/?shopCode=${SHOP}&shopType=express">витрина</a>` +
+      `<script id="__NUXT_DATA__" type="application/json">{"shop":"shopCode=${SHOP}"}</script></body></html>`,
+  };
   await assert.rejects(
     () => adapter.fetchCategories(CTX),
     /категории не найдены/,
-    'наш магазин без категорий — дрейф вёрстки, а не пустой магазин',
+    'наш магазин без плиток — дрейф вёрстки, а не пустой магазин',
   );
 
-  // Категория без ссылки на каталог и дубликат по id: остаются только
-  // пригодные и уникальные.
-  const cats = parseMagnitCategories(
-    own(
-      `"g1","11","Молоко","testmm_1","https://img/a.png","/catalog/11-moloko/","g1","12","Молоко","testmm_1","https://img/a.png","/catalog/12-dubly/","g3","13","Хлеб","testmm_3","data:image/png;base64,AAA","/catalog/13-hleb/","g4","14","Сыр","testmm_4","https://img/d.png",""` +
-        Array.from({ length: 45 }, (_, i) => `"g5${i}","${i}","Кат${i}","testmm_5${i}","https://img/x.png","/catalog/${i}-kat-${i}/"`).join(','),
-    ),
+  // Живой ответ главной (tests/fixtures/magnit-home.html, снят 2026-10-08):
+  // плитки приходят обычными <a> в HTML, id числовой, название в alt.
+  const home = readFileSync(resolve(import.meta.dirname, '../tests/fixtures/magnit-home.html'), 'utf8');
+  const liveShop = /shopCode=(\d+)/.exec(home)?.[1] ?? '';
+  assert.ok(liveShop !== '', 'в фикстуре главной есть shopCode');
+  const cats = parseMagnitCategories(home, liveShop);
+  assert.equal(cats.length, 8, `витрина главной: ${cats.length} верхнеуровневых плиток`);
+  assert.deepEqual(
+    cats.map((c) => c.name),
+    ['Скидки', 'Бакалея', 'Молочное', 'Алкоголь', 'Птица, мясо', 'Сыры', 'Сладкое', 'Чай, кофе'],
+    'названия плиток разобраны по alt',
+  );
+  assert.equal(cats[1]?.id, '64121', 'id — число из ссылки');
+  assert.equal(cats[1]?.url, 'https://magnit.ru/catalog/64121', 'ссылка собрана');
+  assert.ok((cats[1]?.imageUrl ?? '').startsWith('https://'), 'картинка плитки подхвачена');
+  assert.ok(
+    cats.every((c) => c.imageUrl === undefined || !c.imageUrl.startsWith('data:')),
+    'картинки data: в интерфейс не попадают',
+  );
+
+  // Плитка без картинки берёт название из текста подписи, data:-картинка
+  // отбрасывается, дубли по id не повторяются, потолок — 40.
+  const tile = (id: string, alt: string, span: string, img: string): string =>
+    `<a class="catalog-categories-tiles__item pl-hover-base" href="https://magnit.ru/catalog/${id}">` +
+    `<img src="${img}" alt="${alt}"><span class="pl-text catalog-categories-tiles__text">${span}</span></a>`;
+  const handcrafted = parseMagnitCategories(
+    `<html><body><a href="/catalog/?shopCode=${SHOP}&x=1">витрина</a>` +
+      tile('11', 'Молоко', 'Молоко', 'https://img/a.png') +
+      tile('11', 'Молоко дубль', 'Молоко дубль', 'https://img/a.png') +
+      tile('12', '', 'Хлеб без картинки', 'https://img/b.png') +
+      tile('13', 'Сыр data:', 'Сыр data', 'data:image/png;base64,AAA') +
+      tile('14', '   ', '   ', 'https://img/c.png') +
+      // Формы, которые сеть может отдать при смене вёрстки: плитка без картинки
+      // (название только в подписи, с SSR-комментариями), плитка без подписи,
+      // alt из одних пробелов, другой порядок атрибутов и относительная ссылка.
+      '<a href="https://magnit.ru/catalog/15" class="catalog-categories-tiles__item"><span class="pl-text catalog-categories-tiles__text" data-v-1><!--[-->Только подпись<!--]--></span></a>' +
+      '<a class="catalog-categories-tiles__item" href="https://magnit.ru/catalog/16"><img src="https://img/d.png" alt="Только alt"></a>' +
+      '<a class="catalog-categories-tiles__item" href="/catalog/17"><img src="https://img/e.png" alt="   "><span class="pl-text catalog-categories-tiles__text"><!--[-->Из пробелов в alt<!--]--></span></a>' +
+      // Незакрытая плитка не должна съесть следующую.
+      '<a class="catalog-categories-tiles__item" href="https://magnit.ru/catalog/18"><img src="https://img/f.png" alt="Незакрытая плитка">' +
+      tile('19', 'После незакрытой', 'После незакрытой', 'https://img/g.png') +
+      '<a class="catalog-categories-tiles__item" href="https://magnit.ru/promo-catalog">все</a>' +
+      Array.from(
+        { length: 45 },
+        (_, i) => tile(String(100 + i), `Кат${i}`, `Кат${i}`, 'https://img/x.png'),
+      ).join('') +
+      '</body></html>',
     SHOP,
   );
-  assert.equal(cats.length, 40, 'больше сорока категорий не разбираем: витрина не должна расти бесконечно');
+  assert.equal(handcrafted.length, 40, 'больше сорока категорий не разбираем');
   assert.deepEqual(
-    cats.map((c) => c.id),
-    [...new Set(cats.map((c) => c.id))],
+    handcrafted.map((c) => c.id),
+    [...new Set(handcrafted.map((c) => c.id))],
     'дубликаты категорий не повторяются',
   );
-  // id в интерфейсе — цифры из «g3», а не сама метка.
-  assert.equal(cats.some((c) => c.id === '3'), true, 'категория со ссылкой взята');
-  assert.equal(cats.find((c) => c.id === '3')?.imageUrl, undefined, 'картинка data: не попадает в интерфейс');
-  assert.equal(cats.find((c) => c.id === '1')?.url, 'https://magnit.ru/catalog/11-moloko/', 'ссылка категории собрана');
-  assert.equal(cats.some((c) => c.id === '4'), false, 'категория без ссылки отброшена');
+  assert.equal(handcrafted.find((c) => c.id === '11')?.name, 'Молоко', 'первый дубль победил');
+  assert.equal(handcrafted.find((c) => c.id === '12')?.name, 'Хлеб без картинки', 'название из подписи');
+  assert.equal(handcrafted.find((c) => c.id === '13')?.imageUrl, undefined, 'картинка data: не попадает');
+  assert.equal(
+    handcrafted.some((c) => c.id === '14'),
+    false,
+    'пустое имя и в alt, и в подписи — плитка отброшена',
+  );
+  assert.equal(
+    handcrafted.find((c) => c.id === '15')?.name,
+    'Только подпись',
+    'плитка без картинки берёт название из подписи, SSR-комментария не мешают',
+  );
+  assert.equal(
+    handcrafted.find((c) => c.id === '16')?.name,
+    'Только alt',
+    'плитка без подписи берёт название из alt',
+  );
+  assert.equal(
+    handcrafted.find((c) => c.id === '17')?.name,
+    'Из пробелов в alt',
+    'alt из одних пробелов не считается именем — берётся подпись',
+  );
+  assert.equal(handcrafted.find((c) => c.id === '18')?.name, 'Незакрытая плитка', 'незакрытая плитка разобрана');
+  assert.equal(
+    handcrafted.find((c) => c.id === '19')?.name,
+    'После незакрытой',
+    'незакрытая плитка не съела следующую',
+  );
+  assert.equal(handcrafted.some((c) => c.url.includes('promo-catalog')), false, 'плитка вне каталога не категория');
+
+  // Последняя плитка в документе: следующего `<a` за ней нет вовсе.
+  const lastTile = parseMagnitCategories(
+    `<html><body><a href="/catalog/?shopCode=${SHOP}&x=1">витрина</a>` +
+      tile('40', 'Самая последняя', 'Самая последняя', 'https://img/h.png') +
+      '<footer>Магнит</footer></body></html>',
+    SHOP,
+  );
+  assert.equal(lastTile.length, 1, 'плитка, за которой больше ничего нет, разобрана');
+  assert.equal(lastTile[0]?.name, 'Самая последняя', 'последняя плитка прочитана');
+
+  // Ответ магазина через настоящий fetch: плитки достаются из живой разметки.
+  reply = { body: home };
+  const viaHttp = await adapter.fetchCategories({ city: 'moscow', externalStoreId: liveShop });
+  assert.equal(viaHttp.length, cats.length, 'живой ответ разобран так же, как фикстура');
 
   // Карточка: JSON-LD есть, но товара в нём нет.
   reply = { body: productHtml([{ '@type': 'BreadcrumbList', itemListElement: [] }]) };

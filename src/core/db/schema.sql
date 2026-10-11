@@ -82,6 +82,27 @@ CREATE TABLE IF NOT EXISTS poll_meta (
 );
 CREATE INDEX IF NOT EXISTS idx_poll_meta_run ON poll_meta (last_run);
 
+-- Что уже проверено в ТЕКУЩЕМ цикле опроса города.
+--
+-- Зачем: без неё повторное нажатие «Опросить» снова шло по всем 137 товарам
+-- города, и товары с ошибками прошлого прогона терялись в общей очереди — их
+-- повторный опрос нельзя было ни увидеть, ни дождаться. С отметками повторный
+-- прогон берёт только то, что ещё не проверено (то есть новое и ошибочное), а
+-- полный проход без прерывания обнуляет список — и следующий прогон снова
+-- обходит всё.
+--
+-- БЕЗ внешних ключей — намеренно. При `PRAGMA foreign_keys = ON` ссылка на
+-- products превращала удаление товара в «FOREIGN KEY constraint failed», а
+-- openDatabase() глотает такую ошибку и отдаёт database: null: тихо умирают
+-- вся история цен, полки и избранное. Строка сироты безвредна — при удалении
+-- товара она просто больше не совпадёт ни с одной целью опроса.
+CREATE TABLE IF NOT EXISTS poll_checklist (
+  city TEXT NOT NULL,
+  store_id TEXT NOT NULL,
+  canonical_id TEXT NOT NULL,
+  PRIMARY KEY (city, store_id, canonical_id)
+);
+
 -- Ручное «это разные товары». Склейка по названию ошибается: у Магнита и
 -- Пятёрки нет общего штрих-кода, а Jaccard по названию не отличает «Сыр
 -- сливочный 200 г» от «Сыр сливочный 200 г в упаковке». Строка означает «эту
@@ -168,7 +189,22 @@ INSERT OR IGNORE INTO cities (id, name) VALUES
   ('kemerovo', 'Кемерово'),
   ('ulyanovsk', 'Ульяновск'),
   ('krasnodar', 'Краснодар'),
-  ('irkutsk', 'Иркутск');
+  ('irkutsk', 'Иркутск'),
+  ('ryazan', 'Рязань'),
+  ('tula', 'Тула'),
+  ('orel', 'Орёл'),
+  ('bryansk', 'Брянск'),
+  ('voronezh', 'Воронеж'),
+  ('lipetsk', 'Липецк'),
+  ('tambov', 'Тамбов'),
+  ('vladimir', 'Владимир'),
+  ('ivanovo', 'Иваново'),
+  ('kaluga', 'Калуга'),
+  ('smolensk', 'Смоленск'),
+  ('tver', 'Тверь'),
+  ('yaroslavl', 'Ярославль'),
+  ('kursk', 'Курск'),
+  ('belgorod', 'Белгород');
 INSERT INTO stores (id, city, external_store_id, name)
 VALUES
   ('pyaterochka', 'moscow', '35XY', 'Пятёрочка'),
@@ -207,7 +243,63 @@ VALUES
   ('magnit', 'krasnodar', '010033', 'Магнит'),
   ('lenta', 'krasnodar', '3208', 'Лента'),
   ('magnit', 'irkutsk', '540675', 'Магнит'),
-  ('lenta', 'irkutsk', '3621', 'Лента')
+  ('lenta', 'irkutsk', '3621', 'Лента'),
+  ('svetofor', 'moscow', '820', 'Светофор'),
+  ('svetofor', 'saint-petersburg', '206', 'Светофор'),
+  -- Чижик: коды точек из /api/v1/shops (2026-10-08). Сеть покрывает 11 городов из
+  -- 15 наших; Санкт-Петербурга, Красноярска, Омска и Иркутска в localities нет,
+  -- и пустая строка сломала бы инвариант «у каждой сети в городе есть магазин».
+  ('chizhik', 'moscow', 'HD87', 'Чижик'),
+  ('chizhik', 'ulyanovsk', 'HDOW', 'Чижик'),
+  ('chizhik', 'krasnodar', 'HDRA', 'Чижик'),
+  ('chizhik', 'novosibirsk', 'HDJ7', 'Чижик'),
+  ('chizhik', 'ekaterinburg', 'HD1W', 'Чижик'),
+  ('chizhik', 'kazan', 'HDFD', 'Чижик'),
+  ('chizhik', 'nizhny-novgorod', 'HD89', 'Чижик'),
+  ('chizhik', 'chelyabinsk', 'HD98', 'Чижик'),
+  ('chizhik', 'perm', 'HD0J', 'Чижик'),
+  ('chizhik', 'barnaul', 'HDJT', 'Чижик'),
+  ('chizhik', 'kemerovo', 'HDIG', 'Чижик'),
+  -- Перекрёсток: 2053 — код точки из `content.sapId` в ответе каталога для
+  -- Москвы по этому IP. Списка магазинов у сети в API нет (`/shop` → 400,
+  -- `/shop/list` → 404, проверено 2026-10-10), и переключения города тоже не
+  -- нашли: покрытие начинается с Москвы и расширяется только после того, как
+  -- найдётся способ выбрать город.
+  ('perekrestok', 'moscow', '2053', 'Перекрёсток'),
+  -- Светофор в пятнадцати городах, где других сетей нет. Коды — из живой
+  -- выгрузки сети (`api.php?mode=getShops`), у каждой точки самый свежий товар
+  -- датирован сегодняшним днём; протухшие точки (свежесть больше месяца) в
+  -- список не берут, иначе витрина показывала бы цены двухлетней давности.
+  ('svetofor', 'ryazan', '630', 'Светофор'),
+  ('svetofor', 'tula', '365', 'Светофор'),
+  ('svetofor', 'orel', '75', 'Светофор'),
+  ('svetofor', 'bryansk', '109', 'Светофор'),
+  ('svetofor', 'voronezh', '703', 'Светофор'),
+  ('svetofor', 'lipetsk', '120', 'Светофор'),
+  ('svetofor', 'tambov', '640', 'Светофор'),
+  ('svetofor', 'vladimir', '142', 'Светофор'),
+  ('svetofor', 'ivanovo', '757', 'Светофор'),
+  ('svetofor', 'kaluga', '713', 'Светофор'),
+  ('svetofor', 'smolensk', '255', 'Светофор'),
+  ('svetofor', 'tver', '274', 'Светофор'),
+  ('svetofor', 'yaroslavl', '9', 'Светофор'),
+  ('svetofor', 'kursk', '175', 'Светофор'),
+  ('svetofor', 'belgorod', '193', 'Светофор'),
+  -- Лента в тех же городах: коды из её справочника регионов, покрытие
+  -- подтверждено живым поиском 2026-11-11 (в Воронеже и Ярославле Ленты нет).
+  ('lenta', 'ryazan', '3237', 'Лента'),
+  ('lenta', 'tula', '3845', 'Лента'),
+  ('lenta', 'orel', '3271', 'Лента'),
+  ('lenta', 'bryansk', '3313', 'Лента'),
+  ('lenta', 'lipetsk', '3279', 'Лента'),
+  ('lenta', 'tambov', '5313', 'Лента'),
+  ('lenta', 'vladimir', '3216', 'Лента'),
+  ('lenta', 'ivanovo', '3269', 'Лента'),
+  ('lenta', 'kaluga', '3415', 'Лента'),
+  ('lenta', 'smolensk', '3315', 'Лента'),
+  ('lenta', 'tver', '3285', 'Лента'),
+  ('lenta', 'kursk', '3375', 'Лента'),
+  ('lenta', 'belgorod', '3253', 'Лента')
 ON CONFLICT(id, city) DO UPDATE SET
   external_store_id = excluded.external_store_id,
   name = excluded.name;

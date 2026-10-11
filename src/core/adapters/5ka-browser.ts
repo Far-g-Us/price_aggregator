@@ -120,6 +120,9 @@ interface Session {
 let session: Session | null = null;
 let sessionKey = '';
 let inFlight: Promise<Session> | null = null;
+// Счётчик закрытий: см. гонку в getSession. Растёт на каждом close5kaBrowser,
+// поэтому «сессия собрана после close» определяется простым сравнением.
+let epoch = 0;
 
 async function importPlaywright(): Promise<typeof import('playwright')> {
   const injected = injectedPlaywright();
@@ -226,6 +229,13 @@ async function getSession(sapCode: string): Promise<Session> {
     if (s.sapCode === sapCode) return s;
     await s.close();
   }
+  // Эпоха нужна для гонки с close: сборка сессии идёт 10–30 с, а close5kaBrowser
+  // теперь зовётся после каждого прогона. Без сверки сборка, начатая ДО close,
+  // дописывала `session = built` уже после обнуления — Firefox #1 оставался
+  // живым без ссылки и без close до выхода из приложения (те самые «лишние
+  // процессы»). Ниже, после await, эпоха сверяется: устаревшая сборка закрывается
+  // и выбрасывается, а вызывающий получает обычную ошибку сети и повторяет.
+  const myEpoch = epoch;
   const pending = (async () => {
     let last: Error = new Error(`5ka: сессия для ${sapCode} не построена`);
     for (let attempt = 1; attempt <= STORE_DETECT_ATTEMPTS; attempt += 1) {
@@ -245,6 +255,10 @@ async function getSession(sapCode: string): Promise<Session> {
   inFlight = pending;
   try {
     const built = await pending;
+    if (epoch !== myEpoch) {
+      await built.close().catch(() => {});
+      throw new Error('5ka: сессия собрана после закрытия браузера — нужен повтор');
+    }
     session = built;
     sessionKey = sapCode;
     return built;
@@ -322,10 +336,19 @@ export async function detectStore(
 }
 
 export async function close5kaBrowser(): Promise<void> {
-  await session?.close();
+  // Состояние обнуляется ДО закрытия и ошибка close глотается. Иначе упавший
+  // close оставил бы в кэше мёртвую сессию: getSession отдал бы её по
+  // совпадению sessionKey без проверки живости, и вся Пятёрка легла бы с
+  // «Target closed» до перезапуска приложения. Close зовётся теперь в горячем
+  // пути каждого прогона, а не только при выходе — цена ошибки другая.
+  const current = session;
+  // Эпоха растёт ДО обнуления состояния: сборка, висящая на await, после
+  // await увидит несовпадение и закроет свой Firefox сама.
+  epoch += 1;
   session = null;
   sessionKey = '';
   inFlight = null;
+  await current?.close().catch(() => {});
 }
 
 // Ответы по одному URL идут парами: сначала 307 с utm_referrer, потом 200.

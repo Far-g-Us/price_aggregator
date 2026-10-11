@@ -6,6 +6,7 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import { normalize, PyaterochkaAdapter } from '../src/core/adapters/pyaterochka.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 const json = (name: string): unknown => JSON.parse(fs.readFileSync(`tests/fixtures/${name}`, 'utf8'));
 const searchFixture = json('5ka-search.json') as { products: Record<string, unknown>[] };

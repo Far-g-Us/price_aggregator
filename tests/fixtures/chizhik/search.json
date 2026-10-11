@@ -1,0 +1,1372 @@
+{
+  "search_query_id": "3830ebc3-9caf-4dcb-8e88-8c59a80db29b",
+  "query_type": "strict",
+  "products": [
+    {
+      "plu": 4309774,
+      "name": "Молоко АМА МАМА для детей с 8 месяцев 3.2% 205мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1558110-main/320x320.jpeg?updated_at=2026-09-10T12:47:11.512Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1558110-main/800x800.jpeg?updated_at=2026-09-10T12:47:11.512Z",
+          "https://catalog-images.x5static.net/product/de475b50a3ef6f142b527f1c280a3b29-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/fd85be9dc94dd0c22ba99b1440330b82-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/2f2c4f4877b6760d43ff4ac835801ee7-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/4d7bb2fe0f7eb07ba9ba2c509fc5dca6-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/f15d616b9d8b927a7ff2a0ebea2957a1-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/3deaa1f9e5ccb43c7b8837153920597c-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 118
+      },
+      "promo": null,
+      "prices": {
+        "regular": "34.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "200 мл",
+      "has_age_restriction": false,
+      "stock_limit": "19.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1558110-main/320x320.jpeg?updated_at=2026-09-10T12:47:11.512Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1558110-main/800x800.jpeg?updated_at=2026-09-10T12:47:11.512Z",
+            "https://catalog-images.x5static.net/product/de475b50a3ef6f142b527f1c280a3b29-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/fd85be9dc94dd0c22ba99b1440330b82-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/2f2c4f4877b6760d43ff4ac835801ee7-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/4d7bb2fe0f7eb07ba9ba2c509fc5dca6-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/f15d616b9d8b927a7ff2a0ebea2957a1-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/3deaa1f9e5ccb43c7b8837153920597c-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 23,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 3956930,
+      "name": "Сметана Тульское молоко Тульская 15% БЗМЖ 180г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1824519-main/320x320.jpeg?updated_at=2026-07-23T15:41:42.771Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1824519-main/800x800.jpeg?updated_at=2026-07-23T15:41:42.771Z",
+          "https://catalog-images.x5static.net/product/2b304a90ffa0abcdb48fae3041fe8b3c-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/ccd096b3a426eaada6a364c5dcc6074a-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 173
+      },
+      "promo": null,
+      "prices": {
+        "regular": "49.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "180 г",
+      "has_age_restriction": false,
+      "stock_limit": "20.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1824519-main/320x320.jpeg?updated_at=2026-07-23T15:41:42.771Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1824519-main/800x800.jpeg?updated_at=2026-07-23T15:41:42.771Z",
+            "https://catalog-images.x5static.net/product/2b304a90ffa0abcdb48fae3041fe8b3c-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/ccd096b3a426eaada6a364c5dcc6074a-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 34,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4465327,
+      "name": "Молоко Вологодские молочные продукты сгущенное обезжиренное с сахаром БЗМЖ 270г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2188976-main/320x320.jpeg?updated_at=2026-09-15T11:29:19.714Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2188976-main/800x800.jpeg?updated_at=2026-09-15T11:29:19.714Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 9
+      },
+      "promo": null,
+      "prices": {
+        "regular": "69.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "270 г",
+      "has_age_restriction": false,
+      "stock_limit": "24.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2188976-main/320x320.jpeg?updated_at=2026-09-15T11:29:19.714Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2188976-main/800x800.jpeg?updated_at=2026-09-15T11:29:19.714Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 48,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4464793,
+      "name": "Молоко СВЕТАЕВО топленое 4,0% БЗМЖ 900мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2173456-main/320x320.jpeg?updated_at=2026-07-20T15:22:37.625Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2173456-main/800x800.jpeg?updated_at=2026-07-20T15:22:37.625Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 27
+      },
+      "promo": null,
+      "prices": {
+        "regular": "89.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "900 мл",
+      "has_age_restriction": false,
+      "stock_limit": "4.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2173456-main/320x320.jpeg?updated_at=2026-07-20T15:22:37.625Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2173456-main/800x800.jpeg?updated_at=2026-07-20T15:22:37.625Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 62,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4439302,
+      "name": "Молоко СВЕТАЕВО сгущенное с сахаром вареное 8,5% 360г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2159025-main/320x320.jpeg?updated_at=2026-05-25T14:37:40.438Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2159025-main/800x800.jpeg?updated_at=2026-05-25T14:37:40.438Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 108
+      },
+      "promo": null,
+      "prices": {
+        "regular": "119.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "360 г",
+      "has_age_restriction": false,
+      "stock_limit": "52.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2159025-main/320x320.jpeg?updated_at=2026-05-25T14:37:40.438Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2159025-main/800x800.jpeg?updated_at=2026-05-25T14:37:40.438Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4439300,
+      "name": "Молоко СВЕТАЕВО цельное сгущенное с сахаром 8,5% БЗМЖ 360г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2198070-main/320x320.jpeg?updated_at=2026-09-04T15:40:23.287Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2198070-main/800x800.jpeg?updated_at=2026-09-04T15:40:23.287Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 15
+      },
+      "promo": null,
+      "prices": {
+        "regular": "99.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "360 г",
+      "has_age_restriction": false,
+      "stock_limit": "40.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2198070-main/320x320.jpeg?updated_at=2026-09-04T15:40:23.287Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2198070-main/800x800.jpeg?updated_at=2026-09-04T15:40:23.287Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 69,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4439273,
+      "name": "Молоко СВЕТАЕВО цельное сгущенное с сахаром 8,5% БЗМЖ 650г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2125468-main/320x320.jpeg?updated_at=2026-08-13T10:25:41.362Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2125468-main/800x800.jpeg?updated_at=2026-08-13T10:25:41.362Z",
+          "https://catalog-images.x5static.net/product/97e623cecf366ef74d047e09c8ba4fc5-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/6a05d2101e38089af444c4e2f13992f5-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 136
+      },
+      "promo": null,
+      "prices": {
+        "regular": "189.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "650 мл",
+      "has_age_restriction": false,
+      "stock_limit": "72.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2125468-main/320x320.jpeg?updated_at=2026-08-13T10:25:41.362Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2125468-main/800x800.jpeg?updated_at=2026-08-13T10:25:41.362Z",
+            "https://catalog-images.x5static.net/product/97e623cecf366ef74d047e09c8ba4fc5-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/6a05d2101e38089af444c4e2f13992f5-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4412935,
+      "name": "Молоко Лебедяньмолоко пастеризованное БЗМЖ 2,5% 450г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2166258-main/320x320.jpeg?updated_at=2026-05-26T10:20:26.561Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2166258-main/800x800.jpeg?updated_at=2026-05-26T10:20:26.561Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 20
+      },
+      "promo": null,
+      "prices": {
+        "regular": "44.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "450 мл",
+      "has_age_restriction": false,
+      "stock_limit": "14.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2166258-main/320x320.jpeg?updated_at=2026-05-26T10:20:26.561Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2166258-main/800x800.jpeg?updated_at=2026-05-26T10:20:26.561Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 30,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4375366,
+      "name": "Молоко Большая Кружка безлактозное ультрапастеризованное 1,5% 1л",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2127849-main/320x320.jpeg"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2127849-main/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 157
+      },
+      "promo": null,
+      "prices": {
+        "regular": "119.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "1 л",
+      "has_age_restriction": false,
+      "stock_limit": "15.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2127849-main/320x320.jpeg"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2127849-main/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4257838,
+      "name": "Молоко СВЕТАЕВО пастеризованное 2,5% БЗМЖ 925мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1491510-main/320x320.jpeg?updated_at=2025-02-06T08:39:57.512Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1491510-main/800x800.jpeg?updated_at=2025-02-06T08:39:57.512Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 1539
+      },
+      "promo": null,
+      "prices": {
+        "regular": "79.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "925 мл",
+      "has_age_restriction": false,
+      "stock_limit": "52.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1491510-main/320x320.jpeg?updated_at=2025-02-06T08:39:57.512Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1491510-main/800x800.jpeg?updated_at=2025-02-06T08:39:57.512Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 55,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4257817,
+      "name": "Молоко СВЕТАЕВО пастеризованное 3.3-6% 0.93л",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1472814-main/320x320.jpeg?updated_at=2025-02-06T08:39:57.492Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1472814-main/800x800.jpeg?updated_at=2025-02-06T08:39:57.492Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 2665
+      },
+      "promo": null,
+      "prices": {
+        "regular": "89.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "930 мл",
+      "has_age_restriction": false,
+      "stock_limit": "68.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1472814-main/320x320.jpeg?updated_at=2025-02-06T08:39:57.492Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1472814-main/800x800.jpeg?updated_at=2025-02-06T08:39:57.492Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 62,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4177323,
+      "name": "Молоко СВЕТАЕВО ультрапастеризованное 1.5% БЗМЖ 1л",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1432861-main/320x320.jpeg?updated_at=2025-06-11T12:52:46.233Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1432861-main/800x800.jpeg?updated_at=2025-06-11T12:52:46.233Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 1520
+      },
+      "promo": null,
+      "prices": {
+        "regular": "79.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "1 л",
+      "has_age_restriction": false,
+      "stock_limit": "6.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1432861-main/320x320.jpeg?updated_at=2025-06-11T12:52:46.233Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1432861-main/800x800.jpeg?updated_at=2025-06-11T12:52:46.233Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 55,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 2085981,
+      "name": "Молоко Простоквашино отборное пастеризованное 3.4-4.5% 0.93л",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1406432-main/320x320.jpeg?updated_at=2026-09-02T15:49:05.360Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1406432-main/800x800.jpeg?updated_at=2026-09-02T15:49:05.360Z",
+          "https://catalog-images.x5static.net/product/e5cf64c4446854a34273cea4be41bb68-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/0cd59bce91b28d3d4727de2895a9919d-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/eab044fddaa173be15bae53dda544857-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 876
+      },
+      "promo": null,
+      "prices": {
+        "regular": "99.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "930 мл",
+      "has_age_restriction": false,
+      "stock_limit": "20.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1406432-main/320x320.jpeg?updated_at=2026-09-02T15:49:05.360Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1406432-main/800x800.jpeg?updated_at=2026-09-02T15:49:05.360Z",
+            "https://catalog-images.x5static.net/product/e5cf64c4446854a34273cea4be41bb68-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/0cd59bce91b28d3d4727de2895a9919d-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/eab044fddaa173be15bae53dda544857-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 69,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4291960,
+      "name": "Молочко для тела Evo Пантенол 250мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1565303-main/320x320.jpeg"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1565303-main/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/eb912a002530c708a1332c7f3d0b0349-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/da1f7a66310dcc686f7c40d8257b2644-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/fbec916689fdcde4ba3e7729f0be70bd-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 120
+      },
+      "promo": null,
+      "prices": {
+        "regular": "199.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "250 мл",
+      "has_age_restriction": false,
+      "stock_limit": "21.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1565303-main/320x320.jpeg"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1565303-main/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/eb912a002530c708a1332c7f3d0b0349-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/da1f7a66310dcc686f7c40d8257b2644-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/fbec916689fdcde4ba3e7729f0be70bd-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4316311,
+      "name": "Пирожное DELIBON бисквитное с кремом с цельным молоком 30г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/1577199-main/320x320.jpeg?updated_at=2026-02-25T17:50:13.208Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/1577199-main/800x800.jpeg?updated_at=2026-02-25T17:50:13.208Z",
+          "https://catalog-images.x5static.net/product/8a2f39f0250ef059a1ebd5203fd02f7c-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 488
+      },
+      "promo": null,
+      "prices": {
+        "regular": "49.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "30 г",
+      "has_age_restriction": false,
+      "stock_limit": "22.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/1577199-main/320x320.jpeg?updated_at=2026-02-25T17:50:13.208Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/1577199-main/800x800.jpeg?updated_at=2026-02-25T17:50:13.208Z",
+            "https://catalog-images.x5static.net/product/8a2f39f0250ef059a1ebd5203fd02f7c-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 34,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4469811,
+      "name": "Сливки СВЕТАЕВО ультрапастеризованные 33% БЗМЖ 500г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2196849-main/320x320.jpeg?updated_at=2026-09-14T16:28:09.678Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2196849-main/800x800.jpeg?updated_at=2026-09-14T16:28:09.678Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 29
+      },
+      "promo": null,
+      "prices": {
+        "regular": "249.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "500 мл",
+      "has_age_restriction": false,
+      "stock_limit": "19.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2196849-main/320x320.jpeg?updated_at=2026-09-14T16:28:09.678Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2196849-main/800x800.jpeg?updated_at=2026-09-14T16:28:09.678Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4449809,
+      "name": "Коктейль Fitelit протеиновый Клубничное мороженое 500г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2148281-main/320x320.jpeg?updated_at=2026-03-27T15:13:25.957Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2148281-main/800x800.jpeg?updated_at=2026-03-27T15:13:25.957Z"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 97
+      },
+      "promo": null,
+      "prices": {
+        "regular": "99.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "500 мл",
+      "has_age_restriction": false,
+      "stock_limit": "21.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2148281-main/320x320.jpeg?updated_at=2026-03-27T15:13:25.957Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2148281-main/800x800.jpeg?updated_at=2026-03-27T15:13:25.957Z"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 69,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4440430,
+      "name": "Сливки СВЕТАЕВО порционные ультрапастеризованные 10% БЗМЖ 170г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2123752-main/320x320.jpeg?updated_at=2026-08-13T10:40:34.251Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2123752-main/800x800.jpeg?updated_at=2026-08-13T10:40:34.251Z",
+          "https://catalog-images.x5static.net/product/b34448ca611ec30e3e3c2e758dcab61e-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/c329ec25a91ae86d1eec7e7846d95b23-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/08668c287bc7da9603a0fdd1877e950a-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 60
+      },
+      "promo": null,
+      "prices": {
+        "regular": "84.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "170 мл",
+      "has_age_restriction": false,
+      "stock_limit": "24.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2123752-main/320x320.jpeg?updated_at=2026-08-13T10:40:34.251Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2123752-main/800x800.jpeg?updated_at=2026-08-13T10:40:34.251Z",
+            "https://catalog-images.x5static.net/product/b34448ca611ec30e3e3c2e758dcab61e-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/c329ec25a91ae86d1eec7e7846d95b23-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/08668c287bc7da9603a0fdd1877e950a-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 58,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4437758,
+      "name": "Сливки СВЕТАЕВО питьевые 20% БЗМЖ 500г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2122241-main/320x320.jpeg?updated_at=2026-08-12T13:43:44.316Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2122241-main/800x800.jpeg?updated_at=2026-08-12T13:43:44.316Z",
+          "https://catalog-images.x5static.net/product/f17b1409df8d06c9649f372af72fd178-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/a8e02b60e107f81d7da5f2cf5b89c3f5-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 79
+      },
+      "promo": null,
+      "prices": {
+        "regular": "169.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "500 мл",
+      "has_age_restriction": false,
+      "stock_limit": "2.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2122241-main/320x320.jpeg?updated_at=2026-08-12T13:43:44.316Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2122241-main/800x800.jpeg?updated_at=2026-08-12T13:43:44.316Z",
+            "https://catalog-images.x5static.net/product/f17b1409df8d06c9649f372af72fd178-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/a8e02b60e107f81d7da5f2cf5b89c3f5-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    },
+    {
+      "plu": 4331254,
+      "name": "Сливки СВЕТАЕВО питьевые 10% БЗМЖ 500г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2122247-main/320x320.jpeg?updated_at=2026-08-12T13:23:50.700Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2122247-main/800x800.jpeg?updated_at=2026-08-12T13:23:50.700Z",
+          "https://catalog-images.x5static.net/product/b48e9a29f23bb4e3856a9518458432e3-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/700b52fafcc71755b43a15584fbb6ef5-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 115
+      },
+      "promo": null,
+      "prices": {
+        "regular": "89.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "500 мл",
+      "has_age_restriction": false,
+      "stock_limit": "13.00",
+      "median_price": null,
+      "product_advert": null,
+      "is_large_card": null,
+      "boost_type": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2122247-main/320x320.jpeg?updated_at=2026-08-12T13:23:50.700Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2122247-main/800x800.jpeg?updated_at=2026-08-12T13:23:50.700Z",
+            "https://catalog-images.x5static.net/product/b48e9a29f23bb4e3856a9518458432e3-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/700b52fafcc71755b43a15584fbb6ef5-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 62,
+      "orange_loyalty_points_md": null,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "badge_groups": null,
+      "media_analytic": null,
+      "is_inout": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "264C39219",
+      "type": "subcategory",
+      "name": "Детское молоко и кефир",
+      "parent_name": "Детские товары",
+      "parent_id": "264C39214",
+      "main_name": "Основной каталог"
+    },
+    {
+      "id": "264C39144",
+      "type": "subcategory",
+      "name": "Сметана",
+      "parent_name": "Молочные продукты, яйцо",
+      "parent_id": "264C39140",
+      "main_name": "Основной каталог"
+    }
+  ]
+}

@@ -43,7 +43,26 @@ export interface HistoryPoint {
 export interface SchedulerStatus {
   running: boolean;
   lastRun: string | null;
-  counts: { inserted: number; skipped: number; failed: number; notReady: number };
+  counts: {
+    inserted: number;
+    skipped: number;
+    failed: number;
+    notReady: number;
+    /**
+     * Магазины, которые сеть перестала обновлять (протухший прайс точки). Сеть
+     * при этом жива, поэтому они отделены от сетевых сбоев: по ним цены
+     * заморожены, и пользователь должен видеть это в сводке опроса.
+     */
+    staleStores: string[];
+    /**
+     * Прогон прерван по просьбе пользователя (снял галочку или сменил город).
+     * Renderer обязан показать это иначе, чем успех: баннер «Опрос завершён» был бы
+     * зелёным при незакрытом цикле города.
+     */
+    interrupted: boolean;
+    /** Сколько целей осталось в цикле после этого прогона. */
+    remaining: number;
+  };
   intervalHours: number;
 }
 
@@ -116,7 +135,7 @@ export interface RendererApi {
   removeFavorite: (args: ShelfScope) => Promise<Favorite[]>;
   /**
    * Пометить пару как разные товары. Без города: canonicalId несёт префикс
-   * сети (5ka-/magnit-/lenta-), товар не city-scoped, и «это разные товары»
+   * сети (5ka-/magnit-/lenta-/svt-), товар не city-scoped, и «это разные товары»
    * по смыслу одно правило для всех городов. Раньше город был в сигнатуре,
    но игнорировался в ядре и в main — мёртвый параметр на трёх слоях.
    */
@@ -131,10 +150,17 @@ export interface RendererApi {
    */
   getSplitPairs: (args: { city: string }) => Promise<string[]>;
   getSchedulerStatus: () => Promise<SchedulerStatus>;
-  runScheduler: (args?: { city?: string }) => Promise<SchedulerDone>;
+  runScheduler: (args?: { city?: string; storeIds?: string[] }) => Promise<SchedulerDone>;
+  /**
+   * Прервать идущий опрос. Отмена кооперативная: останавливается на границе
+   * товара, уже начатый запрос у браузерных сетей доживает. alse — идти нечего.
+   */
+  cancelScheduler: () => Promise<boolean>;
   /** Сообщить ядру выбранный город: автоопрос бьёт только по нему. */
   setCurrentCity: (city: string) => Promise<void>;
-  onSchedulerProgress: (cb: (done: number, total: number) => void) => () => void;
+  /** Сообщить ядру выбранные сети города: опрос бьёт только по ним. */
+  setCurrentStores: (city: string, storeIds: string[] | null) => Promise<void>;
+  onSchedulerProgress: (cb: (done: number, total: number, storeId?: string) => void) => () => void;
   onSchedulerDone: (cb: (done: SchedulerDone) => void) => () => void;
   checkUpdates: () => Promise<UpdateCheck>;
   installUpdate: () => Promise<void>;

@@ -1,0 +1,10 @@
+uly-msk: 200 shopid=нет offersupd=нет разделов=0
+   title: Р”РѕРјРµРЅ svetoforpfo.ru
+uly-marata: 200 shopid=нет offersupd=нет разделов=0
+   title: Р”РѕРјРµРЅ svetoforpfo.ru
+perm: 200 shopid=нет offersupd=нет разделов=0
+   title: Р”РѕРјРµРЅ svetoforpfo.ru
+kazan-mir: 200 shopid=нет offersupd=нет разделов=0
+   title: Р”РѕРјРµРЅ svetoforpfo.ru
+nn-gagarina: 200 shopid=нет offersupd=нет разделов=0
+   title: Р”РѕРјРµРЅ svetoforpfo.ru

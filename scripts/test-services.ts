@@ -10,11 +10,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createCore } from '../src/core/services.js';
-import { closeDb, openDb, savePriceIfChanged } from '../src/core/db/db.js';
+import { StaleStoreError } from '../src/core/adapter-errors.js';
+import { closeDb, openDb, getPriceHistory, savePriceIfChanged } from '../src/core/db/db.js';
 import { fileStorageAt } from '../electron/node-files.js';
 import { UNASSIGNED_ID } from '../src/core/services.js';
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../src/shared/types.js';
 import type { CoreDeps } from '../src/core/platform.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 type SearchCtx = Parameters<StoreAdapter['search']>[1];
 type ProductCtx = Parameters<StoreAdapter['fetchProduct']>[1];
@@ -49,6 +51,10 @@ class FakeAdapter implements StoreAdapter {
   failSearch = false;
   failCategory = false;
   failProduct = false;
+/** Отказ отдельной точки при живой сети — протухший прайс магазина. */
+    staleStore = false;
+    /** Задержать ответ товара: нужно, чтобы поймать прогон на середине. */
+    hold = false;
   categories: StoreCategory[] = [];
 
   constructor(
@@ -83,6 +89,12 @@ class FakeAdapter implements StoreAdapter {
   async fetchProduct(canonicalId: string, ctx: ProductCtx): Promise<ScrapedProduct> {
     this.productCalls += 1;
     if (this.failProduct) throw new Error(`${this.storeId}: карточка не отвечает`);
+    // Задержка ответа: нужна, чтобы поймать прогон «в середине» — снятие галочки
+    // приходит, пока идёт очередной товар.
+    if (this.hold) await new Promise((r) => setTimeout(r, 40));
+    if (this.staleStore) {
+      throw new StaleStoreError(`${this.storeId}: прайс магазина протух`, `${this.storeId}:1`);
+    }
     const found = this.items.find((i) => i.canonicalId === canonicalId);
     if (!found) throw new Error(`${this.storeId}: товар не найден`);
     return { ...found, city: ctx.city, storeId: this.storeId };
@@ -128,6 +140,10 @@ const deps: CoreDeps = {
 
 const core = createCore(deps);
 core.setCurrentCity('moscow');
+// Выбор сетей ядра: снятие выбора (`null`) возвращает опрос по всем сетям города —
+// это состояние «пользователь ещё не выбирал», а не «опрашивать нечего».
+core.setCurrentStores(['magnit']);
+core.setCurrentStores(null);
 const db = await openDb(storage);
 
 /** Последняя сводка из событий завершения — её и красит renderer. */
@@ -374,11 +390,45 @@ const pollSummaryFrom = (list: { channel: string; payload: unknown }[]): string 
   assert.ok(magnit.productCalls > before, 'опрос дёрнул сеть по отслеживаемым товарам');
   assert.match(ok.summary, /Опрос завершён: проверено \d+, новых цен \d+, ошибок \d+/, 'сводка с числами');
 
+  // Протухшая точка обязана быть видна в сводке: сеть жива, но цены её магазина
+  // заморожены, и молчаливый «успешный» опрос вводил бы в заблуждение.
+  magnit.staleStore = true;
+  const staleRun = await core.runScheduler({ city: 'moscow' });
+  assert.match(staleRun.summary, /Сеть не обновляет: magnit:1/, 'сводка называет протухшую точку');
+  assert.match(staleRun.summary, /цены этих магазинов заморожены/, 'сводка объясняет, что это значит');
+  magnit.staleStore = false;
+
   // Кнопка «Опросить сейчас» обязана опрашивать сразу, даже если автозапуск
   // был минуту назад: откладывать ручной запрос нельзя.
   const manual = await core.runScheduler({ city: 'moscow' });
   assert.match(manual.summary, /Опрос завершён/, 'ручной опрос по кнопке не откладывается');
   assert.equal(manual.status.lastRun !== null, true, 'метка последнего прогона обновилась');
+
+// Выбор магазинов в шапке ограничивает опрос: с выбранной сетью идёт только она.
+  const lentaBefore = lenta.productCalls;
+  const magnitBefore = magnit.productCalls;
+  const onlyMagnit = await core.runScheduler({ city: 'moscow', storeIds: ['magnit'] });
+  assert.ok(onlyMagnit.summary.includes('Опрос завершён') || onlyMagnit.summary.includes('нет отслеживаемых'), 'опрос по одной сети завершился');
+  assert.equal(lenta.productCalls, lentaBefore, 'выключенная сеть не дёргалась');
+  assert.ok(magnit.productCalls >= magnitBefore, 'выбранная сеть опрошена');
+  // Тот же выбор, но поднятый в состояние ядра (как это делает renderer при
+  // смене галочки), ограничивает и автозапуск: вызов БЕЗ storeIds берёт выбор
+  // из состояния.
+  core.setCurrentStores(['lenta']);
+  const lentaAfter = lenta.productCalls;
+  const magnitAfter = magnit.productCalls;
+  await core.runScheduler({ city: 'moscow' });
+  assert.equal(magnit.productCalls, magnitAfter, 'без явного storeIds действует выбор из состояния');
+  assert.ok(lenta.productCalls > lentaAfter, 'выбранная сеть из состояния опрошена');
+  core.setCurrentStores(null);
+
+  // Ни одной сети не выбрано: это НЕ «нет отслеживаемых товаров». Молчаливый
+  // баннер про товары увёл бы пользователя искать товары, хотя он просто снял
+  // все галочки магазинов.
+  const magnitBeforeEmpty = magnit.productCalls;
+  const emptyPick = await core.runScheduler({ city: 'moscow', storeIds: [] });
+  assert.match(emptyPick.summary, /не выбрано ни одного магазина/, 'пустой выбор объяснён по-человечески');
+  assert.equal(magnit.productCalls, magnitBeforeEmpty, 'ни одна сеть не дёргалась');
 
   // Два клика по кнопке подряд: второй должен честно сказать «уже идёт»,
   // а не запустить второй опрос поверх первого (иначе удваивается нагрузка
@@ -411,6 +461,53 @@ const pollSummaryFrom = (list: { channel: string; payload: unknown }[]): string 
   assert.equal(failed.status.running, false, 'после провала планировщик не остался занятым');
   magnit.failProduct = false;
 
+  // Смена галочек магазина на ходу прерывает опрос. Пользователь снял сеть —
+  // значит он больше не хочет в неё ходить, и ждать конца обхода нельзя.
+  // Проверяем на живом прогоне: адаптер висит на первом товаре, галочка снимается.
+  magnit.hold = true;
+  const runningPoll = core.runScheduler({ city: 'moscow', storeIds: ['magnit'] });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(core.schedulerStatus().running, true, 'опрос действительно идёт');
+  core.setCurrentStores(['lenta']);
+  magnit.hold = false;
+  const byToggle = await runningPoll;
+  assert.match(byToggle.summary, /Опрос прерван/, 'сводка называет прогон прерванным');
+  assert.ok(byToggle.status.counts.remaining > 0, `остаток виден в статусе (${byToggle.status.counts.remaining})`);
+  assert.doesNotMatch(byToggle.summary, /Опрос завершён/, 'прерванный прогон не называется завершённым');
+  // Тот же выбор повторно галочки НЕ прерывает: `stores:set` прилетает на
+  // каждое изменение состояния, включая монтирование, и безусловная отмена
+  // сорвала бы автоопрос на старте.
+  core.setCurrentStores(['lenta']);
+  const notStopped = await core.runScheduler({ city: 'moscow' });
+  assert.doesNotMatch(notStopped.summary, /Опрос прерван/, 'тот же выбор галочек прогон не прерывает');
+  // Перестановка того же выбора — тоже не изменение.
+  core.setCurrentStores(['lenta', 'magnit']);
+  core.setCurrentStores(['magnit', 'lenta']);
+  const reordered = await core.runScheduler({ city: 'moscow' });
+  assert.doesNotMatch(reordered.summary, /Опрос прерван/, 'порядок галочек не считается изменением выбора');
+  // Смена города прерывает: прогон старого города пользователь отменил фактом
+  // перехода.
+  magnit.hold = true;
+  const cityPoll = core.runScheduler({ city: 'moscow' });
+  await new Promise((r) => setTimeout(r, 20));
+  core.setCurrentCity('ulyanovsk');
+  magnit.hold = false;
+  const cityStopped = await cityPoll;
+  assert.match(cityStopped.summary, /Опрос прерван/, 'смена города прерывает идущий опрос');
+  core.setCurrentCity('moscow');
+
+  // Кнопка «Прервать»: тот же вызов из интерфейса.
+  magnit.hold = true;
+  const stopped = core.runScheduler({ city: 'moscow' });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(core.schedulerStatus().running, true, 'прогон идёт — кнопка видна');
+  assert.equal(core.cancelScheduler(), true, 'ядро подтвердило отмену');
+  magnit.hold = false;
+  const stoppedSummary = await stopped;
+  assert.match(stoppedSummary.summary, /Опрос прерван/, 'прогон остановлен по кнопке');
+  // Повторный клик по кнопке после завершения — враньё: идти уже нечего.
+  assert.equal(core.cancelScheduler(), false, 'прервать нечего — честный false');
+
   assert.ok(
     events.filter((e) => e.channel === 'scheduler:done').length >= 3,
     'на каждый запуск приходит своё событие завершения',
@@ -419,6 +516,102 @@ const pollSummaryFrom = (list: { channel: string; payload: unknown }[]): string 
 
 core.saveAll();
 assert.ok(fs.existsSync(path.join(tmpDir, 't.db')), 'saveAll действительно пишет базу на диск');
+// Браузеры сетей закрываются после прогона: каждый открытый браузер — отдельный
+// процесс Firefox с сотнями мегабайт памяти, и до выхода из приложения они
+// висели зря (проверено на живой сборке: после прогона по Москве оставалось 8
+// таких процессов).
+{
+  let closed = 0;
+  const closeErrors: string[] = [];
+  const withBrowsers = createCore({
+    ...deps,
+    log: { ...deps.log, error: (m: string) => void closeErrors.push(m) },
+    closeBrowsers: async () => {
+      closed += 1;
+      if (closed === 1) throw new Error('браузер завис');
+    },
+  });
+  const first = await withBrowsers.runScheduler({ city: 'moscow', storeIds: [] });
+  assert.equal(closed, 1, 'браузеры закрыты даже на прогоне, который ничего не делал');
+  assert.ok(first.summary.length > 0, 'падение закрытия не убивает прогон');
+  assert.ok(
+    closeErrors.some((e) => e.includes('закрыть браузеры')),
+    'но ошибка закрытия громкая',
+  );
+  const second = await withBrowsers.runScheduler({ city: 'moscow', storeIds: [] });
+  assert.equal(closed, 2, 'закрытие повторяется на каждом прогоне');
+  assert.doesNotMatch(second.summary, /Опрос уже идёт/, 'падение закрытия не оставило прогон занятым');
+}
+
+// Порядок на ЖИВОМ прогоне: закрытие обязано идти после запроса и после записи
+// цены. Тест выше гонял пустой прогон и потому не ловил мутацию «звать close в
+// начале try» — цены были бы записаны после закрытия, а товар недособран.
+// Хендлер fake-адаптера дописывает 'fetch:<id>' в общий журнал, close — 'close',
+// а проверка внутри close читает базу: значит к моменту teardown цена уже в БД.
+{
+  const order: string[] = [];
+  let priceAtClose = -1;
+  let runningDuringClose: boolean | null = null;
+  // Ядро объявлено до замыкания: closeBrowsers читает его флаг во время прогона.
+  let orderedCore: ReturnType<typeof createCore>;
+  const spy: StoreAdapter = {
+    storeId: 'magnit',
+    search: (q, ctx) => magnit.search(q, ctx),
+    fetchCategories: () => magnit.fetchCategories(),
+    fetchProduct: async (id, ctx) => {
+      order.push(`fetch:${id}`);
+      return magnit.fetchProduct(id, ctx);
+    },
+  };
+  orderedCore = createCore({
+    ...deps,
+    adapters: new Map([['magnit', spy], ['lenta', lenta]]),
+    closeBrowsers: async () => {
+      order.push('close');
+      // Флаг прогона ещё поднят: если state.running сбросился ДО закрытия, за
+      // это окно успел бы стартовать новый опрос и убить свежий браузер.
+      runningDuringClose = orderedCore.schedulerStatus().running;
+      // Цена читается прямо из БД в момент ПЕРВОГО закрытия: если close уедет в
+      // начало прогона (мутация «звать close до pollOnce»), здесь будет пусто,
+      // хотя второе, финальное закрытие уже увидит записанную цену.
+      if (priceAtClose === -1) {
+        priceAtClose = getPriceHistory(db, {
+          canonicalId: 'm-milk',
+          storeId: 'magnit',
+          city: 'moscow',
+        }).length;
+      }
+    },
+  });
+  orderedCore.startScheduler();
+  await scheduled.after?.();
+  assert.ok(!order.includes('close'), 'стартовый прогон-разведка (dryRun) браузеры не трогает');
+  const live = await orderedCore.runScheduler({ city: 'moscow' });
+  assert.equal(order[order.length - 1], 'close', `закрытие идёт последним: ${order.join(' ')}`);
+  assert.ok(order.some((o) => o.startsWith('fetch:')), 'прогон реально что-то опросил');
+  assert.ok(priceAtClose > 0, 'к моменту первого закрытия цены уже записаны в базу');
+  assert.equal(order.filter((o) => o === 'close').length, 1, 'закрытие ровно одно за прогон');
+  assert.match(live.summary, /проверено [1-9]/, 'сводка отчиталась о проверенных товарах');
+  // Флаг прогона живёт ДО teardown: если бы `state.running = false` встал перед
+  // закрытием, за это окно успел бы стартовать новый опрос и убить свежий браузер.
+  assert.equal(runningDuringClose, true, 'во время закрытия прогон ещё считается идущим');
+}
+
+// Зависший close не должен держать прогон вечно: интерфейс ждёт ответа
+// runScheduler и снимет флаг по нему. Потолок — 5 с, поэтому проверяем сам факт
+// («ответ пришёл и флаг снят»), а не ровно время.
+{
+  const stuckCore = createCore({
+    ...deps,
+    closeBrowsers: () => new Promise<void>(() => {}),
+  });
+  const startedAt = Date.now();
+  const out = await stuckCore.runScheduler({ city: 'moscow' });
+  assert.ok(Date.now() - startedAt < 20_000, `зависшее закрытие не держит прогон (${Date.now() - startedAt} мс)`);
+  assert.equal(stuckCore.schedulerStatus().running, false, 'флаг прогона снят по таймауту');
+  assert.match(out.summary, /проверено [1-9]|пропущен/, 'сводка всё равно пришла');
+}
+
 closeDb();
 fs.rmSync(tmpDir, { recursive: true, force: true });
 console.log('core api: ALL GREEN — поиск, каталоги, витрина, полки, история, избранное, разрывы, опрос');

@@ -53,11 +53,23 @@ assert.equal(lentaRegionByCity('saint-petersburg')?.slug, 'spb', 'lentaRegionByC
 
 // Каждый наш город обязан быть в справочнике регионов Ленты, иначе адаптер
 // подставит slug в X-Domain, которого сеть не знает, и всё уедет в 401.
+//
+// Требование — к городам, где Лента ЕСТЬ. Город без Ленты (например, Воронеж или
+// Ярославль, добавленные ради живого магазина Светофора) в её справочнике
+// отсутствует, и требовать обратного значило бы требовать несуществующей точки.
 for (const city of CITIES) {
+  const lenta = (CITY_STORES[city.id] ?? []).find((s) => s.storeId === 'lenta');
+  if (lenta === undefined) {
+    assert.equal(
+      lentaRegionByCity(city.id),
+      undefined,
+      `город без Ленты (${city.name}) и в её справочнике не числится`,
+    );
+    continue;
+  }
   const region = lentaRegionByCity(city.id);
   assert.ok(region, `город ${city.name} (${city.id}) есть в справочнике регионов Ленты`);
   assert.ok((region?.pickup ?? 0) > 0, `в ${city.name} есть точки с самовывозом`);
-  const lenta = (CITY_STORES[city.id] ?? []).find((s) => s.storeId === 'lenta');
   assert.ok(lenta, `в ${city.name} есть магазин Ленты`);
   assert.ok(
     !lenta?.externalStoreId || /^\d+$/.test(lenta.externalStoreId),

@@ -22,6 +22,7 @@ import {
   __setRequestGapMsForTests,
 } from '../src/core/adapters/lenta.js';
 import { CITY_TO_SLUG } from '../src/shared/lenta-regions.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 const fixture = (name: string): string =>
   fs.readFileSync(fileURLToPath(new URL(`../tests/fixtures/${name}`, import.meta.url)), 'utf8');

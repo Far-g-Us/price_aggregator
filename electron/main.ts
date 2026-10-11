@@ -10,13 +10,18 @@ import type { PricesQuery, ShelfScope, SplitPair, StoreCatalog, StorePrices } fr
 import { MagnitAdapter } from '../src/core/adapters/magnit.js';
 import { PyaterochkaAdapter } from '../src/core/adapters/pyaterochka.js';
 import { LentaAdapter } from '../src/core/adapters/lenta.js';
+import { SvetoforAdapter } from '../src/core/adapters/svetofor.js';
+import { ChizhikAdapter } from '../src/core/adapters/chizhik.js';
+import { PerekrestokAdapter, closePerekrestokBrowser } from '../src/core/adapters/perekrestok.js';
+import { svetoforDomain } from '../src/shared/svetofor-regions.js';
 import { close5kaBrowser } from '../src/core/adapters/5ka-browser.js';
+import { closeChizhikBrowser } from '../src/core/adapters/chizhik-browser.js';
 import { createCore, type Core } from '../src/core/services.js';
 import { MAX_FEED_BYTES, RELEASES_PAGE_URL, isNewerVersion, readFeedVersion } from '../src/core/release-check.js';
 import { isExternalAllowed, urlForLog } from './external-links.js';
 import type { CoreDeps } from '../src/core/platform.js';
 import type { StoreAdapter } from '../src/shared/types.js';
-import { CITIES } from '../src/shared/catalog.js';
+import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
 import {
   dbFile,
   describeFirefoxProblem,
@@ -39,6 +44,9 @@ const adapters = new Map<string, StoreAdapter>([
   ['magnit', new MagnitAdapter()],
   ['pyaterochka', new PyaterochkaAdapter()],
   ['lenta', new LentaAdapter()],
+  ['svetofor', new SvetoforAdapter({ domain: (shopId) => svetoforDomain(shopId) })],
+  ['chizhik', new ChizhikAdapter()],
+  ['perekrestok', new PerekrestokAdapter()],
 ]);
 
 // Ядро создаётся лениво, при первом обращении. Порядок «создать окно, потом
@@ -59,6 +67,13 @@ const createDeps = (): CoreDeps => ({
   background: nodeBackground,
   log: electronLogger,
   adapters,
+  // Браузеры сетей закрываются после каждого прогона: каждый открытый браузер —
+  // отдельный процесс Firefox с сотнями мегабайт памяти, и до выхода из
+  // приложения они висели зря (проверено 2026-11-11: после прогона по Москве
+  // оставалось 8 процессов Firefox от сетей).
+  closeBrowsers: async () => {
+    await Promise.all([close5kaBrowser(), closeChizhikBrowser(), closePerekrestokBrowser()]);
+  },
   // Окно могло закрыться между событием и отправкой: send в разрушенный
   // webContents бросает, а emit зовётся в том числе из finally опроса, то есть
   // падение уезжало бы в unhandled rejection и терялся бы scheduler:done.
@@ -206,9 +221,9 @@ async function runPortableCheck(): Promise<PortableCheck> {
   if (available && notifiedRelease !== latest) {
     notifiedRelease = latest;
     releaseState.write(RELEASE_STATE_FILE, latest);
-    electronShell.notify(
+electronShell.notify(
       `Вышла версия ${latest}. Portable сам не обновляется — скачай его заново`,
-      RELEASES_PAGE_URL,
+RELEASES_PAGE_URL,
     );
   }
   return { packaged: true, current, latest, available, portable: true };
@@ -343,10 +358,18 @@ ipcMain.handle('favorites:get', (_e, args: { city: string }) => getCore().getFav
 ipcMain.handle('scheduler:status', () => getCore().schedulerStatus());
 
 ipcMain.handle(
-  'scheduler:run',
-  async (_e, args?: { city?: string }) =>
-    getCore().runScheduler(args?.city ? { city: knownCity(args.city) } : undefined),
-);
+'scheduler:run',
+      async (_e, args?: { city?: string; storeIds?: string[] }) =>
+        getCore().runScheduler({
+          ...(args?.city ? { city: knownCity(args.city) } : {}),
+...(args?.storeIds === undefined ? {} : { storeIds: knownStores(args.city, args.storeIds) }),
+        }),
+  );
+
+  // Прерывание идущего опроса. Возвращаем `false`, когда идти нечего: кнопка
+  // может остаться нажатой после завершения прогона, и «я остановил» на
+  // отсутствующем прогоне — враньё в интерфейсе.
+  ipcMain.handle('scheduler:cancel', () => getCore().cancelScheduler());
   // Город из интерфейса: без него автоопрос не знает, куда смотреть.
   // Город приходит из интерфейса, а не из сети, поэтому проверяем его по списку:
 // иначе опечатка или старый город из сохранённого состояния уехали бы в
@@ -359,6 +382,27 @@ const knownCity = (value: unknown): string => {
   return value;
 };
 ipcMain.handle('city:set', (_e, args: { city: string }) => getCore().setCurrentCity(knownCity(args?.city)));
+    // Выбор сетей приходит из интерфейса, поэтому проверяем его по справочнику
+    // города: иначе опечатка или сеть из другого города молча расширила бы опрос
+    // (или, наоборот, убила бы его целиком — это молчаливое «проверено 0»).
+    const knownStores = (cityValue: unknown, value: unknown): string[] => {
+      const city = knownCity(cityValue);
+      if (!Array.isArray(value)) throw new Error('stores:set: список сетей должен быть массивом или null');
+      const available = new Set<string>((CITY_STORES[city] ?? []).map((s) => s.storeId));
+      const unknownStore = value.find((id) => typeof id !== 'string' || !available.has(id));
+      if (unknownStore !== undefined) {
+        throw new Error(`stores:set: сеть ${String(unknownStore).slice(0, 40)} не найдена в городе ${city}`);
+      }
+      return [...new Set(value as string[])];
+    };
+
+    ipcMain.handle('stores:set', (_e, args: { city: string; storeIds: string[] | null }) => {
+      if (args?.storeIds === null || args?.storeIds === undefined) {
+        getCore().setCurrentStores(null);
+        return;
+      }
+      getCore().setCurrentStores(knownStores(args?.city, args.storeIds));
+    });
 
 app.whenReady().then(async () => {
   // Путь к браузеру Playwright знает только оболочка: ядро не читает process.
@@ -410,8 +454,10 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   // Если ядро так и не создавали (приложение закрылось до первого запроса),
   // сохранять нечего — и создавать его ради этого незачем.
-  maybeCore()?.saveAll();
+maybeCore()?.saveAll();
   void close5kaBrowser();
+  void closeChizhikBrowser();
+  void closePerekrestokBrowser();
 });
 
 app.on('activate', () => {

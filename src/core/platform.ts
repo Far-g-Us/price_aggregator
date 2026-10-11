@@ -48,6 +48,16 @@ export interface CoreDeps {
   log: CoreLogger;
   adapters: Map<string, import('../shared/types.js').StoreAdapter>;
   emit?: CoreEventSink;
+  /**
+   * Закрыть браузеры сетей (Пятёрка, Чижик, Перекрёсток).
+   *
+   * Зачем: после прогона каждый открытый браузер — это отдельный процесс Firefox
+   * с своим профилем и сотнями мегабайт памяти. Держать их до выхода из
+   * приложения нельзя: сессии нужны только на время прогона, а следующий может
+   * быть через шесть часов. Закрытие после прогона означает, что браузер
+   * поднимется заново — это минута прогрева, но её и так платит первый заход.
+   */
+  closeBrowsers?: () => Promise<void>;
 }
 
 export function memoryStorage(): AppStorage & { dump(): Uint8Array | null } {

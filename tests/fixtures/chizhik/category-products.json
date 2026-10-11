@@ -1,0 +1,1028 @@
+{
+  "name": "Трендовая азиатская косметика",
+  "advertisement_banners": null,
+  "ad_config": null,
+  "products": [
+    {
+      "plu": 4438422,
+      "name": "Зубные нити Miniso Mini Travel Series Dental Flossers 50шт",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203794-main/320x320.jpeg?updated_at=2026-09-30T12:03:11.447Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203794-main/800x800.jpeg?updated_at=2026-09-30T12:03:11.447Z",
+          "https://catalog-images.x5static.net/product/b6105790bd79bcdb87a9c12aa6d1d200-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/3bdc9dcbd54eaeedb2336731cac3a88c-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e5a126a67fe0cb833c4adadbfcce2e8c-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/bfdb5af8b89336ca59cdeccd8c77c054-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 7
+      },
+      "promo": null,
+      "prices": {
+        "regular": "99.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "30 г",
+      "has_age_restriction": false,
+      "stock_limit": "14.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203794-main/320x320.jpeg?updated_at=2026-09-30T12:03:11.447Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203794-main/800x800.jpeg?updated_at=2026-09-30T12:03:11.447Z",
+            "https://catalog-images.x5static.net/product/b6105790bd79bcdb87a9c12aa6d1d200-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/3bdc9dcbd54eaeedb2336731cac3a88c-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e5a126a67fe0cb833c4adadbfcce2e8c-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/bfdb5af8b89336ca59cdeccd8c77c054-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 69,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437321,
+      "name": "Набор кистей Miniso для макияжа 7шт",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203819-main/320x320.jpeg?updated_at=2026-09-30T10:35:51.282Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203819-main/800x800.jpeg?updated_at=2026-09-30T10:35:51.282Z",
+          "https://catalog-images.x5static.net/product/0a27a8025dbd368cf6dc14a725bac7d1-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e006ac50c7607327ce0ef53e3e05d991-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/d89d5a04c2c408578d967ae5eba79bbb-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/21a46a84164023202b6c430b34200083-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 1
+      },
+      "promo": null,
+      "prices": {
+        "regular": "299.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "70 г",
+      "has_age_restriction": false,
+      "stock_limit": "1.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203819-main/320x320.jpeg?updated_at=2026-09-30T10:35:51.282Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203819-main/800x800.jpeg?updated_at=2026-09-30T10:35:51.282Z",
+            "https://catalog-images.x5static.net/product/0a27a8025dbd368cf6dc14a725bac7d1-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e006ac50c7607327ce0ef53e3e05d991-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/d89d5a04c2c408578d967ae5eba79bbb-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/21a46a84164023202b6c430b34200083-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437319,
+      "name": "Набор спонжей Miniso Makeup Sponges with Storage Case для макияжа 3шт",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203796-main/320x320.jpeg?updated_at=2026-09-30T10:54:21.345Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203796-main/800x800.jpeg?updated_at=2026-09-30T10:54:21.345Z",
+          "https://catalog-images.x5static.net/product/152a5906b9d3de006a9f6faae6746dfd-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/2f9235a244a9b28223fb0bf9f1c0d43d-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/c7b0d7609c10bdd7ca9d4f8934f5c892-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/57a222612f65c62ea7d0298c55f2a806-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/43b441f9c62fa0b5966dcc03f3001a88-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e3b4ee4d7aef23e3850280eb3d66cb89-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/d87106dee39f669d3fd6f55195052249-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 5
+      },
+      "promo": null,
+      "prices": {
+        "regular": "249.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "30 г",
+      "has_age_restriction": false,
+      "stock_limit": "1.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203796-main/320x320.jpeg?updated_at=2026-09-30T10:54:21.345Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203796-main/800x800.jpeg?updated_at=2026-09-30T10:54:21.345Z",
+            "https://catalog-images.x5static.net/product/152a5906b9d3de006a9f6faae6746dfd-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/2f9235a244a9b28223fb0bf9f1c0d43d-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/c7b0d7609c10bdd7ca9d4f8934f5c892-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/57a222612f65c62ea7d0298c55f2a806-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/43b441f9c62fa0b5966dcc03f3001a88-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e3b4ee4d7aef23e3850280eb3d66cb89-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/d87106dee39f669d3fd6f55195052249-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437310,
+      "name": "Тушь Miniso Minimalist Lengthening для ресниц с эффектом удлинения 9г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203797-main/320x320.jpeg?updated_at=2026-09-30T11:17:31.473Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203797-main/800x800.jpeg?updated_at=2026-09-30T11:17:31.473Z",
+          "https://catalog-images.x5static.net/product/52105a9dbe54e0539eb1a10f99e3a81f-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/89518fde2a83827496a53454b4c10048-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/5beebf8d818a592d0a23fbe9aa4ef023-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e4a9aea8064f99f14ba70ce8122a721d-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 8
+      },
+      "promo": null,
+      "prices": {
+        "regular": "299.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "9 г",
+      "has_age_restriction": false,
+      "stock_limit": "7.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203797-main/320x320.jpeg?updated_at=2026-09-30T11:17:31.473Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203797-main/800x800.jpeg?updated_at=2026-09-30T11:17:31.473Z",
+            "https://catalog-images.x5static.net/product/52105a9dbe54e0539eb1a10f99e3a81f-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/89518fde2a83827496a53454b4c10048-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/5beebf8d818a592d0a23fbe9aa4ef023-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e4a9aea8064f99f14ba70ce8122a721d-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437308,
+      "name": "Подводка-карандаш Miniso Minimalist Gel Eyeliner 01 Black гелевая для глаз 25г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203792-main/320x320.jpeg?updated_at=2026-09-30T11:04:18.532Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203792-main/800x800.jpeg?updated_at=2026-09-30T11:04:18.532Z",
+          "https://catalog-images.x5static.net/product/91435cd81570c286812bb13dc328b97c-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/f0d539f7ba6e5f6bc4d7fe5d38277bab-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/b5c0f36c292ea5b4e7ee50640a5dd771-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 5
+      },
+      "promo": null,
+      "prices": {
+        "regular": "199.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "25 г",
+      "has_age_restriction": false,
+      "stock_limit": "5.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203792-main/320x320.jpeg?updated_at=2026-09-30T11:04:18.532Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203792-main/800x800.jpeg?updated_at=2026-09-30T11:04:18.532Z",
+            "https://catalog-images.x5static.net/product/91435cd81570c286812bb13dc328b97c-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/f0d539f7ba6e5f6bc4d7fe5d38277bab-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/b5c0f36c292ea5b4e7ee50640a5dd771-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437307,
+      "name": "Гель Miniso Minimalist Eyebrow Setting Gel для укладки бровей 6г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203789-main/320x320.jpeg?updated_at=2026-09-30T11:12:22.510Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203789-main/800x800.jpeg?updated_at=2026-09-30T11:12:22.510Z",
+          "https://catalog-images.x5static.net/product/eefb48afccbeb6dcd079369583839bcb-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/6787d34f459bb6cce5937668c31be873-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/be961625e651f737a3b12032aaff638f-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/8a5d18792bf7da0b947ba6f9a5d4bd6f-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/6b95f91038b511bd5e360ae98c574883-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 11
+      },
+      "promo": null,
+      "prices": {
+        "regular": "249.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "6 г",
+      "has_age_restriction": false,
+      "stock_limit": "13.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203789-main/320x320.jpeg?updated_at=2026-09-30T11:12:22.510Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203789-main/800x800.jpeg?updated_at=2026-09-30T11:12:22.510Z",
+            "https://catalog-images.x5static.net/product/eefb48afccbeb6dcd079369583839bcb-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/6787d34f459bb6cce5937668c31be873-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/be961625e651f737a3b12032aaff638f-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/8a5d18792bf7da0b947ba6f9a5d4bd6f-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/6b95f91038b511bd5e360ae98c574883-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437303,
+      "name": "Подводка Miniso Minimalist Micro 4 Point Brow Pen 01 Black для бровей 0,5мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203788-main/320x320.jpeg?updated_at=2026-09-29T15:48:10.738Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203788-main/800x800.jpeg?updated_at=2026-09-29T15:48:10.738Z",
+          "https://catalog-images.x5static.net/product/f8dea02068bd8f6b68b5075759b17d16-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/bab96f4733b16dc700e6bd3beaecb301-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/a3fd62a9f06b42e0d16d495f824e5f3a-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/76196aa401dd8e4bcda585f5c5fc827e-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 4
+      },
+      "promo": null,
+      "prices": {
+        "regular": "249.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "5 мл",
+      "has_age_restriction": false,
+      "stock_limit": "7.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203788-main/320x320.jpeg?updated_at=2026-09-29T15:48:10.738Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203788-main/800x800.jpeg?updated_at=2026-09-29T15:48:10.738Z",
+            "https://catalog-images.x5static.net/product/f8dea02068bd8f6b68b5075759b17d16-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/bab96f4733b16dc700e6bd3beaecb301-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/a3fd62a9f06b42e0d16d495f824e5f3a-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/76196aa401dd8e4bcda585f5c5fc827e-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437103,
+      "name": "Блеск-масло Miniso Minimalist Lip Oil 04 Raspberry Pink для губ 3г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203798-main/320x320.jpeg?updated_at=2026-09-29T15:43:45.404Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203798-main/800x800.jpeg?updated_at=2026-09-29T15:43:45.404Z",
+          "https://catalog-images.x5static.net/product/03973fb6f9be5bd73c2ffa603b4bc5f5-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/2bcaf2a3426564fe61c89bd231ac5357-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/edc731c6b04c86c032640ca2d6d0fa28-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/93149410ceb7978eb425e53427a7eba6-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e72d66ef3f90f3ac271c0aec78ed7117-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 5
+      },
+      "promo": null,
+      "prices": {
+        "regular": "299.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "3 г",
+      "has_age_restriction": false,
+      "stock_limit": "4.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203798-main/320x320.jpeg?updated_at=2026-09-29T15:43:45.404Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203798-main/800x800.jpeg?updated_at=2026-09-29T15:43:45.404Z",
+            "https://catalog-images.x5static.net/product/03973fb6f9be5bd73c2ffa603b4bc5f5-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/2bcaf2a3426564fe61c89bd231ac5357-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/edc731c6b04c86c032640ca2d6d0fa28-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/93149410ceb7978eb425e53427a7eba6-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e72d66ef3f90f3ac271c0aec78ed7117-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437097,
+      "name": "Тональная основа Miniso Matte Liquid Foundation матирующая оттенок 102 30г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203815-main/320x320.jpeg?updated_at=2026-09-29T15:19:16.004Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203815-main/800x800.jpeg?updated_at=2026-09-29T15:19:16.004Z",
+          "https://catalog-images.x5static.net/product/63b1fec3fd86a7c577763d797f9a45c5-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/02e414c819bbc4f61127fc62356c4efc-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/913f036460371bbdc05f64e7b42fb318-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 5
+      },
+      "promo": null,
+      "prices": {
+        "regular": "499.0",
+        "discount": null,
+        "cpd_promo_price": null,
+        "cpd_promo_price_from_sum_cart": null,
+        "markdown": null
+      },
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "30 г",
+      "has_age_restriction": false,
+      "stock_limit": "4.00",
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203815-main/320x320.jpeg?updated_at=2026-09-29T15:19:16.004Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203815-main/800x800.jpeg?updated_at=2026-09-29T15:19:16.004Z",
+            "https://catalog-images.x5static.net/product/63b1fec3fd86a7c577763d797f9a45c5-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/02e414c819bbc4f61127fc62356c4efc-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/913f036460371bbdc05f64e7b42fb318-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 280,
+      "is_available": true,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437100,
+      "name": "Блеск-масло Miniso Minimalist Lip Oil 02 Strawberry Pink для губ 3г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203812-main/320x320.jpeg?updated_at=2026-09-29T15:24:12.945Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203812-main/800x800.jpeg?updated_at=2026-09-29T15:24:12.945Z",
+          "https://catalog-images.x5static.net/product/6968749ea731dac5138b7dec83b44905-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/1c4af74af71a36fb525112b6340ea7f4-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/655c2bbfa33d13103ea8101f6de3ebca-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/72588123d4fd3780f45e9285287f3daa-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/7e0b1ff8e2908fdd8b1bf5831af4a82a-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 9
+      },
+      "promo": null,
+      "prices": null,
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "3 г",
+      "has_age_restriction": false,
+      "stock_limit": null,
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203812-main/320x320.jpeg?updated_at=2026-09-29T15:24:12.945Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203812-main/800x800.jpeg?updated_at=2026-09-29T15:24:12.945Z",
+            "https://catalog-images.x5static.net/product/6968749ea731dac5138b7dec83b44905-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/1c4af74af71a36fb525112b6340ea7f4-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/655c2bbfa33d13103ea8101f6de3ebca-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/72588123d4fd3780f45e9285287f3daa-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/7e0b1ff8e2908fdd8b1bf5831af4a82a-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 140,
+      "is_available": false,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437094,
+      "name": "Тональная основа Miniso Matte Liquid Foundation матирующая оттенок 103 30г",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203805-main/320x320.jpeg?updated_at=2026-09-29T15:37:15.849Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203805-main/800x800.jpeg?updated_at=2026-09-29T15:37:15.849Z",
+          "https://catalog-images.x5static.net/product/9f4888d0991333aa7ae1caf066c50bd0-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/a1e88e8a6aca79853912d5796d9c5f89-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/97e07072b19ff07eb9ab41edd719f725-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/c200df69109aa39586ee691ffb6e03fd-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 3
+      },
+      "promo": null,
+      "prices": null,
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "30 г",
+      "has_age_restriction": false,
+      "stock_limit": null,
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203805-main/320x320.jpeg?updated_at=2026-09-29T15:37:15.849Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203805-main/800x800.jpeg?updated_at=2026-09-29T15:37:15.849Z",
+            "https://catalog-images.x5static.net/product/9f4888d0991333aa7ae1caf066c50bd0-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/a1e88e8a6aca79853912d5796d9c5f89-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/97e07072b19ff07eb9ab41edd719f725-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/c200df69109aa39586ee691ffb6e03fd-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 280,
+      "is_available": false,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437090,
+      "name": "Диффузор ароматический Miniso Жасмин 28мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203816-main/320x320.jpeg?updated_at=2026-09-29T15:15:02.986Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203816-main/800x800.jpeg?updated_at=2026-09-29T15:15:02.986Z",
+          "https://catalog-images.x5static.net/product/1d81b1fb584e82cd51942e9adba60d92-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/27a8bd6cee5d3b9771c107300de90f9a-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/847afe410a874df43443783eb640947f-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/e7b1a45333bf75cda8fc559ebf72a7da-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 3
+      },
+      "promo": null,
+      "prices": null,
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "28 мл",
+      "has_age_restriction": false,
+      "stock_limit": null,
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203816-main/320x320.jpeg?updated_at=2026-09-29T15:15:02.986Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203816-main/800x800.jpeg?updated_at=2026-09-29T15:15:02.986Z",
+            "https://catalog-images.x5static.net/product/1d81b1fb584e82cd51942e9adba60d92-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/27a8bd6cee5d3b9771c107300de90f9a-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/847afe410a874df43443783eb640947f-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/e7b1a45333bf75cda8fc559ebf72a7da-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "is_available": false,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437088,
+      "name": "Диффузор ароматический Miniso Персик 28мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203804-main/320x320.jpeg?updated_at=2026-09-29T15:40:55.425Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203804-main/800x800.jpeg?updated_at=2026-09-29T15:40:55.425Z",
+          "https://catalog-images.x5static.net/product/2e3840f162d127e368325fcbe6227350-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/39c681aef7e7db9c61ecfc5ad3b738bb-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/23827f3d560ec8300b1d87b9bdb4a6e2-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/c74856dc3bcd9ca7e86eff03956c3aa3-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/aa358810ccaf04828eb68f5bbd1a4b22-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 5
+      },
+      "promo": null,
+      "prices": null,
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "28 мл",
+      "has_age_restriction": false,
+      "stock_limit": null,
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203804-main/320x320.jpeg?updated_at=2026-09-29T15:40:55.425Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203804-main/800x800.jpeg?updated_at=2026-09-29T15:40:55.425Z",
+            "https://catalog-images.x5static.net/product/2e3840f162d127e368325fcbe6227350-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/39c681aef7e7db9c61ecfc5ad3b738bb-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/23827f3d560ec8300b1d87b9bdb4a6e2-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/c74856dc3bcd9ca7e86eff03956c3aa3-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/aa358810ccaf04828eb68f5bbd1a4b22-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "is_available": false,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    },
+    {
+      "plu": 4437086,
+      "name": "Диффузор ароматический Miniso Багамский Бриз 28мл",
+      "image_links": {
+        "small": [
+          "https://catalog-images.x5static.net/product/2203779-main/320x320.jpeg?updated_at=2026-09-29T15:50:23.759Z"
+        ],
+        "normal": [
+          "https://catalog-images.x5static.net/product/2203779-main/800x800.jpeg?updated_at=2026-09-29T15:50:23.759Z",
+          "https://catalog-images.x5static.net/product/10d69e286c63bf1da4f39bc1ad67030c-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/a927fb247d34d3eb5193d01c232d9af5-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/0f6eeb635f655b5d13f5dc7a3b3f873d-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/c658b64c0c3e15c97193a87c4d69ffed-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/40f72b84b383eeb77db012356e56a6b0-additional/800x800.jpeg",
+          "https://catalog-images.x5static.net/product/d9272b51e9aefbbfbaf3f1397b15159c-additional/800x800.jpeg"
+        ]
+      },
+      "uom": "шт",
+      "step": "1.0",
+      "rating": {
+        "rating_average": 0,
+        "rates_count": 14
+      },
+      "promo": null,
+      "prices": null,
+      "labels": null,
+      "cpd_labels": null,
+      "property_clarification": "28 мл",
+      "has_age_restriction": false,
+      "stock_limit": null,
+      "median_price": null,
+      "media": {
+        "image_links": {
+          "small": [
+            "https://catalog-images.x5static.net/product/2203779-main/320x320.jpeg?updated_at=2026-09-29T15:50:23.759Z"
+          ],
+          "normal": [
+            "https://catalog-images.x5static.net/product/2203779-main/800x800.jpeg?updated_at=2026-09-29T15:50:23.759Z",
+            "https://catalog-images.x5static.net/product/10d69e286c63bf1da4f39bc1ad67030c-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/a927fb247d34d3eb5193d01c232d9af5-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/0f6eeb635f655b5d13f5dc7a3b3f873d-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/c658b64c0c3e15c97193a87c4d69ffed-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/40f72b84b383eeb77db012356e56a6b0-additional/800x800.jpeg",
+            "https://catalog-images.x5static.net/product/d9272b51e9aefbbfbaf3f1397b15159c-additional/800x800.jpeg"
+          ]
+        },
+        "vertical_image_links": {
+          "product_card": null
+        },
+        "video_links": null
+      },
+      "promo_progressive_labels": null,
+      "badges": [],
+      "initial_weight_step": "1.0",
+      "min_weight": "1.0",
+      "max_qty_per_order": null,
+      "orange_loyalty_points": 70,
+      "is_available": false,
+      "price_piece_unit": null,
+      "stickers": null,
+      "features": null,
+      "stock_limit_md": null,
+      "labels_md": null,
+      "orange_loyalty_points_md": null,
+      "badge_groups": null,
+      "is_large_card": false,
+      "product_advert": null,
+      "banner": null,
+      "is_marketplace": false,
+      "sap_code": null,
+      "seller_type": null
+    }
+  ],
+  "request_id": null
+}

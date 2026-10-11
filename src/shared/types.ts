@@ -1,11 +1,11 @@
 export type CityId = string; // 'moscow' на MVP, дальше — справочник
 
 export interface Store {
-  id: 'pyaterochka' | 'magnit' | 'lenta';
+  id: 'pyaterochka' | 'magnit' | 'lenta' | 'svetofor' | 'chizhik' | 'perekrestok';
   name: string;
   city: CityId;
   // Идентификатор конкретного магазина в API сети:
-  // 5ka -> sapCode, Магнит -> shopCode, Лента -> storeId
+  // 5ka -> sapCode, Магнит -> shopCode, Лента -> storeId, Светофор -> shopid
   externalStoreId: string;
   address?: string;
 }

@@ -1,0 +1,917 @@
+{
+  "content": {
+    "items": [
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 327621,
+        "masterData": {
+          "slug": "belok-aicnyj-pasterizovannyj-zelenaa-linia-330ml",
+          "plu": "4235685",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 330,
+          "volume": 330,
+          "ui4code": "FR0607004",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": false,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Белок яичный пастеризованный Зелёная Линия, 330мл",
+        "primaryCategory": {
+          "id": 374,
+          "title": "Яйца",
+          "slug": "ajca",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 123,
+          "title": "Яйца",
+          "slug": "ajca",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 3391997,
+          "originName": "remote_upl_6a1d4a37bf1ab5.04870352",
+          "fileType": "image",
+          "fileSize": 35038,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/32/47/a9f05f71bceab5839e09c8702eb6.jpg",
+          "publicUrl": null,
+          "uuid": "5e11350c-9874-4da7-bb9c-6289880b63b1"
+        },
+        "rating": 495,
+        "medianPrice": 15099,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 912,
+        "ratingCount": 7850,
+        "priceTag": {
+          "price": 14999,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 436553,
+        "masterData": {
+          "slug": "tvorog-5-zelenaa-linia-180g",
+          "plu": "4334356",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 180,
+          "volume": null,
+          "ui4code": "FR0608002",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Творог 5% Зелёная Линия, 180г",
+        "primaryCategory": {
+          "id": 373,
+          "title": "Творог, сырки",
+          "slug": "tvorog-syrki",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 117,
+          "title": "Творог",
+          "slug": "tvorog",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2598183,
+          "originName": "remote_upl_68e4ba7e7a3940.01572368",
+          "fileType": "image",
+          "fileSize": 58977,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/cd/fb/1a39415e34a2fb31002600452f1d.jpg",
+          "publicUrl": null,
+          "uuid": "9448b402-8653-426e-81d5-9fa28b31f2dc"
+        },
+        "rating": 492,
+        "medianPrice": 9899,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 191,
+        "ratingCount": 1730,
+        "priceTag": {
+          "price": 9899,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 66897,
+        "masterData": {
+          "slug": "ajco-kurinoe-aktivita-s1-s-selenom-i-jodom-zelenaa-linia-10st",
+          "plu": "4068694",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 649,
+          "volume": null,
+          "ui4code": "FR0607001",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": false,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Яйцо куриное активита С1 с селеном и йодом Зелёная Линия, 10шт",
+        "primaryCategory": {
+          "id": 374,
+          "title": "Яйца",
+          "slug": "ajca",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 1589,
+          "title": "Окрошка",
+          "slug": "okroska",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2771097,
+          "originName": "remote_upl_692456fb432e31.64213950",
+          "fileType": "image",
+          "fileSize": 41387,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/c1/7d/07ee502ae4872aa4d5b4ea3cccb2.jpg",
+          "publicUrl": null,
+          "uuid": "4f19870f-86e3-4a8b-b698-3b59f7e8d469"
+        },
+        "rating": 494,
+        "medianPrice": 12499,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 1631,
+        "ratingCount": 33442,
+        "priceTag": {
+          "price": 12499,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 431953,
+        "masterData": {
+          "slug": "fars-iz-kurinoj-grudki-ohlazdennyj-zelenaa-linia-400g",
+          "plu": "4353971",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 400,
+          "volume": null,
+          "ui4code": "FR1301008",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": false,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Фарш из куриной грудки охлаждённый Зелёная Линия, 400г",
+        "primaryCategory": {
+          "id": 385,
+          "title": "Фарш, печень, язык",
+          "slug": "fars-pecen-azyk",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 1320,
+          "title": "Всё мясо",
+          "slug": "vse-maso",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 1,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2593587,
+          "originName": "remote_upl_68e3851cd16a83.61611845",
+          "fileType": "image",
+          "fileSize": 71932,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/5f/70/edccfa2433f4316f1de983ff5751.jpg",
+          "publicUrl": null,
+          "uuid": "07e012f9-ee26-4b22-81b8-742d84b4beb1"
+        },
+        "rating": 493,
+        "medianPrice": 24199,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 647,
+        "ratingCount": 6139,
+        "priceTag": {
+          "price": 25299,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 272104,
+        "masterData": {
+          "slug": "tvorog-5-zelenaa-linia-400g",
+          "plu": "4128957",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 400,
+          "volume": null,
+          "ui4code": "FR0608002",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Творог 5% Зелёная Линия, 400г",
+        "primaryCategory": {
+          "id": 373,
+          "title": "Творог, сырки",
+          "slug": "tvorog-syrki",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 117,
+          "title": "Творог",
+          "slug": "tvorog",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2676484,
+          "originName": "remote_upl_68f9d27b87cd65.44652705",
+          "fileType": "image",
+          "fileSize": 61528,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/27/cd/a4e7a2482599e3e4d5d7621ba3f3.jpg",
+          "publicUrl": null,
+          "uuid": "eee9f06f-d53a-49ab-8e57-56cacee10542"
+        },
+        "rating": 490,
+        "medianPrice": 14999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 937,
+        "ratingCount": 10733,
+        "priceTag": {
+          "price": 14999,
+          "discountMinimumAmount": 0,
+          "grossPrice": 18999,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-21%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 267689,
+        "masterData": {
+          "slug": "pastila-belevskaa-klassiceskaa-bez-sahara-zelenaa-linia-100g",
+          "plu": "4116134",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 100,
+          "volume": null,
+          "ui4code": "FD0604003",
+          "taxGroup": "HB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 22
+        },
+        "title": "Пастила Белёвская классическая без сахара Зелёная Линия, 100г",
+        "primaryCategory": {
+          "id": 433,
+          "title": "Полезные сладости",
+          "slug": "poleznye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 255,
+          "title": "Правильные сладости",
+          "slug": "pravilnye-sladosti",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2553116,
+          "originName": "remote_upl_68dc60ff508514.53934605",
+          "fileType": "image",
+          "fileSize": 66030,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/4e/7c/9ce74e69335c00b6592a26c2e5bd.jpg",
+          "publicUrl": null,
+          "uuid": "837b9f4e-23c0-4b4c-9080-18f8a6b2760a"
+        },
+        "rating": 493,
+        "medianPrice": 12999,
+        "labelCharacteristics": [],
+        "labels": [
+          {
+            "listingImage": {
+              "id": 211246,
+              "originName": "d1a8d6c10dbbe2606f995ec0a992.jpg",
+              "fileType": "image",
+              "fileSize": 22208,
+              "width": 512,
+              "height": 512,
+              "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/6a/62/4b4068e8dca39af34f0c15d766cf.jpg",
+              "publicUrl": null,
+              "uuid": "f4bf585b-7628-4741-a04d-1f6ed15d8b3c"
+            },
+            "toolTip": null
+          }
+        ],
+        "reviewCount": 633,
+        "ratingCount": 7858,
+        "priceTag": {
+          "price": 12999,
+          "discountMinimumAmount": 0,
+          "grossPrice": 17499,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-25%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 362245,
+        "masterData": {
+          "slug": "maslo-sladkoslivocnoe-tradicionnoe-nesolenoe-82-5-zelenaa-linia-180g",
+          "plu": "4260609",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 180,
+          "volume": null,
+          "ui4code": "FR0603003",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Масло сладкосливочное Традиционное несолёное 82.5% Зелёная Линия, 180г",
+        "primaryCategory": {
+          "id": 376,
+          "title": "Масло, маргарин",
+          "slug": "maslo-margarin",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 121,
+          "title": "Масло",
+          "slug": "maslo",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 3392000,
+          "originName": "remote_upl_6a1d4a34b11f85.22462906",
+          "fileType": "image",
+          "fileSize": 65043,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/60/36/a519a7fe883fb057f6d7e2378b00.jpg",
+          "publicUrl": null,
+          "uuid": "4fd7a9e0-835c-408d-97cc-201fc9b3ab81"
+        },
+        "rating": 495,
+        "medianPrice": 20199,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 678,
+        "ratingCount": 7073,
+        "priceTag": {
+          "price": 18999,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 59468,
+        "masterData": {
+          "slug": "bifilajf-malina-sipovnik-s-8-mesacev-2-5-zelenaa-linia-210g",
+          "plu": "3668931",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 210,
+          "volume": 210,
+          "ui4code": "FR0301002",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": false,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Бифилайф малина-шиповник с 8 месяцев 2.5% Зелёная Линия, 210г",
+        "primaryCategory": {
+          "id": 485,
+          "title": "Детские напитки",
+          "slug": "detskie-napitki",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 284,
+          "title": "Зелёная Линия",
+          "slug": "zelenaa-linia",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2787102,
+          "originName": "remote_upl_69276b0c07d164.53231571",
+          "fileType": "image",
+          "fileSize": 48123,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/71/cc/7f6ceeae28959cf7af8c4b92e417.jpg",
+          "publicUrl": null,
+          "uuid": "52ed5368-c868-4b89-b754-83f3ec6835b3"
+        },
+        "rating": 496,
+        "medianPrice": 6199,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 189,
+        "ratingCount": 3817,
+        "priceTag": {
+          "price": 6199,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [
+            {
+              "type": "red",
+              "text": "4 по цене 3-х"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 287761,
+        "masterData": {
+          "slug": "moloko-zelenaa-linia-otbornoe-pasterizovannoe-3-4-6-900ml",
+          "plu": "4137917",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 930,
+          "volume": 900,
+          "ui4code": "FR0604001",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Молоко Зелёная Линия отборное пастеризованное 3.4-6%, 900мл",
+        "primaryCategory": {
+          "id": 370,
+          "title": "Молоко, сметана",
+          "slug": "moloko-smetana",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 114,
+          "title": "Молоко",
+          "slug": "moloko",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 2774611,
+          "originName": "remote_upl_6925c4b22e2f42.68430285",
+          "fileType": "image",
+          "fileSize": 24111,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/3d/ca/2eaa2824ccf37f9a15d409eecb42.jpg",
+          "publicUrl": null,
+          "uuid": "2458ec51-96a2-407a-b364-ab18ea109da0"
+        },
+        "rating": 495,
+        "medianPrice": 9999,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 1019,
+        "ratingCount": 17618,
+        "priceTag": {
+          "price": 9999,
+          "discountMinimumAmount": 0,
+          "grossPrice": null,
+          "labels": [],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      },
+      {
+        "liked": false,
+        "recSysRecommendationRequestId": null,
+        "borderStyle": null,
+        "bestReview": null,
+        "advToken": null,
+        "id": 255236,
+        "masterData": {
+          "slug": "jogurt-greceskij-naturalnyj-4-zelenaa-linia-190g",
+          "plu": "4068957",
+          "unit": 1,
+          "unitName": "шт",
+          "quantum": 1000,
+          "quantumStep": 1000,
+          "weight": 190,
+          "volume": null,
+          "ui4code": "FR0609001",
+          "taxGroup": "BB",
+          "ownProduction": false,
+          "privateLabel": true,
+          "isMark": true,
+          "alcoSetUnits": null,
+          "activeNds": 10
+        },
+        "title": "Йогурт греческий натуральный 4% Зелёная Линия, 190г",
+        "primaryCategory": {
+          "id": 372,
+          "title": "Йогурты, десерты",
+          "slug": "jogurty-deserty",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            2,
+            3,
+            4
+          ]
+        },
+        "catalogPrimaryCategory": {
+          "id": 1704,
+          "title": "Салатная классика",
+          "slug": "salatnaa-klassika",
+          "isAlcohol": false,
+          "isTobacco": false,
+          "isExciseAlcohol": false,
+          "isAdultContent": false,
+          "displayStyle": 2,
+          "catalogs": [
+            1
+          ]
+        },
+        "image": {
+          "id": 3300974,
+          "originName": "remote_upl_69f8b497f2ecc6.98230507",
+          "fileType": "image",
+          "fileSize": 37589,
+          "width": 800,
+          "height": 800,
+          "cropUrlTemplate": "https://tsx.x5static.net/i/%s/xdelivery/files/a1/58/eb59dce1131ed273bd53xdec315a.jpg",
+          "publicUrl": null,
+          "uuid": "c93d6660-e9fd-4654-9ecb-d171498c9a8a"
+        },
+        "rating": 495,
+        "medianPrice": 9499,
+        "labelCharacteristics": [],
+        "labels": [],
+        "reviewCount": 385,
+        "ratingCount": 4869,
+        "priceTag": {
+          "price": 10099,
+          "discountMinimumAmount": 0,
+          "grossPrice": 10999,
+          "labels": [
+            {
+              "type": "yellow",
+              "text": "-8%"
+            }
+          ],
+          "pricePerQuantum": null,
+          "grossPricePerQuantum": null,
+          "potentialPointsForOrangeCard": null,
+          "unitPriceWithConditionalDiscount": null,
+          "discountCondition": null
+        },
+        "balanceState": "many"
+      }
+    ],
+    "paginator": {
+      "step": 10,
+      "current": 1,
+      "nextPageExists": true
+    },
+    "currentSorting": {
+      "orderBy": "popularity",
+      "orderDirection": "desc"
+    },
+    "canonical": null,
+    "orderByInfoItems": [
+      {
+        "orderBy": "popularity",
+        "orderDirection": "desc",
+        "orderByTitle": "Рекомендуемые",
+        "isSelected": true
+      },
+      {
+        "orderBy": "price",
+        "orderDirection": "asc",
+        "orderByTitle": "Сначала дешевле",
+        "isSelected": false
+      },
+      {
+        "orderBy": "price",
+        "orderDirection": "desc",
+        "orderByTitle": "Сначала дороже",
+        "isSelected": false
+      },
+      {
+        "orderBy": "discount",
+        "orderDirection": "desc",
+        "orderByTitle": "По размеру скидки",
+        "isSelected": false
+      },
+      {
+        "orderBy": "rating",
+        "orderDirection": "desc",
+        "orderByTitle": "По рейтингу",
+        "isSelected": false
+      }
+    ],
+    "searchQueryId": null,
+    "searchType": "strict",
+    "catalogs": null,
+    "sapId": "2053"
+  }
+}

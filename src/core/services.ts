@@ -85,8 +85,10 @@ export interface Core {
   getShelves(args: ShelfScope): Promise<ProductShelves>;
   /** Избранное города с текущей ценой каждой отмеченной точки. */
   getFavorites(args: { city: string }): Promise<Favorite[]>;
-  /** Город, выбранный в интерфейсе: автоопрос бьёт только по нему. */
+/** Город, выбранный в интерфейсе: автоопрос бьёт только по нему. */
   setCurrentCity(city: string): void;
+  /** Выбор сетей города: null — все сети (пользователь ещё не выбирал). */
+  setCurrentStores(storeIds: string[] | null): void;
   /**
    * Избранное с достигнутым порогом. Вызывается после опроса: сеть ответила,
    * цена упала — пора сообщить. Возвращает только те отметки, где порог есть
@@ -112,7 +114,14 @@ export interface Core {
   /** Вернуть товар под управление автораскладки. */
   releaseShelves(args: ShelfScope): Promise<ProductShelves>;
   schedulerStatus(): SchedulerState;
-  runScheduler(args?: { city?: string }): Promise<{ status: SchedulerState; summary: string }>;
+  runScheduler(args?: { city?: string; storeIds?: string[] }): Promise<{ status: SchedulerState; summary: string }>;
+  /**
+   * Прервать идущий опрос. Отмена кооперативная: останавливается на границе
+   * товара (уже начатый запрос у браузерных сетей доживает), собранное за прогон
+   * сохраняется, а незакрытый цикл докачивается следующим запуском.
+   * `false` — идти нечего.
+   */
+  cancelScheduler(): boolean;
   /** Запуск фоновых таймеров. Вызывает оболочка, когда приложение готово. */
   startScheduler(): void;
   saveAll(): void;
@@ -133,17 +142,19 @@ export interface Core {
 export function progressEmitter(
   emit: (channel: string, payload: unknown) => void,
   minGapMs = 250,
-): { onProgress: (done: number, total: number) => void; flush: () => void } {
+): { onProgress: (done: number, total: number, storeId?: string) => void; flush: () => void } {
   // Монотонные часы: Date.now() прыгает назад при переводе времени или правке
   // часов, разность с lastAt становится отрицательной, и до выравнивания
   // прогресс глух — счётчик прыгал с «12/237» сразу на «237/237».
   // performance.now() от этого свободен.
   const monotonic = (): number => performance.now();
   let lastAt = Number.NEGATIVE_INFINITY;
-  let last: { done: number; total: number } | null = null;
+  let last: { done: number; total: number; storeId?: string } | null = null;
   return {
-    onProgress: (done, total) => {
-      last = { done, total };
+    // storeId едет вместе со счётчиком: без него интерфейс не знает, ЧЕЙ магазин
+    // сейчас опрашивается, и прогресс выглядит как «что-то делается в тишине».
+    onProgress: (done, total, storeId) => {
+      last = { done, total, ...(storeId === undefined ? {} : { storeId }) };
       const now = monotonic();
       if (now - lastAt < minGapMs) return;
       lastAt = now;
@@ -161,10 +172,14 @@ export function progressEmitter(
 }
 
 export function createCore(deps: CoreDeps): Core {
-  const { storage, json, shell, background, log, adapters } = deps;
+  const { storage, json, shell, background, log, adapters, closeBrowsers } = deps;
   const emit = deps.emit ?? (() => {});
 
   const SHELF_CACHE_TTL_MS = 3 * 60 * 1000;
+  // Потолок на разбор браузеров после прогона. Обычно это десятки миллисекунд;
+  // пять секунд ждём только зависший Playwright, чтобы интерфейс не остался с
+  // вечно включённой кнопкой «Опрашиваю…».
+  const BROWSER_CLOSE_TIMEOUT_MS = 5000;
   // Кэш полки в памяти. Каждое открытие бьётся в сети заново: восемь запросов
   // на три сети, а Пятёрка через браузер — около 5 секунд на запрос. При
   // возвращении «назад → та же полка» повторный обход сети смысла не имеет, а
@@ -682,6 +697,12 @@ export function createCore(deps: CoreDeps): Core {
   // --- Избранное ----------------------------------------------------------
   // Город из интерфейса: без него автоопрос шёл бы по всем городам сразу.
   let currentCity: string | null = null;
+/**
+ * Выбранные пользователем сети для текущего города. Живёт в памяти процесса, как и
+ * currentCity: после перезапуска приложения renderer снова присылает выбор, а до этого
+ * автоопрос идёт по всем сетям города (пользователь ещё не выбирал).
+ */
+let currentStores: string[] | null = null;
   const selectedCity = (): string | null => currentCity;
 
   // Цена для избранного берётся из последней строки истории по (canonical_id,
@@ -807,7 +828,16 @@ export function createCore(deps: CoreDeps): Core {
   const state: SchedulerState = {
     running: false,
     lastRun: null,
-    counts: { inserted: 0, skipped: 0, failed: 0, notReady: 0, failedStores: [] },
+    counts: {
+      inserted: 0,
+      skipped: 0,
+      failed: 0,
+      notReady: 0,
+      failedStores: [],
+      staleStores: [],
+      interrupted: false,
+      remaining: 0,
+    },
     intervalHours: 6,
   };
   // Упавший опрос нельзя рапортовать как успешный: renderer красит summary как
@@ -833,11 +863,48 @@ export function createCore(deps: CoreDeps): Core {
     // (сеть выключена или стоит на паузе breaker'а), иначе рапортовал бы
     // «проверено 0, ошибок 0» — зелёный баннер при нуле реальных проверок.
     const notReady = c.notReady > 0 ? `, не проверено ${c.notReady}` : '';
-    return `Опрос завершён: проверено ${c.inserted + c.skipped}, новых цен ${c.inserted}, ошибок ${c.failed}${notReady}${who}.`;
+    // Протухшие точки — отдельная строка: сеть жива, но её магазины она не
+    // обновляет, поэтому цены этих товаров заморожены. Без этой строки сводка
+    // выглядит как обычная ошибка сети, а пользователь не понимает, почему по
+    // части магазинов цены не меняются месяцами.
+const stale = c.staleStores.length
+        ? ` Сеть не обновляет: ${c.staleStores.join(', ')} — цены этих магазинов заморожены.`
+        : '';
+      // Прерванный прогон НЕ называется завершённым: баннер «Опрос завершён» был бы
+      // зелёным при незакрытом цикле, и следующее нажатие снова выглядело бы
+      // как «всё проверил». Показываем, сколько осталось — ради этого всё и было.
+      if (c.interrupted) {
+        return `Опрос прерван: проверено ${c.inserted + c.skipped}, осталось ${c.remaining}.` +
+          ` Следующий запуск докачает остаток (ошибок ${c.failed}${notReady}${who}).${stale}`;
+      }
+      return `Опрос завершён: проверено ${c.inserted + c.skipped}, новых цен ${c.inserted}, ошибок ${c.failed}${notReady}${who}.${stale}`;
   };
 
-  const runScheduled = async (opts?: { city?: string | null; force?: boolean; dryRun?: boolean }): Promise<void> => {
-    if (state.running) return;
+  /**
+  * Прерывание идущего прогона.
+  *
+  * Отмена кооперативная: планировщик спрашивает `isCancelled` перед каждым
+  * товаром, поэтому точность — один товар, а у браузерных сетей уже начатый
+  * запрос доживает сам (до минуты). Мгновенной остановки не обещаем ни в UI,
+  * ни здесь — иначе пользователь снимет галочку, увидит «опрос идёт» и решит,
+  * что кнопка не работает.
+  */
+  let pollCancelled = false;
+  const stopRunningPoll = (reason: string): void => {
+    if (!state.running) return;
+    pollCancelled = true;
+    log.info(`опрос прерывается: ${reason} (останавливается на текущем товаре)`);
+  };
+
+  const runScheduled = async (opts?: {
+    city?: string | null;
+    storeIds?: string[];
+    force?: boolean;
+    dryRun?: boolean;
+  }): Promise<string> => {
+    // Сводка возвращается всегда строкой: ранние ветки (уже идёт, dryRun) отдают
+    // текущую, чтобы вызывающий не получил void в типе.
+    if (state.running) return pollSummary();
     // dryRun — только показать, когда был последний опрос, без запросов.
     if (opts?.dryRun === true) {
       // Не поднимаем state.running: этот проход только читает метку, иначе он
@@ -853,12 +920,15 @@ export function createCore(deps: CoreDeps): Core {
         // падение openDb стало бы unhandled rejection в main.
         log.error('опрос: не удалось прочитать метку последнего прохода', err);
       }
-      return;
+      return pollSummary();
     }
-    // Баннер на проход ровно один и он обязан быть честным: ветка «отложен»
+// Баннер на проход ровно один и он обязан быть честным: ветка «отложен»
     // знает, что сетевых запросов не было, и говорит это своим текстом.
-    let summaryOverride: string | null = null;
+let summaryOverride: string | null = null;
     state.running = true;
+    // Флаг прерывания сбрасывается на старте: прошлый прогон мог быть отменён,
+    // и без сброса новый прогон встал бы на первом же товаре.
+    pollCancelled = false;
     try {
       const database = await openDb(storage);
       // Опрос без цели: пока ни один товар не отслеживается, он не делает
@@ -866,7 +936,7 @@ export function createCore(deps: CoreDeps): Core {
       // нет» — а его видно как «опрос пошёл при открытии полки». Молчим.
       if (listTrackedProducts(database).length === 0) {
         log.info('опрос пропущен: отслеживаемых товаров ещё нет');
-        return;
+        return pollSummary();
       }
       // Автозапуск не повторяет недавний ручной. Без этой проверки старт
       // после запуска (background.after(30000)) опрашивал бы город заново
@@ -874,6 +944,17 @@ export function createCore(deps: CoreDeps): Core {
       // бесплатной сети это лишние запросы к магазину без нужды.
       const auto = opts?.force !== true;
       const targetCity = opts?.city ?? selectedCity();
+      // Выбор магазинов из шапки — фильтр опроса, а не только фильтр выдачи: без
+      // него счётчик обещал обход всех сетей города, а ходил и в выключенные.
+      const targetStores = opts?.storeIds ?? currentStores;
+      // Ни одной сети не выбрано: это НЕ то же, что «нет отслеживаемых
+      // товаров». Молчаливый баннер про товары увёл бы пользователя искать
+      // товары, хотя он просто снял все галочки магазинов.
+      if (targetStores !== null && targetStores.length === 0) {
+        log.info('опрос пропущен: ни одна сеть не выбрана');
+        summaryOverride = 'Опрос пропущен: не выбрано ни одного магазина.';
+        return summaryOverride;
+      }
       // Автозапуск не повторяет недавний опрос этого города. Правило — метка против
       // интервала, а не «5 минут после ручного»: ручной запуск сам пишет
       // метку, поэтому свежая метка одинаково отсекает и повтор ручного, и
@@ -890,7 +971,8 @@ export function createCore(deps: CoreDeps): Core {
           // finally эмитил ВТОРОЕ событие со сводкой прошлого прохода, и
           // пользователь читал выдуманные «проверено 237, новых цен 7».
           summaryOverride = `Опрос отложен: ${targetCity} проверяли в ${last.slice(0, 16).replace('T', ' ')}.`;
-          return;
+          // summaryOverride тут всегда задан: ветка только что его выставила.
+          return summaryOverride;
         }
       }
       const progress = progressEmitter(emit);
@@ -901,17 +983,34 @@ export function createCore(deps: CoreDeps): Core {
         // Только выбранный город: цена привязана к магазину, и обход всех
         // городов одной кнопкой означал бы запросы туда, куда пользователь
         // не смотрел.
-        ...(targetCity ? { city: targetCity } : {}),
+...(targetCity ? { city: targetCity } : {}),
+        // И только выбранные сети: галочка в шапке обещала не больше, а опрос
+        // ходил во все сети города — отсюда «28 из 445» при одном магазине.
+        ...(targetStores ? { storeIds: targetStores } : {}),
+        // Продолжение незаконченного цикла города: повторное нажатие берёт
+        // неповеренное и ошибочное, а не всё подряд. Полный проход обнуляет
+        // чек-лист сам (в планировщике) — тогда следующий прогон снова весь.
+        resume: targetCity !== null && targetCity !== undefined,
+        // Отмена кооперативная: снятие галочки или смена города останавливают
+        // прогон на границе товара, собранное за него сохраняется.
+        isCancelled: () => pollCancelled,
         onProgress: progress.onProgress,
         log,
       });
       // Финальное состояние уходит обязательно: иначе последние 250 мс
       // прогресса терялись бы и счётчик не дошёл бы до «N/N».
-      progress.flush();
+progress.flush();
       state.lastRun = new Date().toISOString();
       // Метку пишем в БД: без неё перезапуск приложения (особенно portable —
       // каждый запуск новый процесс) забывал опрос и начинал его заново.
-      if (targetCity) {
+      //
+      // Прерванный прогон метку НЕ пишет: цикл города не закрыт, и запись
+      // «проверяли час назад» отложила бы автозапуск на полный интервал (до 6
+      // часов) — то есть остаток добирался бы только ручным нажатием, что
+      // тихо противоречит самой идее докачки. Автозапуск при этом тоже
+      // пропустит город по старой метке, и это осознанный размен: единственный
+      // способ ускорить докачку — нажать кнопку ещё раз.
+      if (targetCity && !state.counts.interrupted) {
         saveLastRun(database, targetCity, state.lastRun);
         persistDb();
       }
@@ -942,9 +1041,40 @@ export function createCore(deps: CoreDeps): Core {
       const summary = pollSummary();
       log.error('уведомление об опросе', summary);
       shell.notify(summary);
-    } finally {
+} finally {
+      // Браузеры сетей после прогона НЕ нужны: каждый — отдельный процесс Firefox
+      // с сотнями мегабайт памяти, и до выхода из приложения они висели бы зря
+      // (проверено 2026-11-11 на живой сборке: после прогона по Москве оставалось
+      // 8 таких процессов). Закрытие в finally, а не после опроса: ветки
+      // «пропущен» и «отложен» тоже уходят отсюда, а браузеры, открытые прошлым
+      // прогоном, им не нужны тем более.
+      if (closeBrowsers !== undefined) {
+        // С таймаутом: зависший close() Playwright иначе держал бы и флаг
+        // прогона, и ответ runScheduler вечно — интерфейс остался бы с
+        // неактивной кнопкой. Цены к этому моменту уже записаны, терять нечего.
+        // Таймер НЕ unref-ится намеренно: с unref он не срабатывал, когда в цикле
+        // событий больше ничего не держано (тест висел), и «потолок» превращался в
+        // вечное ожидание. Вместо этого таймер гасится сразу после гонки.
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        await Promise.race([
+          closeBrowsers().catch((err) => {
+            log.error('не удалось закрыть браузеры после опроса', err);
+          }),
+          new Promise<void>((r) => {
+            timer = setTimeout(r, BROWSER_CLOSE_TIMEOUT_MS);
+          }),
+        ]).finally(() => {
+          if (timer !== undefined) clearTimeout(timer);
+        });
+      }
+      // Флаг снимается ПОСЛЕ закрытия. Иначе за окно teardown (сотни
+      // миллисекунд) таймер или второй клик успевали бы начать новый опрос и
+      // убить только что поднятый браузер, а запрос полки — словить «Target
+      // closed» ровно на завершении предыдущего прогона.
       state.running = false;
-      emit('scheduler:done', { status: { ...state }, summary: summaryOverride ?? pollSummary() });
+      const summary = summaryOverride ?? pollSummary();
+      emit('scheduler:done', { status: { ...state }, summary });
+      return summary;
     }
   };
 
@@ -1000,9 +1130,38 @@ export function createCore(deps: CoreDeps): Core {
     setShelves,
     releaseShelves,
     getFavorites,
-  setCurrentCity: (city: string) => {
-    currentCity = city;
-  },
+setCurrentCity: (city: string) => {
+      // Смена города — тоже смена объёма работы: идущий опрос старого города
+      // пользователь отменил фактом перехода. Прерываем до сброса выбора.
+      if (city !== currentCity) stopRunningPoll('смена города');
+      currentCity = city;
+      // Выбор магазинов принадлежит городу: сменили город — галочки прежнего
+      // города не должны молча решать, какие сети опрашивать.
+      currentStores = null;
+    },
+    /**
+     * Выбранные сети города. `null` — пользователь ещё не выбирал (опрос по всем
+     * сетям города), иначе — только эти: пустой массив означает «ни одной», а не
+     * «все», иначе пустой выбор в UI означал бы опрос всего подряд.
+     *
+     * Прерывание идёт только при РЕАЛЬНОМ изменении выбора: `stores:set`
+     * прилетает на каждое изменение состояния, включая само монтирование
+     * приложения, и безусловная отмена сорвала бы автоопрос на старте.
+     */
+    setCurrentStores: (storeIds: string[] | null) => {
+      // Порядок галочек в массиве не имеет значения для опроса, но имеет — для
+      // сравнения: иначе перестановка того же выбора рвала бы идущий прогон.
+      const next = storeIds === null ? null : [...storeIds].sort();
+      const previous = currentStores === null ? null : [...currentStores].sort();
+      const same =
+        (next === null && previous === null) ||
+        (next !== null &&
+          previous !== null &&
+          next.length === previous.length &&
+          next.every((id, i) => id === previous[i]));
+      currentStores = next;
+      if (!same) stopRunningPoll('выбор магазинов изменился');
+    },
   checkTargets,
   // Только для тестов ядра: тот же markNotified, что зовёт опрос, но без
   // рассылки уведомлений. В проде недостижимо — оболочка наружу не отдаёт.
@@ -1017,12 +1176,32 @@ export function createCore(deps: CoreDeps): Core {
   // Ручной запуск: force = true всегда. Иначе кнопка «Опросить сейчас» молча
   // ничего бы не делала сразу после автоопроса — пользователь нажал и не видит
   // ни счётчика, ни ошибки.
-  runScheduler: async (args?: { city?: string }) => {
+  runScheduler: async (args?: { city?: string; storeIds?: string[] }) => {
     if (state.running) {
       return { status: { ...state }, summary: 'Опрос уже идёт — дождись завершения.' };
     }
-    await runScheduled({ ...(args?.city ? { city: args.city } : {}), force: true });
-    return { status: { ...state }, summary: pollSummary() };
+    // storeIds передаются явно: кнопка «Опросить сейчас» может быть нажата раньше,
+    // чем эффект отправит выбор отдельным вызовом, и молча ушёл бы опрос по всем
+    // сетям города.
+    // Сводка берётся из самого прохода: ветки «пропущен/отложен» объясняют
+    // себя СВОИМ текстом, и возвращать вместо него общий pollSummary() значило
+    // бы показать пользователю «проверено 0» вместо причины пропуска.
+    const summary = await runScheduled({
+      ...(args?.city ? { city: args.city } : {}),
+      ...(args?.storeIds === undefined ? {} : { storeIds: args.storeIds }),
+      force: true,
+    });
+return { status: { ...state }, summary };
+  },
+  /**
+   * Остановить идущий опрос. `false` — идти нечего (прогон уже закончился или
+   * не начинался): кнопка могла остаться нажатой после завершения, и «я
+   * остановил» на пустом месте было бы враньём в интерфейсе.
+   */
+  cancelScheduler: (): boolean => {
+    if (!state.running) return false;
+    stopRunningPoll('пользователь нажал «Прервать»');
+    return true;
   },
   saveAll,
   startScheduler,

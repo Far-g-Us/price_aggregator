@@ -6,11 +6,18 @@ node_modules/
 .claude/
 opencode.json
 
+CHANGELOG.md
+
 # build (electron-builder кладёт установщик и portable в dist/)
 dist/
 build-renderer/
 dist-electron/
 out/
+# Промежуточная сборка electron-builder внутри проекта (build-exe.mjs).
+# Отдельный каталог нужен из-за EPERM на переименовании win-unpacked.tmp:
+# в %TEMP% система фильтрует переименование иначе. Но %TEMP% — не наше место:
+# там копируется 400 МБ, которые пользователь потом вручную чистит.
+.build-staging/
 *.tsbuildinfo
 
 # electron-builder cache / win code-sign

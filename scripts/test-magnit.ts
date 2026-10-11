@@ -94,23 +94,34 @@ const brandObj = normalizeMagnitProduct(
 );
 assert.equal(brandObj?.brand, 'B');
 
-const catHtml = fs.readFileSync('tests/fixtures/magnit-categories.html', 'utf-8');
-const cats = parseMagnitCategories(catHtml, '473996');
-assert.equal(cats.length, 3);
+// Категории: берём живой ответ главной (tests/fixtures/magnit-home.html, снят
+// 2026-10-08). Прежняя фикстура была в формате `__NUXT_DATA__` со ссылками
+// `/catalog/…`, которых в живом ответе больше нет: сеть перенесла плитки
+// витрины в обычные `<a>` с числовым id и названием в `alt`.
+const homeHtml = fs.readFileSync('tests/fixtures/magnit-home.html', 'utf-8');
+// Код магазина — константой, а не самоизвлечением из фикстуры: главная приходит с
+// промо-каруселью, и если сеть отдаст её с чужими ссылками, витрина должна
+// отвалиться с «чужой магазин», а не тихо разобраться.
+const HOME_SHOP = '992301';
+assert.ok(homeHtml.includes(`shopCode=${HOME_SHOP}`), 'фикстура главной снята для магазина 992301');
+const cats = parseMagnitCategories(homeHtml, HOME_SHOP);
+assert.ok(cats.length > 0, 'витрина главной разобрана');
 assert.ok(cats[0]?.url.startsWith('https://magnit.ru/catalog/'), 'clean catalog url');
 assert.ok(!cats[0]?.url.includes('?'), 'no query leak');
-// Регрессия 2026-09-30: пятое поле записи категории в __NUXT_DATA__ — это
-// ссылка на картинку, а не мусор. Раньше оно отбрасывалось, и плитки категорий
-// оставались без картинок, хотя сеть её отдаёт.
-assert.equal(
-  cats[0]?.imageUrl,
-  'https://images-foodtech.magnit.ru/fDaCzEYETDNF1ti6B3iGkHCIYCRiD9pBxwHkcX92jpA/rs:fit:318:384/plain/s3://img-dostavka/pim/category/65247/gallery/a6b485186af77c86d5683c0585d4c54b.png@webp',
-  'картинка категории берётся из пятого поля и с \\u002F разэкранируется',
+assert.ok(
+  cats.every((c) => /^\d+$/.test(c.id)),
+  'id числовой, как в живых ссылках витрины',
 );
-const noImage = parseMagnitCategories(catHtml.replace(/images-foodtech[^"]*/, ''), '473996');
-assert.equal(noImage[0]?.imageUrl, undefined, 'без ссылки на картинку полка остаётся без неё');
+// Регрессия 2026-10-08: картинка плитки лежит в `src` картинки внутри `<a>`,
+// и раньше её теряли вместе с форматом `__NUXT_DATA__`.
+assert.ok((cats[0]?.imageUrl ?? '').startsWith('https://'), 'картинка категории взята из плитки');
+const noImage = parseMagnitCategories(
+  homeHtml.replace(/<img[^>]*src="https:\/\/[^"]*"[^>]*>/g, '<img alt="x">'),
+  HOME_SHOP,
+);
+assert.equal(noImage[0]?.imageUrl, undefined, 'без картинки полка остаётся без неё');
 assert.ok(noImage[0]?.url.startsWith('https://magnit.ru/catalog/'), 'ссылка на категорию не пострадала');
-assert.throws(() => parseMagnitCategories(catHtml, '000000'), /чужого магазина/);
+assert.throws(() => parseMagnitCategories(homeHtml, '000000'), /чужого магазина/);
 
 const promoHtml = fs.readFileSync('tests/fixtures/magnit-category-promo.html', 'utf-8');
 const promos = parseMagnitCategoryPromos(promoHtml, '473996');

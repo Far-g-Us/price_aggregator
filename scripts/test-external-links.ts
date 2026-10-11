@@ -15,6 +15,11 @@ const blocked: unknown[] = [
   'https://magnit.ru.evil.com/',
   'https://5ka.ru.evil.com/catalog',
   'https://lenta.com.evil.com/',
+  // Поддомен Светофора разрешён, а вот хост, который просто заканчивается на
+  // его буквы, — нет: суффикс сравнивается по границе метки.
+  'https://evil-svetoforonline.ru/',
+  'https://svetoforonline.ru.evil.com/',
+  'https://svetoforonline.ru.evil.com/kuku/',
   'https://github.com/Far-g-Us/price_aggregator/releases.evil.com/',
   'https://github.com/Far-g-Us/price_aggregator/releasesXYZ',
   'https://github.com/other/repo/releases/',
@@ -46,6 +51,11 @@ const allowed = [
   'https://magnit.ru/catalog/12345/',
   'https://5ka.ru/catalog/0/',
   'https://lenta.com/catalog/4161/',
+  // Ссылки на товары Светофора ведут на поддомен региона: сравнение origin
+  // побайтно их бы не пустило, в списке у правила стоит хост-суффикс.
+  'https://svetoforonline.ru/',
+  'https://moskovskaya-oblast.svetoforonline.ru/kuku/',
+  'https://leningradskaya-oblast.svetoforonline.ru/molochnaya-produktsiya/',
   // Адрес без слеша допускается: без него GitHub не редиректит, а со слешем
   // редиректит на себя же с кодом 301 — то есть лишний запрос и лишний шаг.
   'https://github.com/Far-g-Us/price_aggregator/releases',

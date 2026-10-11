@@ -13,6 +13,7 @@ import { closeDb, openDb } from '../src/core/db/db.js';
 import { fileStorageAt } from '../electron/node-files.js';
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../src/shared/types.js';
 import type { CoreDeps } from '../src/core/platform.js';
+// печатает ошибки — в тестах это шум, мешающий прочитать результат.
 
 type SearchCtx = Parameters<StoreAdapter['search']>[1];
 

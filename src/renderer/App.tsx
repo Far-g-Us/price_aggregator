@@ -93,10 +93,17 @@ function HistoryChart({ points }: { points: HistoryPoint[] }) {
  * умолчанию, а перечисление отказов пришлось бы дополнять при каждом новом.
  */
 function isWarnSummary(summary: string): boolean {
-  // Правило fail-closed: успешна только сводка, начавшаяся с «Опрос завершён»
-  // и при этом не содержащая «товаров пока нет» — тот случай в ядре тоже
-  // оформляется как «Опрос завершён», но проходом он не является.
-  return !summary.startsWith('Опрос завершён') || summary.includes('отслеживаемых товаров пока нет');
+  // Правило fail-closed: успешна только сводка, начавшаяся с «Опрос завершён»,
+  // не содержащая «товаров пока нет» и не содержащая протухших магазинов. Тот
+  // случай в ядре тоже оформляется как «Опрос завершён», но проходом он не
+  // является; протухшая точка — сеть жива, но её цены заморожены, то есть по
+  // этим товарам проверки фактически не было, и зелёный баннер вводил бы в
+  // заблуждение.
+  return (
+    !summary.startsWith('Опрос завершён') ||
+    summary.includes('отслеживаемых товаров пока нет') ||
+    summary.includes('Сеть не обновляет')
+  );
 }
 
 function useDismissableMenu(
@@ -180,12 +187,27 @@ function ProductImage({
 /** Текст ошибки для баннера: без «Error:» и прочей обвязки, с обрезкой. */
 function errText(err: unknown): string {
   return (typeof err === 'string' ? err : err instanceof Error ? err.message : String(err))
+    // Обёртка `invoke` от Electron приходит ПЕРВОЙ и всегда: `Error invoking
+    // remote method 'канал': Error: <текст>`. Старый регекс её не снимал
+    // (через `\w*\s*` перескочить слово «invoking remote method» нельзя), и
+    // пользователь читал в баннере имя канала вместо причины. Это правило чинит
+    // ВСЕ баннеры приложения, а не только ошибку выбора магазинов.
+    .replace(/^Error invoking remote method '[^']*':\s*/i, '')
     .replace(/^(\s*(?:\w*\s*)?Error:\s*)+/i, '')
     .trim()
     .slice(0, 200);
 }
 
 const EMPTY_SHELF_PLAIN = 'Категория пуста — попробуй соседнюю или поиск.';
+
+/**
+ * Ошибка от ядра о выборе магазинов — по-человечески. Внутренний код канала
+ * («stores:set: сеть … не найдена в городе …») пользователю ничего не говорит.
+ */
+function storesErrorText(err: unknown): string {
+  const raw = errText(err).replace(/^stores:set:\s*/i, '');
+  return `Не получилось применить выбор магазинов: ${raw}`;
+}
 const EMPTY_SHELF_VIRTUAL =
   'Полка собирает только уже найденное и в магазины не ходит. Найди что-нибудь в поиске или открой полку любой сети.';
 
@@ -275,7 +297,21 @@ export default function App(): React.ReactElement {
   const [status, setStatus] = useState('...');
   const [version, setVersion] = useState('...');
   const [update, setUpdate] = useState<UpdateState>({ kind: 'idle' });
-  const [city, setCity] = useState('moscow');
+  /**
+ * Город из прошлого запуска. Без этого каждое открытие возвращало в Москву, а
+ * пользователь каждый раз заново выбирал город и смотрел, как обнуляется выбор
+ * магазинов («Магазины: 0/5» в чужом городе).
+ */
+function readCity(): string {
+  try {
+    const saved = localStorage.getItem('pa.city');
+    return saved !== null && CITIES.some((c) => c.id === saved) ? saved : 'moscow';
+  } catch {
+    return 'moscow';
+  }
+}
+
+const [city, setCity] = useState(readCity);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<StorePrices[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -285,7 +321,74 @@ export default function App(): React.ReactElement {
   const [catalog, setCatalog] = useState<StoreCatalog[] | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [catError, setCatError] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
-  const [storeOn, setStoreOn] = useState<Record<string, boolean>>({});
+  // Выбранные сети города. Модель явная: ключ отсутствует = сеть ВЫКЛЮЧЕНА.
+// Раньше было наоборот («нет ключа = включена»), и потому выбрать одну сеть
+// было невозможно: стартовое состояние пустое означало «все включены», а
+// пользователь при этом рассчитывал опрос одного магазина.
+//
+// При ПЕРВОМ запуске не выбрано НИ ОДНОГО магазина: обход всех сетей города
+// бьёт по пяти точкам сразу, а пользователь об этом не просил. Со второй
+// запуска приложение помнит свой выбор (и город) — это и есть смысл галочек.
+//
+// Ключ версионирован (`v2`): модель инвертирована, и старое значение в старом
+// ключе прочиталось бы наоборот — «всё, кроме Пятёрки» превратилось бы в
+// «не выбрано ничего». Старые данные просто игнорируются.
+
+/** Ключ хранения выбора сетей города: версия в имени, чтобы смена смысла ключа
+ *  не читала старые данные наоборот. */
+function storesKeyFor(cityId: string): string {
+  return `pa.stores.v2.${cityId}`;
+}
+
+/** Все готовые сети города включены — для кнопки «выбрать все магазины». */
+function allStoresOn(cityId: string): Record<string, boolean> {
+  return Object.fromEntries((CITY_STORES[cityId] ?? []).filter((s) => s.ready).map((s) => [s.storeId, true]));
+}
+
+/**
+ * Сохранённый выбор города: пусто, если его ещё нет. Берём только сети, которые
+ * в этом городе есть и готовы, и только логические значения — битое значение
+ * (массив, «true», незнакомый код сети) иначе превратилось бы в «не выбрано
+ * ничего» тихо, и пользователь не понял бы, почему опрос молчит.
+ */
+const readStores = (c: string): Record<string, boolean> => {
+  try {
+    const raw = localStorage.getItem(storesKeyFor(c));
+    if (raw === null) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const saved = parsed as Record<string, unknown>;
+    const out: Record<string, boolean> = {};
+    for (const s of CITY_STORES[c] ?? []) {
+      if (s.ready && saved[s.storeId] === true) out[s.storeId] = true;
+    }
+    return out;
+  } catch {
+    // Повреждённое значение молча заменяем пустым: выбор магазинов не должен
+    // быть причиной, по которой приложение не запускается.
+    return {};
+  }
+};
+
+/**
+ * Выбор сетей хранится ВМЕСТЕ с городом, одним состоянием. Раздельные `storeOn`
+ * и флаг «город уже перечитан» ловились гонкой: при смене города эффект записи
+ * успевал положить выбор ПРОШЛОГО города в ключ нового (самокоррекция спасала
+ * через кадр, но между двумя записями хранилище было испорчено, и комментарий
+ * обещал гарантию, которой не было). Здесь выбор нового города становится
+ * производным значением, поэтому гонки не существует по построению.
+ */
+const [storeSel, setStoreSel] = useState<{ city: string; on: Record<string, boolean> }>(() => ({
+  city,
+  on: readStores(city),
+}));
+const storeOn = React.useMemo(
+  () => (storeSel.city === city ? storeSel.on : readStores(city)),
+  [storeSel, city],
+);
+const setStoreOn = (next: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)): void =>
+  setStoreSel({ city, on: typeof next === 'function' ? next(storeOn) : next });
+
   const [promoOnly, setPromoOnly] = useState(false);
   const [stockOnly, setStockOnly] = useState(false);
   const [sort, setSort] = useState<'none' | 'asc' | 'desc'>('none');
@@ -343,6 +446,9 @@ export default function App(): React.ReactElement {
   // Токен защиты от гонок: пока шёл опрос, полка или новый поиск могли занять
   // экран, и их данные обновлять уже нельзя.
   const shelfTokenRef = useRef(0);
+  // Текущий статус опроса нужен вне рендера: markRunning вызывается из
+  // обработчиков прогресса и должна видеть «статус уже приходил или нет».
+  const schedRef = useRef<SchedulerStatus | null>(null);
   const [scrollIntent, setScrollIntent] = useState<{ top: number; n: number } | null>(null);
   const [fatal, setFatal] = useState(false);
 
@@ -534,8 +640,12 @@ export default function App(): React.ReactElement {
           }
         })
         .catch(() => {});
-    window.api.getSchedulerStatus().then((s) => setSched(s)).catch(() => {});
+    window.api.getSchedulerStatus().then((s) => {
+      schedRef.current = s;
+      setSched(s);
+    }).catch(() => {});
     const offDone = window.api.onSchedulerDone((d) => {
+      schedRef.current = d.status;
       setSched(d.status);
       setPollMsg({ text: d.summary, tone: isWarnSummary(d.summary) ? 'warn' : 'ok' });
     });
@@ -630,12 +740,47 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     if (!window.api) return;
     setResults(null);
-    setStoreOn({});
     setLastAction(null);
     setDetailKey(null);
     setOurCategories(null);
     reloadLists();
   }, [reloadLists]);
+
+  // Выбор магазинов живёт в двух местах: в интерфейсе (галочки, фильтр выдачи) и
+  // в ядре (кому вообще можно ходить за ценами). Раньше второго не было, и опрос
+  // обходил все сети города, пока интерфейс показывал «28 из 445» при одном
+  // выбранном магазине.
+  const selectedStores = (CITY_STORES[city] ?? []).filter((s) => s.ready && storeOn[s.storeId] === true).map((s) => s.storeId);
+
+  // Пишем в хранилище только выбор СВОЕГО города: пока в состоянии лежит выбор
+  // прошлого города, его место в ключе нового — это порча данных (сама по себе
+  // она исправлялась следующим кадром, но между записями хранилище было неверным).
+  const storesKey = storesKeyFor(city);
+  useEffect(() => {
+    if (storeSel.city !== city) return;
+    try {
+      localStorage.setItem(storesKey, JSON.stringify(storeOn));
+    } catch {
+      // Без localStorage выбор живёт только до перезапуска — это полезно, но не
+      // повод показывать ошибку: магазины всё равно переключаются.
+    }
+  }, [storesKey, storeOn, city, storeSel.city]);
+
+  useEffect(() => {
+    if (!window.api) return;
+    // Guard здесь НЕ нужен: `setCurrentCity` уже обнуляет выбор в ядре, а окно в
+    // одну долю секунды, пока летит `stores:set`, означало бы «опросить все сети».
+    // Отправляем всегда, даже если выбор ещё не перечитан: хуже, чем одно лишнее
+    // IPC-сообщение со старым городом, не будет ничего.
+    // Пустой массив уходит как пустой массив, а не как null: null в ядре значит
+    // «пользователь ещё не выбирал» и включает опрос ВСЕХ сетей города, то есть
+    // снятие последней галочки тихо возвращало бы полный обход.
+    void window.api.setCurrentStores(city, selectedStores).catch((e: unknown) => {
+      // Ядро отвергло выбор (сеть не найдена в городе) — говорим честно, потому
+      // что иначе опрос молча пошёл бы по всем сетям города.
+      setPollMsg({ text: storesErrorText(e), tone: 'warn' });
+    });
+  }, [city, selectedStores.join(',')]);
 
   useEffect(() => {
     if (detailKey === null) return;
@@ -692,12 +837,28 @@ export default function App(): React.ReactElement {
     if (!window.api) return;
     setPollMsg(null);
     const action = lastAction;
+    // Флаг «идёт» ставим сразу, до ответа ядра: пока он не приедет (а он
+    // приезжает по завершении), кнопка в подвале продолжала бы предлагать
+    // «Опросить сейчас», и второй клик получал бы отказ «Опрос уже идёт».
+    markRunning(true);
     // Город передаём явно: кнопка «Опросить сейчас» в подвале не привязана к
     // последнему открытому списку, и без city ядро опрашивало бы все города.
     window.api
-      .runScheduler({ city })
+      .runScheduler({ city, storeIds: selectedStores })
       .then((d) => {
-        setSched(d.status);
+        // Ответ по ПРОШЛОМУ прогону не имеет права гасить флаг у текущего:
+        // без проверки кнопка на мигнувший срок возвращалась бы в «Опросить
+        // сейчас» и «Прервать» исчезала — то есть исходная жалоба вернулась бы
+        // узким окном. Свежий статус всегда с running: false, поэтому сравниваем
+        // с тем, что уже есть в состоянии.
+        setSched((prev) => {
+          // Тот же ref держим в актуальном состоянии: markRunning смотрит на
+          // schedRef, а не на prev из этого апдейтера.
+          const next =
+            prev?.running === true && d.status.running === false ? prev : d.status;
+          schedRef.current = next;
+          return next;
+        });
         // Тот же вопрос по возврату runScheduler: ядро отвечает «Опрос уже идёт»,
         // когда проход занял флаг, и зелёный баннер врал бы.
         setPollMsg({ text: d.summary, tone: isWarnSummary(d.summary) ? 'warn' : 'ok' });
@@ -730,11 +891,82 @@ export default function App(): React.ReactElement {
             });
         }
       })
-      .catch((e) => {
+.catch((e) => {
+            // Флаг снимаем ДО баннера: оптимистический running живёт до конца
+            // прогона, и если IPC оборвётся (или emit бросит в finally ядра), подвал
+            // остался бы с неактивной кнопкой «Опрашиваю…» навсегда — ровно тот
+            // мёртвый класс, который правка чинит.
+            markRunning(false);
             // Причина обязательна: «Опрос не удался» без текста — это ровно тот
-        // молчаливый отказ, который чинили в категориях.
-        setPollMsg({ text: `Опрос не удался: ${errText(e)}`, tone: 'warn' });
-      });
+            // молчаливый отказ, который чинили в категориях.
+            setPollMsg({ text: `Опрос не удался: ${errText(e)}`, tone: 'warn' });
+          });
+  };
+
+  /**
+   * Прервать идущий опрос.
+   *
+   * Кнопка не гасится после клика: отмена кооперативная и срабатывает на границе
+   * товара, то есть в браузерных сетях через минуту. Ранняя блокировка обещала бы
+   * мгновенную остановку и вводила в заблуждение — «я нажал, а ничего не
+   * происходит». Итоговую сводку приносит тот же `runScheduler`, который висел:
+   * он вернётся с «Опрос прерван: … осталось N».
+   */
+  /**
+   * Отметка «опрос идёт» для подвала.
+   *
+   * Раньше этот флаг приезжал только ответом на runScheduler — то есть в самом
+   * конце прогона. Пока он не приезжал, кнопка в подвале оставалась «Опросить
+   * сейчас», а повторный клик получал от ядра «Опрос уже идёт — дождись
+   * завершения»: выглядело, как сломанная кнопка. Теперь флаг ставится по
+   * первому событию прогресса и снимается по событию завершения.
+   */
+  const markRunning = (running: boolean): void => {
+    if (schedRef.current === null) {
+      // Статус ещё не приходил (окно только открылось, автозапуск уже пошёл).
+      // Запрос уходит ЗДЕСЬ, а не внутри апдейтера состояния: апдейтеры должны
+      // быть чистыми, а побочный запрос в них — это неразборчивая отладка.
+      // Ответ берём с поправкой на `|| running`: к моменту ответа прогон уже
+      // начат, и ядро успело бы вернуть running: false — ровно тот мёртвый
+      // флаг, который мы чиним.
+      if (running) {
+        window.api
+          .getSchedulerStatus()
+          .then((s) => {
+            const next = { ...s, running: true };
+            // Ref обязателен и здесь: без него следующий markRunning(false) из
+            // .catch прогона увидел бы null, вышел на return и оставил флаг
+            // включённым — то есть мёртвая кнопка в окне до первого ответа.
+            schedRef.current = next;
+            setSched(next);
+          })
+          .catch(() => {});
+      }
+      return;
+    }
+    setSched((prev) => {
+      const next = prev === null || prev.running === running ? prev : { ...prev, running };
+      schedRef.current = next;
+      return next;
+    });
+  };
+
+  // «Идёт ли опрос» в одном месте вместо пяти `sched?.running === true`:
+  // разъезд этих проверок и есть источник «кнопка горит, а Прервать не показан».
+  const pollRunning = sched?.running === true;
+
+  const stopPoll = () => {
+    if (!window.api) return;
+    window.api
+      .cancelScheduler()
+      .then((stopped) => {
+        if (!stopped) return;
+        setPollMsg({
+          text: 'Останавливаю на текущем товаре — собранное сохранится.',
+          tone: 'warn',
+        });
+      })
+      .catch((e) => setPollMsg({ text: `Не удалось прервать: ${errText(e)}`, tone: 'warn' }));
   };
 
   const openCategory = (url: string) => {
@@ -897,8 +1129,14 @@ const groups = useMemo(() => {
     // Разрыв склейки в пределах одного магазина невозможен по смыслу: два
     // товара одной сети с одинаковым названием — это почти всегда один товар,
     // а если нет — они и так в одной карточке, и разделить их нечем.
+    // Фильтр по выбору НЕ применяется, пока не выбрана ни одна сеть: клик по
+    // поиску или полке сам по себе согласие на запрос, ядро спрашивает все
+    // готовые сети, и выбрасывать их ответ («ничего не выбрано — показывать
+    // нечего») значило заплатить полным обходом и показать пустоту. Молчит при
+    // этом планировщик: он фильтр соблюдает.
+    const anyStoreOn = (CITY_STORES[city] ?? []).some((s) => s.ready && storeOn[s.storeId] === true);
     const items = results.flatMap((s) =>
-      storeOn[s.storeId] === false
+      anyStoreOn && storeOn[s.storeId] !== true
         ? []
         : s.items.filter((p) => {
             if (promoOnly && p.oldPrice == null && p.promoPrice == null) return false;
@@ -1036,6 +1274,15 @@ const storeName = (id: string) =>
                   setCatLoading(false);
                   setSearching(false);
                   setCity(c.id);
+                  // Город запоминается между запусками: выбор магазинов хранится
+                  // по городам, и без этого после перезапуска он был бы виден не
+                  // для того города, к которому относится.
+                  try {
+                    localStorage.setItem('pa.city', c.id);
+                  } catch {
+                    // Без localStorage город просто не запомнится — это не повод
+                    // мешать переключению.
+                  }
                   setResults(null);
                   setCityMenuOpen(false);
                   cityMenuBtnRef.current?.focus();
@@ -1165,7 +1412,7 @@ const storeName = (id: string) =>
             onClick={() => setStoreMenuOpen((v) => !v)}
             aria-expanded={storeMenuOpen}
           >
-            Магазины: {(CITY_STORES[city] ?? []).filter((s) => s.ready && storeOn[s.storeId] !== false).length}/
+            Магазины: {(CITY_STORES[city] ?? []).filter((s) => s.ready && storeOn[s.storeId] === true).length}/
             {(CITY_STORES[city] ?? []).filter((s) => s.ready).length} ▾
           </button>
           {storeMenuOpen && (
@@ -1179,7 +1426,7 @@ const storeName = (id: string) =>
                   <input
                     type="checkbox"
                     className="h-[18px] w-[18px] accent-primary"
-                    checked={storeOn[s.storeId] !== false}
+                    checked={storeOn[s.storeId] === true}
                     disabled={!s.ready}
                     onChange={(e) => setStoreOn((prev) => ({ ...prev, [s.storeId]: e.target.checked }))}
                   />
@@ -1190,7 +1437,7 @@ const storeName = (id: string) =>
             </div>
           )}
         </div>
-        <PollProgress />
+        <PollProgress onRunningChange={markRunning} />
         {pollMsg && (
           <div
             className={
@@ -1295,9 +1542,29 @@ const storeName = (id: string) =>
                   <>
                     {/* Число сетей одинаково для всех полок города — десять раз
                         повторять его в строках незачем, поэтому оно вынесено
-                        одной строкой над панелью. */}
+                        одной строкой над панелью. Не «Опрашиваем»: выбранных
+                        сетей может быть ноль, и тогда планировщик молчит
+                        («Опрос пропущен: не выбрано ни одного магазина»). Здесь
+                        считаются ГОТОВЫЕ сети — по ним ищутся полки и товары. */}
                     <p className="mb-1.5 mt-3 text-[13px] text-muted">
-                      Опрашиваем {storesPhrase(realShelves[0]?.storeCount ?? 0)} — столько сетей сейчас готово.
+                      Полка ищет в {storesPhrase(realShelves[0]?.storeCount ?? 0)} — столько сетей сейчас готово.
+                    </p>
+                    {/* Строка резервируется ВСЕГДА: иначе переключение последней галочки в шапке
+                        дёргала бы сетку плиток на 20 px вниз-вверх, а переключатель
+                        магазинов находится на 600 px выше — связь между действием и
+                        скачком не читается. Внутри условие по числу выбранных. */}
+                    <p className="mb-1.5 flex min-h-5 flex-wrap items-center gap-2 text-[13px] text-muted">
+                      {selectedStores.length === 0 && (
+                        <>
+                          <span>Ни одного магазина не выбрано — опрос молчит, включи хотя бы одну сеть.</span>
+                          <button
+                            className="min-h-8 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1 text-xs text-ink"
+                            onClick={() => setStoreOn(allStoresOn(city))}
+                          >
+                            выбрать все магазины города
+                          </button>
+                        </>
+                      )}
                     </p>
                     {/* Плоский список плиток — тем же видом, что витрина сети
                         (акцент слева, скруглённая карточка, сетка). Раньше здесь
@@ -1363,14 +1630,15 @@ const storeName = (id: string) =>
           )}
           {catalog !== null &&
             catalog.some((s) => s.categories.length > 0) &&
-            catalog.every((s) => storeOn[s.storeId] === false) && (
+            catalog.every((s) => storeOn[s.storeId] !== true) && (
               <div className="mt-3 rounded-xl border border-dashed border-line bg-card p-7 text-center text-muted" role="status">
-                Все магазины выключены в фильтре «Магазины» — включи хотя бы один.
+                Все магазины выключены в фильтре «Магазины» — включи хотя бы один: с пустым
+                  выбором не опрашивается ни один магазин, и приложение молчит.
               </div>
             )}
             {(catalog ?? []).map(
               (s) =>
-                storeOn[s.storeId] !== false &&
+                storeOn[s.storeId] === true &&
                 s.categories.length > 0 && (
                   <div key={s.storeId}>
                     {/* Сетка разделов у Магнита и Пятёрки — это 40–80 плиток на
@@ -1601,9 +1869,22 @@ const storeName = (id: string) =>
                 пришли товары или нет. Считаем groups.length, а не rawCount:
                 rawCount — это позиции по сетям до склейки, и один товар в трёх
                 магазинах дал бы «120 товаров» при 40 карточках на экране. */}
-            {groups.rawCount > 0 && `Найдено ${plural(groups.groups.length, 'товар', 'товара', 'товаров')} · `}
-            {groups.stores
-              .map((s) =>
+            {/* Только ВЫБРАННЫЕ сети: при «Магазины: 1/5» строка не должна
+                перечислять ошибки сетей, которые выключены и в опрос не идут.
+                Список считается заранее (`onStores`): при нуле выбранных сетей
+                `join` даёт пустую строку, и после «Найдено 120 товаров · »
+                висел разделитель. Пустое состояние выдачи ниже ветвится по
+                тому же множеству — иначе оно blames «фильтры», когда виновата
+                конкретная сеть, а не фильтр. */}
+            {(() => {
+              const onStores = groups.stores.filter((s) => storeOn[s.storeId] === true);
+              if (groups.rawCount === 0 && onStores.length === 0) return null;
+              return (
+                <>
+                  {groups.rawCount > 0 && `Найдено ${plural(groups.groups.length, 'товар', 'товара', 'товаров')}`}
+                  {groups.rawCount > 0 && onStores.length > 0 && ' · '}
+                  {onStores
+                    .map((s) =>
                 s.ready && !s.error
                   ? `${s.name}: ${s.cached ? 'из локальной базы' : 'опрошен'}`
                   : s.error
@@ -1611,23 +1892,62 @@ const storeName = (id: string) =>
                     : `${s.name}: скоро`,
               )
               .join(' · ')}
+                </>
+              );
+            })()}
           </p>
         )}
 
         {groups && groups.groups.length === 0 && groups.rawCount > 0 && (
           <div className="mt-3 rounded-xl border border-dashed border-line bg-card p-7 text-center text-muted" role="status">
-            Всё скрыто фильтрами.{' '}
-            <button
-              className="min-h-8 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1 text-xs text-ink"
-              onClick={() => {
-                setStoreOn({});
-                setPromoOnly(false);
-                setStockOnly(false);
-                setSort('none');
-              }}
-            >
-              сбросить фильтры
-            </button>
+            {(() => {
+              // Причину называем по ИМЕННОГО множества, по которому фильтруем:
+              // «ничего не выбрано» и «выбранная сеть ничего не вернула» — разные
+              // ситуации, и кнопка сброса во втором случае была мёртвой.
+              const onStores = groups.stores.filter((s) => storeOn[s.storeId] === true);
+              if (onStores.length === 0) {
+                return (
+                  <>
+                    Ни одного магазина не выбрано — показывать нечего.{' '}
+                    <button
+                      className="min-h-8 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1 text-xs text-ink"
+                      onClick={() => setStoreOn(allStoresOn(city))}
+                    >
+                      выбрать все магазины города
+                    </button>
+                  </>
+                );
+              }
+              const silent = onStores.filter((s) => s.items.length === 0 && !s.error);
+              if (silent.length > 0) {
+                return (
+                  <>
+                    {silent.length === 1 ? silent[0]?.name : 'Выбранные магазины'} не вернули товаров по
+                    этому запросу. Включи в фильтре «Магазины» другую сеть или попробуй другой запрос.
+                  </>
+                );
+              }
+              return (
+                <>
+                  Всё скрыто фильтрами.{' '}
+                  <button
+                    className="min-h-8 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1 text-xs text-ink"
+                    onClick={() => {
+                      // Возвращаем РАБОЧЕЕ состояние: магазины — те же, что были
+                      // выбраны, а гасятся только промо/наличие/сортировка. Раньше
+                      // здесь стояло «снять выбор магазинов», и на пустом выборе
+                      // кнопка была саморазрушительной: жал и оставался с тем же
+                      // пустым экраном, только ещё и без запросов.
+                      setPromoOnly(false);
+                      setStockOnly(false);
+                      setSort('none');
+                    }}
+                  >
+                    сбросить фильтры
+                  </button>
+                </>
+              );
+            })()}
           </div>
         )}
         {searchError && (
@@ -1650,7 +1970,7 @@ const storeName = (id: string) =>
                 <input
                   type="checkbox"
                   className="h-[18px] w-[18px] accent-primary"
-                  checked={storeOn[s.storeId] !== false}
+                  checked={storeOn[s.storeId] === true}
                   disabled={!s.ready}
                   onChange={(e) => setStoreOn((prev) => ({ ...prev, [s.storeId]: e.target.checked }))}
                 />
@@ -1869,11 +2189,18 @@ const storeName = (id: string) =>
           </nav>
         )}
 
-        {/* Три колонки, а не flex с justify-between: текст опроса меняет длину
+        {/* Сетка, а не flex с justify-between: текст опроса меняет длину
             («(добавлено 1, без изменений 22)»), и при flex кнопка «Опросить
             сейчас» уезжала вбок на 40+ пикселей — футер «танцевал». Первая
-            колонка забирает всю свободную ширину, последние две стоят на месте. */}
-        <footer className="mt-7 grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 gap-y-1 text-xs text-muted">
+            колонка забирает всю свободную ширину, остальные стоят на месте. */}
+        <footer
+          className={`mt-7 grid items-center gap-x-3 gap-y-1 text-xs text-muted ${
+            // Пятая колонка ровно на время прогона: с ней появляется «Прервать»,
+            // и на четырёх колонках версия уезжала на вторую строку — подвал
+            // прыгал высотой при каждом старте опроса.
+            pollRunning ? 'grid-cols-[1fr_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto]'
+          }`}
+        >
           <span>Локально · SQLite · IPC: {status} · запись в историю только при изменении цены</span>
           <span className="whitespace-nowrap tabular-nums">
             {sched && sched.lastRun
@@ -1889,11 +2216,23 @@ const storeName = (id: string) =>
           <button
             className="flex min-h-8 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-line bg-card px-2.5 text-xs text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
             onClick={runPoll}
-            disabled={sched?.running === true}
+            disabled={pollRunning}
           >
-            {sched?.running === true && <Spinner className="h-3 w-3" />}
-            {sched?.running === true ? 'Опрашиваю…' : 'Опросить сейчас'}
+            {pollRunning && <Spinner className="h-3 w-3" />}
+            {pollRunning ? 'Опрашиваю…' : 'Опросить сейчас'}
           </button>
+          {/* Прервать показываем ТОЛЬКО во время прогона: вне его кнопка была бы
+              лишней и предлагала бы действие, которого нечего отменять.
+              Отмена кооперативная — уже начатый запрос доживает, поэтому
+              кнопка остаётся активной до конца, а не гаснет после первого клика. */}
+          {pollRunning && (
+            <button
+              className="flex min-h-8 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-line bg-card px-2.5 text-xs text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+              onClick={stopPoll}
+            >
+              Прервать
+            </button>
+          )}
           <span className="tabular-nums">v{version}</span>
         </footer>
 

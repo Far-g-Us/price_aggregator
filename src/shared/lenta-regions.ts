@@ -901,4 +901,22 @@ export const CITY_TO_SLUG: Record<string, string> = {
   'nizhny-novgorod': 'nnov',
   krasnoyarsk: 'krsk',
   kazan: 'kzn',
+  // Города, добавленные 2026-11 ради Светофора: Лента в них тоже есть, и
+  // оставить город с одной сетью, когда вторая работает, значит показать
+  // пользователю меньше, чем могли бы. Слаги и коды точек — из живого
+  // справочника LENTA_REGIONS (снят 2026-09-30, 93 региона), покрытие
+  // подтверждено живым поиском 2026-11-11.
+  ryazan: 'ryazan',
+  tula: 'tula',
+  orel: 'orel',
+  bryansk: 'bryansk',
+  lipetsk: 'lipetsk',
+  tambov: 'tambov',
+  vladimir: 'vladimir',
+  ivanovo: 'ivanovo',
+  kaluga: 'kaluga',
+  smolensk: 'smolensk',
+  tver: 'tver',
+  kursk: 'kursk',
+  belgorod: 'belgorod',
 };

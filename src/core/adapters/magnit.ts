@@ -419,31 +419,66 @@ async function readCards(
   );
 }
 
+/**
+ * Витрина категорий с главной страницы.
+ *
+ * Формат сменился (проверено на живом ответе 2026-10-08): в `__NUXT_DATA__`
+ * больше нет ни меток `"g123"`, ни ссылок `/catalog/…` — вместо них лежит
+ * плоский Nuxt-массив (devalue) со ссылками на индексы, где у записи категории
+ * есть `id`/`name`/`code`/`image`/`children`, но нет URL. Зато сами плитки
+ * витрины пришли обычными `<a>` в HTML главной:
+ *
+ *   <a class="catalog-categories-tiles__item pl-hover-base"
+ *      href="https://magnit.ru/catalog/63303" data-test-id="v-app-link">
+ *     <img src="https://…png" alt="Скидки"> <span …>Скидки</span></a>
+ *
+ * Отсюда и берём: числовой id из `href`, название из `alt` (у плиток без
+ * картинки alt пустой, там берём текст `span`), картинку — только https и не
+ * `data:` (в `data:` утекает вес страницы, а в `<img>` такая не покажется).
+ * Сверка магазина остаётся прежней: `shopCode` должен встречаться в ответе,
+ * иначе мы смотрим не тот магазин.
+ */
 export function parseMagnitCategories(html: string, shopCode: string): MagnitCategory[] {
-  const script = html.match(/<script[^>]*__NUXT_DATA__[^>]*>(.*?)<\/script>/s)?.[1] ?? '';
-  assertOwnStore(script, shopCode);
-  // Порядок полей записи категории в __NUXT_DATA__ (проверен на живом ответе):
-  //   id, числовой id, название, код, КАРТИНКА, ссылка на категорию.
-  // Картинка — пятое поле, ссылка — шестое. Раньше пятое отбрасывалось, и
-  // плитки категорий оставались без картинок, хотя сеть её отдаёт.
-  const re = /"g(\d+)","\d+","((?:[^"\\]|\\.)*)","(testmm[a-z0-9_]+)","((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)"/g;
+  assertOwnStore(html, shopCode);
+  // Плитку ищем по открывающему `<a>`, а класс и адрес разбираем внутри тега
+  // отдельными регулярками: их порядок в атрибутах менялся (сейчас `class`
+  // первым, в других ответах — `href`), а общий шаблон вида
+  // `<a ... class=... href=...>` молча перестал бы находить витрину целиком.
+  // Адрес бывает и абсолютным, и относительным — поэтому ищем `/catalog/<id>`.
+  const openTag = /<a\b[^>]*>/g;
+  const classRe = /\bclass="[^"]*\bcatalog-categories-tiles__item\b[^"]*"/;
+  const hrefRe = /\bhref="[^"]*\/catalog\/(\d+)[^"]*"/;
+  // SSR-разметка Nuxt оборачивает текст служебными комментариями
+  // (`<!--[-->Бакалея<!--]-->`), и без их снятия разбор подписи упирается в
+  // `<!--[-->` и даёт пустую строку: плитка без `alt` молча выпала бы.
+  const stripSsr = (raw: string): string => raw.replace(/<!--[\s\S]*?-->/g, '');
   const seen = new Map<string, MagnitCategory>();
   let m: RegExpExecArray | null;
-  while ((m = re.exec(script)) !== null) {
-    const id = m[1]!;
-    const name = m[2]!;
-    const unescape = (s: string): string => s.replace(/\\u002F/g, '/');
-    const rawImage = unescape(m[4]!);
-    const rawUrl = unescape(m[5]!);
-    // id из регулярки непустой («g» + цифры), проверять остаётся имя и дубль.
-    if (!name || seen.has(id)) continue;
-    const pathOnly = rawUrl.split('?')[0];
-    if (!pathOnly || !/\/catalog\/\d+-/.test(pathOnly)) continue;
-    const category: MagnitCategory = { id, name, url: `https://magnit.ru${pathOnly}` };
-    // Только https и без data:-картинка с не-HTTP схемой в <img> не покажется,
-    // а в data: утекает вес страницы.
+  while ((m = openTag.exec(html)) !== null) {
+    const tag = m[0];
+    if (!classRe.test(tag)) continue;
+    const id = hrefRe.exec(tag)?.[1];
+    if (id === undefined) continue;
+    const openEnd = m.index + tag.length;
+    // Тело плитки — до следующего открывающего `<a`, а не до `</a>`: при
+    // незакрытой плитке `[\s\S]*?</a>` съедал бы следующую целиком, и витрина
+    // молча теряла бы половину. Закрывающий тег в хвосте просто отрезается.
+    const nextOpen = html.indexOf('<a', openEnd);
+    const stop = nextOpen === -1 ? html.length : nextOpen;
+    const body = stripSsr(html.slice(openEnd, stop));
+    const alt = body.match(/<img[^>]*\salt="([^"]*)"/)?.[1] ?? '';
+    const label = body.match(/catalog-categories-tiles__text[^>]*>([^<]*)</)?.[1] ?? '';
+    // alt из одних пробелов — это не имя: иначе плитка без подписи потеряла бы
+    // своё настоящее название.
+    const name = (alt.trim() !== '' ? alt : label).replace(/\s+/g, ' ').trim();
+    if (name === '' || seen.has(id)) continue;
+    const category: MagnitCategory = { id, name, url: `https://magnit.ru/catalog/${id}` };
+    const rawImage = body.match(/<img[^>]*\ssrc="([^"]*)"/)?.[1] ?? '';
     if (/^https:\/\/\S+$/.test(rawImage) && !rawImage.startsWith('data:')) category.imageUrl = rawImage;
     seen.set(id, category);
+    openTag.lastIndex = Math.max(openEnd, nextOpen);
+    // Витрина на главной — это верхний уровень (8–9 плиток), потолок оставлен
+    // на случай, если сеть вернёт развёрнутый список с вложенными.
     if (seen.size >= 40) break;
   }
   if (seen.size === 0) throw new Error('magnit: категории не найдены (смена вёрстки?)');

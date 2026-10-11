@@ -784,6 +784,66 @@ export function saveLastRun(database: Database, city: string, at: string): void 
 }
 
 /**
+ * Что уже проверено в текущем цикле опроса города.
+ *
+ * Возвращается ключом `storeId\u0000canonicalId`: пара «товар у двух сетей» или
+ * «два товара одного магазина» склеились бы в одну строку простым
+ * `${storeId}:${canonicalId}` — а id товара у нас начинается как раз с названия
+ * сети (`lenta:12345`), то есть склейка не выдуманная, а реальная.
+ * Разделитель нулевой байт в id товара не встречается.
+ *
+ * Город фильтруется ДО чтения: без него в память тянулось бы 445 строк всех
+ * городов ради 137 нужных.
+ */
+export function loadPollChecklist(database: Database, city: string): Set<string> {
+  const stmt = database.prepare(
+    'SELECT store_id, canonical_id FROM poll_checklist WHERE city = ?',
+  );
+  const out = new Set<string>();
+  try {
+    stmt.bind([city]);
+    while (stmt.step()) {
+      const o = stmt.getAsObject() as unknown as { store_id: string; canonical_id: string };
+      out.add(`${o.store_id}\u0000${o.canonical_id}`);
+    }
+  } finally {
+    stmt.free();
+  }
+  return out;
+}
+
+/**
+ * Отметка «проверено в этом цикле».
+ *
+ * INSERT OR IGNORE: отметка ставится один раз на товар, но повтор возможен —
+ * товар мог попасть в два вызова одного прогона, и обычный INSERT упал бы на
+ * UNIQUE, уронив весь опрос на ровном месте.
+ *
+ * Роняет ли ошибка записи? Нет: она ловится вызывающим (см. планировщик).
+ * Неразрешённая ошибка БД здесь означала бы, что следующий прогон этот товар
+ * просто переспросит — цена при этом уже записана и переживёт выход из
+ * приложения.
+ */
+export function markPollChecked(database: Database, city: string, storeId: string, canonicalId: string): void {
+  database.run('INSERT OR IGNORE INTO poll_checklist (city, store_id, canonical_id) VALUES (?, ?, ?)', [
+    city,
+    storeId,
+    canonicalId,
+  ]);
+}
+
+/**
+ * Цикл города пройден до конца — следующий прогон начинается с нуля.
+ *
+ * Чистит ВСЕ сети города, включая снятые пользователем галочками: сброс означает
+ * «сначала», а не «потерять», поэтому фильтровать по текущему выбору здесь
+ * незачем. Прерванный прогон сюда не доходит — он докачивает остаток позже.
+ */
+export function clearPollChecklist(database: Database, city: string): void {
+  database.run('DELETE FROM poll_checklist WHERE city = ?', [city]);
+}
+
+/**
  * Ручные разрывы склейки, у которых хотя бы один id встречается в списке.
  *
  * Возвращаем только пары, где хотя бы один id есть в ids: таблица разрывов
