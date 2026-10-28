@@ -6,7 +6,13 @@ export interface PriceGroup {
   imageUrl?: string;
   brand?: string;
   unit?: string;
-  offers: { storeId: string; product: ScrapedProduct }[];
+  /**
+   * Предложение — это ТОЧКА магазина, а не сеть: `storeId` у двух точек
+   * Магнита один и тот же, а `storeCode` разный. Внутри группы допустимо
+   * несколько предложений одной сети — ровно ради сравнения цен между
+   * точками; нельзя только два одинаковых (сеть + точка + товар).
+   */
+  offers: { storeId: string; storeCode: string; product: ScrapedProduct }[];
 }
 
 /**
@@ -95,8 +101,16 @@ export function groupByProduct(items: ScrapedProduct[], splits?: ReadonlySet<str
   const isSplit = (a: string, b: string) => (splits ? splits.has(matchSplitKey(a, b)) : false);
   const groups: PriceGroup[] = [];
   for (const item of items) {
+    // Дубль — это тот же товар в той же точке. Сверка по сети одна на все её
+    // точки выбрасывала вторую точку в `continue`, и сравнение цен между
+    // точками не отображалось физически.
     const sameId = groups.some((x) =>
-      x.offers.some((o) => o.storeId === item.storeId && o.product.canonicalId === item.canonicalId),
+      x.offers.some(
+        (o) =>
+          o.storeId === item.storeId &&
+          o.storeCode === item.storeCode &&
+          o.product.canonicalId === item.canonicalId,
+      ),
     );
     if (sameId) {
       continue;
@@ -104,18 +118,18 @@ export function groupByProduct(items: ScrapedProduct[], splits?: ReadonlySet<str
     // 1) Куда новый товар встанет без нарушения разрыва.
     const linked = groups.find(
       (x) =>
-        !x.offers.some((o) => o.storeId === item.storeId) &&
+        !x.offers.some((o) => o.storeId === item.storeId && o.storeCode === item.storeCode) &&
         x.offers.every((o) => !isSplit(o.product.canonicalId, item.canonicalId)) &&
         x.offers.some((o) => sameProduct(o.product, item)),
     );
     if (linked) {
-      linked.offers.push({ storeId: item.storeId, product: item });
+      linked.offers.push({ storeId: item.storeId, storeCode: item.storeCode, product: item });
       continue;
     }
     const group: PriceGroup = {
-      key: `${item.storeId}:${item.canonicalId}`,
+      key: `${item.storeId}:${item.storeCode}:${item.canonicalId}`,
       name: item.name,
-      offers: [{ storeId: item.storeId, product: item }],
+      offers: [{ storeId: item.storeId, storeCode: item.storeCode, product: item }],
     };
     if (item.imageUrl) group.imageUrl = item.imageUrl;
     if (item.brand) group.brand = item.brand;

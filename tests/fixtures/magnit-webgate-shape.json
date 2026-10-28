@@ -1,0 +1,82 @@
+{
+  "top": {
+    "category": "object",
+    "containerConfig": "object",
+    "correctedTerm": "object",
+    "fastCategories": "object",
+    "items": "array",
+    "offerCategoryIds": "object",
+    "pagination": "object",
+    "resultId": "string",
+    "term": "string",
+    "videoDelay": "number"
+  },
+  "item": {
+    "badges": [
+      "object"
+    ],
+    "catalogType": [
+      "string"
+    ],
+    "gallery": [
+      "object"
+    ],
+    "id": [
+      "string"
+    ],
+    "isAdditionalActionRequired": [
+      "boolean"
+    ],
+    "isBiometryRequired": [
+      "boolean"
+    ],
+    "isForAdults": [
+      "boolean"
+    ],
+    "name": [
+      "string"
+    ],
+    "needPassport": [
+      "boolean"
+    ],
+    "orderProperties": [
+      "object"
+    ],
+    "pickupOnly": [
+      "boolean"
+    ],
+    "price": [
+      "number"
+    ],
+    "productId": [
+      "string"
+    ],
+    "promoTag": [
+      "string"
+    ],
+    "promotion": [
+      "object"
+    ],
+    "quantity": [
+      "number"
+    ],
+    "ratings": [
+      "object"
+    ],
+    "seoCode": [
+      "string"
+    ],
+    "service": [
+      "string"
+    ],
+    "storeCode": [
+      "string"
+    ],
+    "targetCart": [
+      "string"
+    ],
+    "weighted": [
+      "object"
+    ]
+  }
+}

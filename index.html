@@ -2,7 +2,13 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <!-- Content-Security-Policy: сеть из renderer не нужна (адаптеры ходят
+           из main через нативный слой), а запрет скриптов из сети и переходов
+           защищает окно, если в интерфейс попадёт текст ответа сети. -->
+      <meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
+      />      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>PriceAggregator</title>
   </head>
   <body>

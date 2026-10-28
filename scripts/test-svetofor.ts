@@ -90,10 +90,19 @@ import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
 const CP1251_FIXTURE = new URL('../tests/fixtures/svetofor/region-moskva-vostok.cp1251.html', import.meta.url);
 const REGION_HTML = '<html><script>var shopid=712; var offersupd=1791443124;</script></html>';
 
-const fixture = JSON.parse(
+// Фикстура снята вручную (2026-10-08) и с тех пор СТАРЕЕТ: сеть считает
+// прайс протухшим, если самая свежая позиция старше двух недель. Без сдвига
+// тест падал бы из-за календаря, а не из-за кода. Поэтому метки позиций
+// сдвигаются так, чтобы самая свежая была «сейчас»: разброс меток (а он в
+// фикстуре разный — это отметка позиции, а не дата файла) сохраняется, а
+// свежесть перестаёт зависеть от даты запуска.
+const fixtureRaw = JSON.parse(
   readFileSync(resolve(import.meta.dirname, '../tests/fixtures/svetofor/offers-649.json'), 'utf8'),
 ) as SvetoforPriceList;
-const ctx = { city: 'kaluga', domain: 'kaluzhskaya-oblast' };
+const newestMark = Math.max(...fixtureRaw.map((r) => Number(r.d ?? 0)));
+const markShift = Math.floor(Date.now() / 1000) - newestMark;
+const fixture = fixtureRaw.map((r) => ({ ...r, d: Number(r.d ?? 0) + markShift }));
+const ctx = { city: 'kaluga', domain: 'kaluzhskaya-oblast', externalStoreId: '713' };
 const rows = fixture;
 
 // Фикстура обязана быть живым форматом: если кто-то пересоберёт её в
@@ -108,6 +117,7 @@ assert.ok(rows.length > 100, `в фикстуре много товаров: ${r
 
   for (const item of items) {
     assert.equal(item.storeId, 'svetofor', 'storeId константой, а не из ответа');
+    assert.equal(item.storeCode, ctx.externalStoreId, 'код точки из контекста, а не из ответа');
     assert.equal(item.city, 'kaluga', 'город из контекста');
     assert.ok(item.price > 0, `цена положительная: ${item.name}`);
     assert.equal(item.promoPrice, null, 'скидки у сети нет — null, а не undefined');
@@ -202,7 +212,11 @@ assert.ok(rows.length > 100, `в фикстуре много товаров: ${r
   // SKU навсегда исчезли бы из поиска и из карточки.
   const spread = new Set(rows.map((r) => r.d));
   assert.ok(spread.size > 5, `в фикстуре смешанные даты: ${spread.size} разных d`);
-  const weekAgo = today - 9 * 86400;
+  // Порог — от САМОЙ СВЕЖЕЙ метки фикстуры, а не от календаря: иначе проверка
+  // зависела бы от даты запуска (фикстура стареет, и «старше недели» перестало
+  // бы быть правдой — а сдвиг меток делает свежайшую «сегодняшней»).
+  const newestInFixture = Math.max(...rows.map((r) => Number(r.d ?? 0)));
+  const weekAgo = newestInFixture - 9 * 86400;
   const withOld = rows.filter((r) => (r.d ?? 0) < weekAgo);
   assert.ok(withOld.length > 0, 'в фикстуре есть позиции старше недели — они обязаны выжить');
   assert.doesNotThrow(

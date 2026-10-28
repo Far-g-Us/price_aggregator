@@ -12,7 +12,21 @@ export function fileStorageAt(file: string): AppStorage {
     },
     writeDb(bytes: Uint8Array): void {
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, bytes);
+      // Через временный файл с переименованием: обычная запись обрывается на
+      // середине, и на диске остаётся битая база — а цены и история в ней
+      // единственные, восстановить их неоткуда.
+      const tmp = `${file}.tmp`;
+      fs.writeFileSync(tmp, bytes);
+      fs.renameSync(tmp, file);
+    },
+    backupDb(bytes: Uint8Array): void {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      // Так же через временный файл: оборванная на середине копия бесполезна
+      // хуже отсутствующей — она выглядит как запасной вариант, который можно
+      // развернуть, и при этом не разворачивается.
+      const tmp = `${file}.pre-phase6.bak.tmp`;
+      fs.writeFileSync(tmp, bytes);
+      fs.renameSync(tmp, `${file}.pre-phase6.bak`);
     },
   };
 }

@@ -1,0 +1,100 @@
+# Сборка и проверки на каждом пуш-реквесте.
+#
+# Проверки те же, что локально, и в том же порядке: типы → тесты (с порогом
+# покрытия 100 %) → сборка renderer → сборка main/preload. Локальный гейт
+# описан в CONTRIBUTING.md, и CI — его копия: расхождение между ними означало
+# бы, что «зелёное» в пул-реквесте и «зелёное» у разработчика — разные вещи.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Токен workflow — только чтение: публиковать ничего не нужно, а лишние
+# права у проверяющего коммита — лишний риск.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Типы (renderer + main/preload)
+        run: npm run typecheck
+
+      - name: Юнит-цикл и порог покрытия
+        run: npm run test:coverage:check
+
+      - name: Сборка renderer
+        run: npx vite build
+
+      - name: Сборка main и preload
+        # main собирается в ESM, preload — в CJS: ESM-preload Electron не грузит
+        # и приложение открывается пустым. Сборка это проверяет.
+        run: npm run build:electron
+
+      - name: Иконки полок: геометрия и провенанс
+        run: npm run test:icons
+
+      - name: Артефакт сборки renderer
+        uses: actions/upload-artifact@v4
+        with:
+          name: renderer-build
+          path: build-renderer
+          retention-days: 3
+
+  android:
+    # Оболочка под Android: сборка APK проверяет, что проект не разъехался с
+    # Capacitor. Локально SDK может стоять или нет, поэтому проверка живёт
+    # здесь: debug-APK достаточно, релизная подпись — вне задачи.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Собрать веб-часть и синхронизировать проект
+        run: npm run android:sync
+
+      - name: Собрать debug APK
+        working-directory: android
+        # `sh gradlew`, а не `./gradlew`: бит исполнения у файла в git может
+        # не сохраниться (клоны на Windows и core.filemode=false его теряют),
+        # и job падал бы с «Permission denied». `sh` работает при любых правах.
+        run: sh gradlew assembleDebug --console=plain
+
+      - name: Артефакт APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 3

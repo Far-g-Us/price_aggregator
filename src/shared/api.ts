@@ -18,6 +18,13 @@ export interface UpdateCheck {
 
 export interface StorePrices {
   storeId: string;
+  /**
+   * Код точки, к которой относится этот блок. Обязателен: у одной сети в
+   * городе может быть несколько точек, и без кода два блока неразличимы —
+   * интерфейс склеил бы их в один и показал бы две строки с одинаковым ключом.
+   * Пока точка на город одна, поле просто повторяет код справочника.
+   */
+  storeCode: string;
   name: string;
   ready: boolean;
   items: ScrapedProduct[];
@@ -28,6 +35,12 @@ export interface StorePrices {
 
 export interface StoreCatalog {
   storeId: string;
+  /**
+   * Код точки. Блок каталога — это ТОЧКА (справочник отдаёт блок на каждую),
+   * и без кода две точки одной сети получили бы одинаковый React-ключ и общее
+   * состояние раскрытия.
+   */
+  storeCode: string;
   name: string;
   categories: StoreCategory[];
   error?: string;
@@ -88,13 +101,19 @@ export interface ProductShelves {
 }
 
 /**
- * Отметка «избранное» на конкретное предложение (товар + магазин + город).
- * targetPrice — порог уведомления; null означает просто отметку без порога.
+ * Отметка «избранное» на конкретное предложение (товар + магазин + город +
+ * точка). targetPrice — порог уведомления; null означает просто отметку без
+ * порога.
+ *
+ * storeCode обязателен и здесь: без него отметка точки А неотличима от отметки
+ * точки Б той же сети в том же городе — и интерфейс не смог бы ни показать,
+ * ни снять правильную.
  */
 export interface Favorite {
   canonicalId: string;
   storeId: string;
   city: string;
+  storeCode: string;
   name: string;
   price: number | null;
   targetPrice: number | null;
@@ -110,6 +129,16 @@ export interface ShelfScope {
   canonicalId: string;
   storeId: string;
   city: string;
+  /**
+   * Код точки. Раскладка привязана к полке конкретного магазина, и без кода
+   * отметка точки А всплыла бы в выдаче точки Б.
+   *
+   * Обязателен: раньше ядро подставляло «первую готовую точку сети», и стоило
+   * добавить в город вторую точку — всё избранное и раскладки молча переехали
+   * бы на неё. Точку называет тот, кто показывает товар: список цен, отметка,
+   * карточка — во всех трёх код известен из ответа сети.
+   */
+  storeCode: string;
 }
 
 // Канал разрыва склейки нужен и в API: renderer спрашивает у ядра, какие пары
@@ -121,13 +150,34 @@ export interface RendererApi {
   getPrices: (args: PricesQuery) => Promise<StorePrices[]>;
   openExternal: (url: string) => Promise<boolean>;
   getCatalog: (args: { city?: string }) => Promise<StoreCatalog[]>;
+  /**
+   * Сети, для которых в этой сборке есть адаптер. На десктопе — все шесть,
+   * на Android — три (там нет браузера). Интерфейс считает по этому списку
+   * доступные точки, иначе обещает опрос сетей, которых в сборке нет.
+   */
+  getSupportedNetworks: () => Promise<string[]>;
+  /**
+   * Установка браузера для Пятёрки, Чижика и Перекрёстка. Firefox не вшит в
+   * установщик (это было бы около 340 МБ из 210 МБ сборки), поэтому ставится
+   * по требованию — пользователь сам решает, нужны ли ему эти сети.
+   */
+  /** Скачать обновление. Скачивание идёт только по клику пользователя. */
+  downloadUpdate: () => Promise<void>;
+  installBrowser: () => Promise<{ ok: boolean; message: string }>;
+  /** Готов ли браузер и где он лежит. */
+  browserStatus: () => Promise<{ installed: boolean; message: string }>;
   getCategory: (args: { city?: string; url?: string }) => Promise<StorePrices[]>;
   getOurCategories: (args: { city?: string }) => Promise<OurCategoryInfo[]>;
   getOurCategory: (args: { city?: string; id?: string }) => Promise<StorePrices[]>;
   getShelves: (args: ShelfScope) => Promise<ProductShelves>;
   setShelves: (args: ShelfScope & { categoryIds: string[] }) => Promise<ProductShelves>;
   releaseShelves: (args: ShelfScope) => Promise<ProductShelves>;
-  getHistory: (args: { canonicalId: string; storeId: string; city: string }) => Promise<HistoryPoint[]>;
+  /**
+   * История цены конкретной точки. storeCode обязателен: кривые двух точек
+   * одной сети в одном городе — разные графики, и без кода интерфейс показал
+   * бы историю той точки, чью строку случайно нашёл в базе.
+   */
+  getHistory: (args: { canonicalId: string; storeId: string; city: string; storeCode: string }) => Promise<HistoryPoint[]>;
   /** Избранное города: текущая цена каждой отмеченной точки. */
   getFavorites: (args: { city: string }) => Promise<Favorite[]>;
   /** Отметить или снять; targetPrice = null оставляет прежний порог. */
@@ -150,7 +200,7 @@ export interface RendererApi {
    */
   getSplitPairs: (args: { city: string }) => Promise<string[]>;
   getSchedulerStatus: () => Promise<SchedulerStatus>;
-  runScheduler: (args?: { city?: string; storeIds?: string[] }) => Promise<SchedulerDone>;
+  runScheduler: (args?: { city?: string; pointKeys?: string[] }) => Promise<SchedulerDone>;
   /**
    * Прервать идущий опрос. Отмена кооперативная: останавливается на границе
    * товара, уже начатый запрос у браузерных сетей доживает. alse — идти нечего.
@@ -158,9 +208,17 @@ export interface RendererApi {
   cancelScheduler: () => Promise<boolean>;
   /** Сообщить ядру выбранный город: автоопрос бьёт только по нему. */
   setCurrentCity: (city: string) => Promise<void>;
-  /** Сообщить ядру выбранные сети города: опрос бьёт только по ним. */
-  setCurrentStores: (city: string, storeIds: string[] | null) => Promise<void>;
-  onSchedulerProgress: (cb: (done: number, total: number, storeId?: string) => void) => () => void;
+  /**
+ * Выбор ТОЧЕК города: ключи `storeId:storeCode` из `pointKeysForCity`.
+ *
+ * Опрос бьёт только по ним. null — «выбор не сделан» и тогда опрос идёт по всем
+ * точкам города; пустой массив — «нечего опрашивать» (так выглядит снятие всех
+ * галочек, и это не то же самое, что «выбор не сделан»).
+ */
+setCurrentStores: (city: string, pointKeys: string[] | null) => Promise<void>;
+  onSchedulerProgress: (
+    cb: (done: number, total: number, storeId?: string, storeCode?: string) => void,
+  ) => () => void;
   onSchedulerDone: (cb: (done: SchedulerDone) => void) => () => void;
   checkUpdates: () => Promise<UpdateCheck>;
   installUpdate: () => Promise<void>;

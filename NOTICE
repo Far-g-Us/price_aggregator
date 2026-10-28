@@ -1,0 +1,34 @@
+Price Aggregator
+Copyright (c) 2026 Price Aggregator contributors
+Owner (copyright holder): the authors of the repository
+github.com/Far-g-Us/price_aggregator — the "Owner" and the "Work" named in
+LICENSE (PAL v1.0).
+
+This product is licensed under the Price Aggregator License (PAL) v1.0 — see
+LICENSE in the repository root. PAL is a source-available, non-commercial,
+copyleft license: commercial use is not permitted without a separate written
+permission from the copyright holder, and anyone who distributes a modified
+version must publish the complete corresponding source code under the same
+license.
+
+Improvements are welcome and are asked to be proposed to the main repository
+first (section 3 of the license) — but forks and independent works are
+permitted.
+
+THIRD-PARTY COMPONENTS
+
+Font Awesome Free (Fonticons, Inc.) — CC BY 4.0
+  Category icons in assets/icons/ (and the paths derived from them in
+  src/renderer/CategoryIcon.tsx and assets/readme/hero.svg).
+  License texts: assets/icons/CC-BY-4.0.txt and assets/icons/LICENSE.
+  Attribution: Font Awesome by Fonticons, Inc. — https://fontawesome.com
+  The set is pinned as the dev dependency @fortawesome/fontawesome-free.
+  CHANGES: the icons are MODIFIED — scaled and shifted into a common 24x24
+  frame with a common optical weight (assets/icons/README.md), which CC BY 4.0
+  section 3(a) requires to be indicated.
+
+Electron, React, Vite, TypeScript, sql.js, electron-builder, electron-updater
+and the other npm dependencies listed in package.json — under their own
+licenses (mostly MIT or Apache-2.0; the exact license of each package is in
+its package.json inside node_modules). Their terms are unaffected by PAL and
+are not restricted by it.

@@ -16,6 +16,7 @@
 //    «неизвестно»: угаданное «нет в наличии» дало бы волну «распродано» по
 //    сети при живых ценах.
 
+import { StaleStoreError } from '../adapter-errors.js';
 import type { ScrapedProduct } from '../../shared/types.js';
 
 /** Верхний уровень фида: то, что сеть отдаёт один раз на весь ответ. */
@@ -86,7 +87,7 @@ function readImage(item: PerekrestokItem): string | null {
  * и молча пропускать тоже нельзя, поэтому фид считает их сам (см.
  * `normalizePerekrestokFeed`).
  */
-export function normalizePerekrestokItem(raw: unknown, ctx: { city: string }): ScrapedProduct | null {
+export function normalizePerekrestokItem(raw: unknown, ctx: { city: string; externalStoreId: string }): ScrapedProduct | null {
   if (raw === null || typeof raw !== 'object') return null;
   const item = raw as PerekrestokItem;
   const plu = typeof item.masterData?.plu === 'string' ? item.masterData.plu : '';
@@ -113,6 +114,7 @@ export function normalizePerekrestokItem(raw: unknown, ctx: { city: string }): S
     canonicalId: `perekrestok:${plu}`,
     storeId: 'perekrestok',
     city: ctx.city,
+    storeCode: ctx.externalStoreId,
     name,
     // Обычная цена товара — цена ДО скидки: именно она сравнивается с прошлым
     // замером в write-on-change, и именно её видит пользователь как «было».
@@ -141,7 +143,7 @@ export function normalizePerekrestokItem(raw: unknown, ctx: { city: string }): S
  * из истории, а breaker смолчал бы. Такой отказ громкий — как у соседей
  * (`chizhik.ts`, `lenta.ts`).
  */
-export function normalizePerekrestokFeed(raw: unknown, ctx: { city: string }): ScrapedProduct[] {
+export function normalizePerekrestokFeed(raw: unknown, ctx: { city: string; externalStoreId: string }): ScrapedProduct[] {
   const feed = (raw ?? {}) as PerekrestokFeed;
   const items = Array.isArray(feed.content?.items) ? feed.content.items : [];
   const out: ScrapedProduct[] = [];
@@ -177,4 +179,99 @@ export function perekrestokSapId(raw: unknown): string | null {
 export function isStrictPerekrestokSearch(raw: unknown): boolean {
   const feed = (raw ?? {}) as PerekrestokFeed;
   return feed.content?.searchType === 'strict';
+}
+
+/**
+ * Адрес единственного входа в товары: деревьев категорий у Перекрёстка нет,
+ * поиск `/catalog/product/feed` — единственный путь и на десктопе, и в
+ * читалке Android.
+ */
+export const FEED_PATH = '/catalog/product/feed';
+
+/**
+ * Сколько товаров берём за один запрос.
+ *
+ * 100 — потолок сети: при `perPage: 500` она отвечает 400 (проверено живьём
+ * 2026-10-10). Поэтому «первые 10» означало бы молчаливо показывать четверть
+ * того, что нашлось, без единого слова об обрезке.
+ */
+export const FEED_PAGE = 100;
+
+const PREFIX = 'perekrestok:';
+
+/** plu из нашего ключа товара: `perekrestok:2059346` → `2059346`. */
+export function perekrestokPlu(canonicalId: string): string {
+  if (!canonicalId.startsWith(PREFIX)) {
+    throw new Error(`perekrestok: не наш ключ товара ${canonicalId.slice(0, 40)}`);
+  }
+  const plu = canonicalId.slice(PREFIX.length);
+  if (plu === '') throw new Error('perekrestok: в ключе товара нет кода');
+  return plu;
+}
+
+/** Код точки: цифры и ничего кроме них, код в адрес не подставляется. */
+export function assertPerekrestokSapId(value: string): string {
+  if (!/^\d{1,12}$/.test(value)) {
+    throw new Error(`perekrestok: код магазина «${value.slice(0, 20)}» не похож на sapId (цифры)`);
+  }
+  return value;
+}
+
+/** Лестница длин названия: сеть режет запрос, полное название может не найтись. */
+const NAME_CUTS = [40, 25];
+
+/** Названия для поиска: целиком и укороченные. */
+export function perekrestokNameQueries(name: string): string[] {
+  const out = [name];
+  for (const cut of NAME_CUTS) {
+    const short = name.slice(0, cut).trim();
+    if (short !== '' && !out.includes(short)) out.push(short);
+  }
+  return out;
+}
+
+/**
+ * Строгий ли поиск. Сеть сама пишет `searchType`: если она искала не строго,
+ * выдача размыта и в неё попали чужие популярные товары, а write-on-change их
+ * потом не отыграет. Это обычная ошибка (breaker должен остановить сеть), а не
+ * `ProductLookupError`.
+ */
+export function assertStrictSearch(data: unknown, where: string): void {
+  // Массив — тоже `typeof 'object'`, поэтому проверяем явно: без этого
+  // `[]`-ответ прошёл бы дальше как «пустая выдача», а это дрейф формата.
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error(`perekrestok: ответ ${where} — не объект (смена ответа сети?)`);
+  }
+  const feed = data as { content?: { items?: unknown[] } };
+  const nonEmpty = Array.isArray(feed.content?.items) && feed.content.items.length > 0;
+  if (isStrictPerekrestokSearch(data)) return;
+  if (nonEmpty) {
+    throw new Error(
+      `perekrestok: сеть искала ${where} не строго (searchType=${JSON.stringify((data as { content?: { searchType?: unknown } }).content?.searchType)}), ` +
+        'а товары вернула — доверять такой выдаче цену нельзя',
+    );
+  }
+}
+
+/**
+ * Ответ относится к нашей точке. `sapId` в ответе — единственное, что можно
+ * сверить: код из нашего справочника подставляется в заголовок/тело запроса,
+ * но если сеть отдаст другую точку, её цены уедут в нашу историю молча.
+ *
+ * Отсутствие `sapId` — тоже отказ, а не «нечем проверять, ну и ладно»: сеть
+ * отдаёт его в каждом ответе (снимали живьём 2026-10-10), а молча пропустить
+ * проверку значило бы записать в историю цены неизвестно чьей точки.
+ */
+export function assertOwnStore(data: unknown, sapId: string, where: string): void {
+  const answer = perekrestokSapId(data);
+  if (answer === null) {
+    throw new Error(`perekrestok: в ответе ${where} нет sapId — сеть сменила ответ, цены неизвестно чьи`);
+  }
+  if (answer === sapId) return;
+  // Расхождение кода точки — наша неверная настройка, а не отказ сети: обычная
+  // ошибка дала бы strike и паузу ВСЕЙ сети, а сеть-то жива.
+  throw new StaleStoreError(
+    `perekrestok: ${where} вернул цены точки ${answer}, а опрашивается ${sapId} — это чужой магазин`,
+    `perekrestok:${sapId}`,
+  );
 }

@@ -29,20 +29,55 @@
 // не правим антивирус. Скрипт не трогает ничего, кроме своей рабочей папки.
 
 import { spawn } from 'node:child_process';
-import { existsSync, copyFileSync, readdirSync, rmSync, mkdirSync } from 'node:fs';
+import { existsSync, copyFileSync, readdirSync, readFileSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
-// ELECTRON_DIST — путь к локальному zip/каталогу Electron. Нужен, когда сеть до
-// github.com рвётся: @electron/get сначала качает SHASUMS256.txt для сверки,
+// ELECTRON_DIST — путь к локальному zip/каталогу Electron. Нужен, когда сеть
+// на github.com рвётся: @electron/get сначала качает SHASUMS256.txt для сверки,
 // и его ETIMEDOUT читается как «артефакт из кэша не сошёлся», после чего
 // перекачивается и сам zip — падает уже он, а сеть может не подняться до конца
 // сборки. С локальным файлом сверки нет вовсе, и сборка идёт офлайн.
 // Аргумент повторяет electronDist electron-builder, поэтому лишних копий zip
 // и распаковки в проект не попадает.
 // env — запасной путь: явный --config.electronDist в аргументах главнее.
-if (process.env.ELECTRON_DIST && !args.some((a) => a.startsWith('--config.electronDist'))) {
-  args.push(`--config.electronDist=${process.env.ELECTRON_DIST}`);
+//
+// СВОЯ КОПИЯ ZIP (2026-10-19). electron-builder после распаковки удаляет zip
+// из своего кэша, и каждая следующая сборка снова тянет ~150 МБ из сети.
+// Поэтому копия хранится в `.cache/electron/` (каталог в .gitignore): сборка
+// берёт её оттуда, и сеть нужна только при смене версии Electron.
+const ELECTRON_CACHE = resolve(process.cwd(), '.cache', 'electron');
+function electronVersion() {
+  try {
+    const pkg = JSON.parse(readFileSync(resolve(process.cwd(), 'node_modules', 'electron', 'package.json'), 'utf8'));
+    return typeof pkg.version === 'string' ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+function localElectronZip() {
+  const version = electronVersion();
+  if (!version) return null;
+  const own = join(ELECTRON_CACHE, `electron-v${version}-win32-x64.zip`);
+  if (existsSync(own)) return own;
+  // Копия в системном кэше electron-builder: забираем и сохраняем у себя, чтобы
+  // дальше не качать.
+  const systemCache = join(process.env.LOCALAPPDATA ?? '', 'electron', 'Cache');
+  if (!existsSync(systemCache)) return null;
+  for (const dir of readdirSync(systemCache)) {
+    const candidate = join(systemCache, dir, `electron-v${version}-win32-x64.zip`);
+    if (!existsSync(candidate)) continue;
+    mkdirSync(ELECTRON_CACHE, { recursive: true });
+    copyFileSync(candidate, own);
+    console.log(`[build-exe] electron zip сохранён локально: ${own}`);
+    return own;
+  }
+  return null;
+}
+if (!args.some((a) => a.startsWith('--config.electronDist'))) {
+  const local = process.env.ELECTRON_DIST || localElectronZip();
+  if (local) args.push(`--config.electronDist=${local}`);
+  else console.warn('[build-exe] локального zip Electron нет — сборка скачает его из сети');
 }
 const distDir = resolve(process.cwd(), 'dist');
 // Каталог промежуточной сборки по умолчанию — внутри проекта, НЕ в `%TEMP%`:
@@ -66,6 +101,11 @@ const distDir = resolve(process.cwd(), 'dist');
 const stagingDir = process.env.BUILD_STAGING_DIR
   ? resolve(process.env.BUILD_STAGING_DIR, 'price-aggregator-staging')
   : resolve(process.cwd(), '.build-staging');
+// Исходный package.json хранится рядом: сборка дважды меняет его (в portable
+// добавляется Firefox), и после ЛЮБОГО исхода — включая упавшую сборка —
+// файл обязан вернуться в исходный вид.
+const pkgPath = resolve(process.cwd(), 'package.json');
+const pkgOriginal = readFileSync(pkgPath, 'utf8');
 // Сначала каталог убираем целиком, иначе после упавшей сборки там остаётся
 // half-unpacked Electron на 400 МБ.
 rmSync(stagingDir, { recursive: true, force: true });
@@ -80,9 +120,7 @@ function run(cmd, cmdArgs) {
 }
 
 try {
-console.log(`[build-exe] промежуточная сборка: ${stagingDir}`);
-  await run('npx', ['electron-builder', ...args, `--config.directories.output=${stagingDir}`]);
-
+  console.log(`[build-exe] промежуточная сборка: ${stagingDir}`);
   mkdirSync(distDir, { recursive: true });
   const setupDir = join(distDir, 'setup');
   const portableDir = join(distDir, 'portable');
@@ -91,22 +129,83 @@ console.log(`[build-exe] промежуточная сборка: ${stagingDir}`
   mkdirSync(setupDir, { recursive: true });
   mkdirSync(portableDir, { recursive: true });
 
-  const produced = readdirSync(stagingDir, { withFileTypes: true })
-    .filter((e) => e.isFile())
-    .map((e) => e.name);
-  if (produced.length === 0) throw new Error('electron-builder не создал ни одного файла');
-  for (const name of produced) {
-    // builder-debug.yml — внутренний дамп electron-builder (раскрытые пути и
-    // шаблоны NSIS). В dist ему не место: там лежат артефакты, которые
-    // выкладывают в релиз. Нужен он только при разборе сборки, и то через
-    // DEBUG=electron-builder, который пишет в консоль.
-    if (name === 'builder-debug.yml') continue;
-    const target = name.includes('-portable.') ? portableDir : setupDir;
-    copyFileSync(join(stagingDir, name), join(target, name));
-    console.log(`[build-exe] ${target === distDir ? 'dist' : target.slice(distDir.length + 1)}: ${name}`);
+  // Два прохода, а не один:
+  //
+  //  * ПОРТАТИВНЫЙ exe — «всё в себе»: Firefox (около 340 МБ) внутри, чтобы
+  //    Пятёрка, Чижик и Перекрёсток работали сразу, без скачивания. Так
+  //    переносимая версия и ведёт себя: положили рядом и запустили.
+  //  * УСТАНОВЩИК — без браузера: 117 МБ вместо 210. Браузер ставится кнопкой
+  //    в интерфейсе, и те, кому он не нужен, его не качают.
+  //
+  // extraResources у electron-builder общий для всех target'ов, поэтому браузер
+  // добавляется временной правкой package.json — с обязательным восстановлением
+  // в finally: упавшая сборка не должна оставить изменённый package.json.
+  const browsersDir = resolve(process.cwd(), '.playwright-browsers');
+  const withBrowser = {
+    from: '.playwright-browsers',
+    to: 'browsers',
+    filter: ['firefox-*/**', 'winldd-*/**'],
+  };
+
+  const buildTarget = async (target, withFirefox) => {
+    const pkg = JSON.parse(pkgOriginal);
+    if (withFirefox) {
+      pkg.build.extraResources = [withBrowser, ...(pkg.build.extraResources ?? [])];
+    }
+    writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8');
+    // Свой каталог на каждый проход: два прохода подряд в одном каталоге
+    // ломались — NSIS не мог перезаписать свой uninstaller («Can't open output
+    // file»), потому что файл держал антивирус. Разные каталоги этой
+    // коллизии не создают.
+    const out = `${stagingDir}-${target}`;
+    rmSync(out, { recursive: true, force: true });
+    mkdirSync(out, { recursive: true });
+    await run('npx', [
+      'electron-builder',
+      ...args.filter((a) => !a.startsWith('--win')),
+      '--win',
+      target,
+      `--config.directories.output=${out}`,
+    ]);
+    const produced = readdirSync(out, { withFileTypes: true })
+      .filter((e) => e.isFile())
+      .map((e) => e.name);
+    if (produced.length === 0) throw new Error(`electron-builder не создал ни одного файла (${target})`);
+    for (const name of produced) {
+      // builder-debug.yml — внутренний дамп electron-builder (раскрытые пути и
+      // шаблоны NSIS). В dist ему не место: там лежат артефакты, которые
+      // выкладывают в релиз. Нужен он только при разборе сборки, и то через
+      // DEBUG=electron-builder, который пишет в консоль.
+      if (name === 'builder-debug.yml') continue;
+      const target_ = name.includes('-portable.') ? portableDir : setupDir;
+      copyFileSync(join(out, name), join(target_, name));
+      console.log(`[build-exe] ${target_ === distDir ? 'dist' : target_.slice(distDir.length + 1)}: ${name}`);
+    }
+    return produced;
+  };
+
+  const hasFirefox = existsSync(join(browsersDir, 'firefox-1543')) || readdirSync(browsersDir).some((d) => d.startsWith('firefox-'));
+  if (hasFirefox) {
+    console.log('[build-exe] портативный exe: Firefox вшит внутрь');
+    await buildTarget('portable', true);
+  } else {
+    console.warn('[build-exe] Firefox в .playwright-browsers нет — портативный exe соберётся без него');
+    await buildTarget('portable', false);
   }
-  console.log(`[build-exe] готово, файлов перенесено: ${produced.length}`);
+  console.log('[build-exe] установщик: без Firefox (ставится кнопкой в приложении)');
+  await buildTarget('nsis', false);
+  console.log('[build-exe] готово');
 } finally {
+  // package.json возвращается в исходный вид при ЛЮБОМ исходе, включая
+  // упавшую сборку.
+  try {
+    writeFileSync(pkgPath, pkgOriginal, 'utf8');
+  } catch (err) {
+    console.error('[build-exe] НЕ УДАЛОСЬ вернуть package.json:', err);
+    process.exitCode = 1;
+  }
   // Промежуточная папка с 400 МБ распакованного Electron не остаётся в проекте.
-  if (existsSync(stagingDir)) rmSync(stagingDir, { recursive: true, force: true });
+  for (const dir of [stagingDir, `${stagingDir}-portable`, `${stagingDir}-nsis`]) {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+  }
 }

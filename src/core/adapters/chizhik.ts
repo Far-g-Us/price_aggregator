@@ -74,7 +74,7 @@ function productsOf(data: ProductsResponse, where: string): ChizhikItem[] {
  * товара, — это дрейф формата (например, уехало имя поля), а не «товаров нет»:
  * тихая пустая полка выглядит как пустая витрина, а breaker молчит.
  */
-function normalizedItems(items: ChizhikItem[], ctx: { city: string }, where: string): ScrapedProduct[] {
+function normalizedItems(items: ChizhikItem[], ctx: { city: string; externalStoreId: string }, where: string): ScrapedProduct[] {
   const out = items.map((item) => normalizeChizhikItem(item, ctx)).filter((x): x is ScrapedProduct => x !== null);
   if (items.length > 0 && out.length === 0) {
 throw new Error(

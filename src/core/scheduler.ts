@@ -1,8 +1,9 @@
 import type { Database } from 'sql.js';
 import type { StoreAdapter } from '../shared/types.js';
-import { CITY_STORES } from '../shared/catalog.js';
+import { pointKey, storesForCity, type StoreId } from '../shared/catalog.js';
 import { consoleLogger, type CoreLogger } from './platform.js';
 import { isProductLookupError, isStaleStoreError } from './adapter-errors.js';
+import { UNKNOWN_STORE_CODE } from '../shared/types.js';
 import {
   listTrackedProducts,
   type TrackedProduct,
@@ -45,7 +46,7 @@ export interface PollCounts {
 export interface PollOptions {
   /** Пауза между товарами: сеть враждебная, без пауз получишь блок. */
   delayMs?: number;
-  onProgress?: (done: number, total: number, storeId?: string) => void;
+  onProgress?: (done: number, total: number, storeId?: string, storeCode?: string) => void;
   log?: CoreLogger;
   /**
    * Опрашивать только этот город. Опрос без фильтра бьёт по всем городам сразу,
@@ -55,14 +56,18 @@ export interface PollOptions {
    */
   city?: string;
   /**
-   * Опрашивать только эти сети. Выбор магазинов в шапке — это обещание
-   * пользователю, а без фильтра прогресс обещал обход всех сетей города: при
-   * одном выбранном магазине счётчик показывал «28/445», то есть обещал 445
-   * позиций и ходил в выключенные сети тоже. Пустой массив — не «все», а
-   * «нечего опрашивать»: пустой выбор пользователь выразить не может, поэтому
-   * undefined — все сети (прежнее поведение, нужно ручному запуску из консоли).
+   * Опрашивать только эти ТОЧКИ (ключи `storeId:storeCode`). Выбор магазинов в
+   * шапке — это обещание пользователю, а без фильтра прогресс обещал обход всех
+   * сетей города: при одном выбранном магазине счётчик показывал «28/445», то
+   * есть обещал 445 позиций и ходил в выключенные сети тоже. Пустой массив — не
+   * «все», а «нечего опрашивать»: пустой выбор пользователь выразить не может,
+   * поэтому undefined — все точки (прежнее поведение, нужно ручному запуску из
+   * консоли).
+   *
+   * Именно точки, а не сети: у сети может быть несколько точек города, и выбор
+   * по сети отвечал бы на вопрос, которого пользователь не задавал.
    */
-  storeIds?: string[];
+  pointKeys?: string[];
   /**
    * Продолжать незаконченный цикл: пропускать то, что уже проверено в этом
    * цикле (см. `poll_checklist`). Товары с ошибками в чек-лист не попадают, то
@@ -120,12 +125,34 @@ function pauseBetween(targets: readonly TrackedProduct[], i: number, delayMs: nu
   return ms > 0 ? sleep(ms) : null;
 }
 
+/**
+ * Фильтр выбора — по ключу ТОЧКИ. Отслеживание без точки (sentinel) проходит,
+ * если выбрана хоть одна точка его сети: оно и опрашивается по точке.
+ * Пустой выбор (null/undefined) означает «фильтра нет — проходят все»: так
+ * зовёт автопрогон, у которого списка точек ещё нет.
+ * Функция на уровне модуля не случайно: сводке опроса (services.ts) нужно
+ * различать «товаров нет вообще» и «товары есть, но их отсёк выбор магазинов»,
+ * а второй предикат об одном правиле дублировать — значит разместить две правды.
+ */
+export function pointSelected(
+  t: { storeId: string; storeCode: string },
+  pointKeys: readonly string[] | null | undefined,
+): boolean {
+  if (pointKeys == null) return true;
+  return pointKeys.some(
+    (k) =>
+      k === pointKey(t.storeId, t.storeCode) ||
+      (t.storeCode === UNKNOWN_STORE_CODE && k.startsWith(`${t.storeId}:`)),
+  );
+}
+
 export async function pollOnce(
   database: Database,
   adapters: Map<string, StoreAdapter>,
   options: PollOptions = {},
 ): Promise<PollCounts> {
-  const { delayMs = 1000, onProgress, log = consoleLogger, city, storeIds, resume, isCancelled } = options;
+  const { delayMs = 1000, onProgress, log = consoleLogger, city, pointKeys, resume, isCancelled } =
+    options;
   const counts: PollCounts = {
     inserted: 0,
     skipped: 0,
@@ -145,9 +172,18 @@ export async function pollOnce(
   // (у Пятёрки и Чижика это минута прогрева НА КАЖДЫЙ товар). Сортировка по
   // городу здесь уронила бы эти сети в разы. Поэтому и «повторный прогон» не
   // переупорядочивает список — он просто выкидывает уже проверенное.
-  const tracked = listTrackedProducts(database).filter(
-    (t) => (!city || t.city === city) && (storeIds === undefined || storeIds.includes(t.storeId)),
+  // Фильтр выбора — по ключу ТОЧКИ (pointSelected выше). Отслеживание без
+  // точки (sentinel) проходит, если выбрана хоть одна точка его сети: оно
+  // и опрашивается по точке.
+  const allTracked = listTrackedProducts(database);
+  const tracked = allTracked.filter(
+    (t) => (!city || t.city === city) && pointSelected(t, pointKeys),
   );
+  // Правило «сеть без адаптера → notReady, товар не отмечен и вернётся в целях»
+  // оставлено как есть: это осознанный сигнал «цена устарела, товар не
+  // проверен», и он проверяется тестом. Сети, которых нет в сборке, отсекаются
+  // не здесь, а в выборе магазинов (setCurrentStores) — там, где известно,
+  // какие сети вообще опрашиваются.
   // Чек-лист — вспомогательная структура: цены лежат в prices_history, и потеря
   // чек-листа не должна ронять прогон. Поэтому и чтение, и запись, и очистка
   // идут через безопасные обёртки: упавшее чтение даёт пустой список (опросит
@@ -172,12 +208,41 @@ export async function pollOnce(
     }
   };
   const checked = readChecklist();
-  const targets = tracked.filter((t) => !checked.has(`${t.storeId}\u0000${t.canonicalId}`));
+  // Ключ отметки — с кодом точки: у двух точек одной сети canonicalId совпадает,
+  // и отметка первой точки скрыла бы вторую от опроса до конца цикла.
+  const targetKey = (t: TrackedProduct): string => `${t.storeId}\u0000${t.storeCode}\u0000${t.canonicalId}`;
+  // Цель без точки нужна, пока той же тройки «товар + сеть + город» нет ни в
+  // одной реальной точке. После материализации sentinel-строка остаётся в
+  // истории навсегда (цены в неё больше не пишутся), и без этой проверки она
+  // давала бы вторую цель на тот же товар и ту же точку — то есть два сетевых
+  // запроса на товар каждый цикл и завышенный «проверено N».
+  const byPoint = new Set(
+    tracked
+      .filter(
+        (t) =>
+          t.storeCode !== UNKNOWN_STORE_CODE &&
+          // Код, которого больше нет в справочнике, точкой не считается: иначе
+          // sentinel-цель подавилась бы строкой-призраком (правка базы руками,
+          // смена справочника) и товар ушёл бы в вечный notReady вместо опроса
+          // по живой точке сети.
+          storesForCity(t.city, t.storeId as StoreId).some(
+            (s) => s.externalStoreId === t.storeCode,
+          ),
+      )
+      .map((t) => `${t.storeId}\u0000${t.city}\u0000${t.canonicalId}`),
+  );
+  const targets = tracked.filter(
+    (t) =>
+      !checked.has(targetKey(t)) &&
+      (t.storeCode !== UNKNOWN_STORE_CODE || !byPoint.has(`${t.storeId}\u0000${t.city}\u0000${t.canonicalId}`)),
+  );
   if (targets.length === 0) {
     log.info(
       tracked.length > 0
         ? `опрос: все ${tracked.length} товаров города уже проверены в этом цикле`
-        : `опрос: нет отслеживаемых товаров${city ? ` в городе ${city}` : ''}`,
+        : allTracked.some((t) => !city || t.city === city)
+          ? 'опрос: отслеживаемые товары есть, но все отсечены выбором магазинов'
+          : `опрос: нет отслеживаемых товаров${city ? ` в городе ${city}` : ''}`,
     );
     counts.remaining = tracked.length;
     // Цикл фактически завершён: незакрытых целей не осталось. Чек-лист чистим,
@@ -207,23 +272,43 @@ export async function pollOnce(
   const RETRY_COOLDOWN_MS = 120_000;
   const strikes = new Map<string, number>();
   const disabledUntil = new Map<string, number>();
+  const unknownPoints = new Set<string>();
   let done = 0;
+  // Персист посреди прогона. Цены и отметки чек-листа живут в памяти sql.js,
+  // и до конца прогона на диск не попадают: убитый процесс теряет ВСЁ
+  // собранное (реальный случай: MIUI-киллер вычистил фоновое приложение
+  // посреди живого опроса 2026-10-28 — потеряно 20 минут работы). Раз в
+  // 15 секунд сериализация стоит миллисекунды, а между записями теряется
+  // максимум 15 секунд.
+  const PERSIST_EVERY_MS = 15000;
+  let lastPersistAt = Date.now();
+  const persistPeriodically = (): void => {
+    if (Date.now() - lastPersistAt < PERSIST_EVERY_MS) return;
+    lastPersistAt = Date.now();
+    try {
+      persistDb(database);
+    } catch (err) {
+      // Не провал прогона: следующая попытка через 15 секунд, финальная
+      // запись в конце цикла остаётся как была.
+      log.warn('poll: периодическая запись не удалась', err);
+    }
+  };
   // Отметка «проверено» не должна ронять прогон: ошибка записи ушла бы в catch
   // сервисов, и уже собранные за прогон цены не дошли бы до `persistDb`.
   // Худшее при потере отметки — товар переспросится в следующем цикле.
   const markSafe = (t: TrackedProduct): void => {
     if (!resume || city === undefined) return;
     try {
-      markPollChecked(database, city, t.storeId, t.canonicalId);
+      markPollChecked(database, city, t.storeId, t.storeCode, t.canonicalId);
     } catch (err) {
-      log.warn(`poll checklist: не удалось отметить ${t.storeId} ${t.canonicalId}`, err);
+      log.warn(`poll checklist: не удалось отметить ${t.storeId}:${t.storeCode} ${t.canonicalId}`, err);
     }
   };
   // Первый прогресс уходит ДО первого товара, а не после него: у браузерных
   // сетей первый запрос включает прогрев сессии и занимает минуты, и без этого
   // события интерфейс молчал всё это время — выглядело как зависший опрос.
   if (onProgress && targets.length > 0) {
-    onProgress(0, targets.length, targets[0]?.storeId);
+    onProgress(0, targets.length, targets[0]?.storeId, targets[0]?.storeCode);
   }
   for (const t of targets) {
     // Отмена кооперативная и с точностью в один товар: уже начатый запрос у
@@ -234,25 +319,71 @@ export async function pollOnce(
       log.info(`опрос прерван пользователем: проверено ${done} из ${targets.length}, осталось ${counts.remaining}`);
       break;
     }
+    // Персист ДО товара: собранное предыдущими итерациями уезжает на диск,
+    // пока сеть отвечает на текущий запрос.
+    persistPeriodically();
     const i = done;
     done += 1;
     // Смена сети объявляется сразу, а не после первого товара следующей сети:
     // иначе подпись «Сейчас: …» на минуты оставалась от прошлой сети, и по ней
     // нельзя было понять, где именно опрос застрял.
-    if (onProgress && i > 0 && targets[i - 1]?.storeId !== t.storeId) {
-      onProgress(i, targets.length, t.storeId);
+    if (
+      onProgress &&
+      i > 0 &&
+      (targets[i - 1]?.storeId !== t.storeId || targets[i - 1]?.storeCode !== t.storeCode)
+    ) {
+      // Точка едет в событии: у двух точек одной сети подпись «Сейчас: Магнит» не
+      // отличала бы вторую точку от первой — то есть врала бы ровно там, ради
+      // чего фаза и затевалась.
+      onProgress(i, targets.length, t.storeId, t.storeCode);
     }
-    const store = CITY_STORES[t.city]?.find((s) => s.storeId === t.storeId);
+    // Точка ОПРОШЕННАЯ, а не первая в справочнике: у сети может быть несколько
+    // точек города, и цена второй точки, опрошенная по коду первой, была бы
+    // ценой чужого магазина (инвариант домена на коде точки).
+    //
+    // Сентинел `?` — отслеживание без точки: у него нет кода, и оно идёт по
+    // первой рабочей точке сети. Такой товар просто материализуется в её ключ.
+    const points = storesForCity(t.city, t.storeId as StoreId);
+    const store =
+      t.storeCode === UNKNOWN_STORE_CODE
+        ? points.find((s) => s.ready)
+        : points.find((s) => s.externalStoreId === t.storeCode);
     const adapter = adapters.get(t.storeId);
-    if (!store?.ready || !adapter) {
+    if (!adapter) {
       counts.notReady += 1;
-      if (onProgress) onProgress(i + 1, targets.length, t.storeId);
+      if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
+      continue;
+    }
+    // Код точки, которого нет в справочнике (правка базы вручную, перенос с
+    // другой сети), — это вечная цель: ни запроса, ни отметки. Молчаливый
+    // «не проверено N» выглядел бы как вина сети, поэтому коды собираем и
+    // называем один раз за прогон.
+    if (!store) {
+      const unknownKey = `${t.storeId}:${t.storeCode}`;
+      if (!unknownPoints.has(unknownKey)) {
+        unknownPoints.add(unknownKey);
+        // Для sentinel-цели это не «точка вне справочника», а «в городе нет
+        // готовой точки сети»: кода-то у такой цели нет вовсе.
+        log.warn(
+          t.storeCode === UNKNOWN_STORE_CODE
+            ? `опрос: у сети ${t.storeId} в городе ${t.city} нет готовой точки — её товары не опрашиваются`
+            : `опрос: точка ${t.storeId}:${t.storeCode} не найдена в справочнике — товары этой точки ` +
+                `не опрашиваются и остаются без новых цен`,
+        );
+      }
+      counts.notReady += 1;
+      if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
+      continue;
+    }
+    if (!store.ready) {
+      counts.notReady += 1;
+      if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
       continue;
     }
     const blockedUntil = disabledUntil.get(t.storeId) ?? 0;
     if (blockedUntil > Date.now()) {
       counts.notReady += 1;
-      if (onProgress) onProgress(i + 1, targets.length, t.storeId);
+      if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
       continue;
     }
     const itemStart = Date.now();
@@ -262,11 +393,25 @@ export async function pollOnce(
         externalStoreId: store.externalStoreId,
         name: t.name,
       });
+      // Код точки — из ответа сети, как и в storeItems: sentinel «не
+      // подтвердила» означает «доверяем запрошенной точке», а ЧУЖОЙ код — это
+      // цены другой точки, и такой ответ громко отбрасывается (товар уходит в
+      // неудачные, запись не происходит). Раньше здесь безусловно подставлялся
+      // код из справочника, то есть подтверждение сети молча затиралось.
+      if (
+        p.storeCode !== UNKNOWN_STORE_CODE &&
+        p.storeCode !== store.externalStoreId
+      ) {
+        throw new Error(
+          `опрос: сеть ответила за точку ${p.storeCode}, а просили ${store.externalStoreId} (${t.canonicalId})`,
+        );
+      }
       const r = savePriceIfChanged(database, {
         ...toPriceInput(p),
         canonicalId: t.canonicalId,
         storeId: t.storeId,
         city: t.city,
+        storeCode: p.storeCode === UNKNOWN_STORE_CODE ? store.externalStoreId : p.storeCode,
       });
       counts[r === 'inserted' ? 'inserted' : 'skipped'] += 1;
       // Отметка ставится и на «без изменений» (skipped): товар проверен, сеть
@@ -285,7 +430,7 @@ export async function pollOnce(
         counts.failed += 1;
         if (!counts.failedStores.includes(t.storeId)) counts.failedStores.push(t.storeId);
         log.warn(`poll: ${t.storeId} ${t.canonicalId} — ${err.message}`);
-        if (onProgress) onProgress(i + 1, targets.length, t.storeId);
+        if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
         await pauseBetween(targets, i, delayMs);
         continue;
       }
@@ -298,7 +443,7 @@ export async function pollOnce(
         if (!counts.failedStores.includes(t.storeId)) counts.failedStores.push(t.storeId);
         if (!counts.staleStores.includes(err.storeKey)) counts.staleStores.push(err.storeKey);
         log.warn(`poll: ${t.storeId} ${t.canonicalId} — ${err.message}`);
-        if (onProgress) onProgress(i + 1, targets.length, t.storeId);
+        if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
         await pauseBetween(targets, i, delayMs);
         continue;
       }
@@ -318,7 +463,7 @@ export async function pollOnce(
         );
       }
     }
-    if (onProgress) onProgress(i + 1, targets.length, t.storeId);
+    if (onProgress) onProgress(i + 1, targets.length, t.storeId, t.storeCode);
     // Пауза — между товарами ОДНОЙ сети и по правилу `pauseBetween` (тем же,
     // что и в ветках отказа): иначе успешный проход платил бы лишнюю секунду там,
     // где другие ветки её не платят, и дрейф повторился бы снова.

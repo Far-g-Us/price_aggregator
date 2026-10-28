@@ -29,7 +29,7 @@ import { CITY_TO_STORE, chizhikSapId } from '../src/shared/chizhik-regions.js';
 import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
 
 const read = (name: string): unknown => JSON.parse(fs.readFileSync(`tests/fixtures/chizhik/${name}`, 'utf8'));
-const CTX = { city: 'moscow' };
+const CTX = { city: 'moscow', externalStoreId: 'TEST' };
 
 // --- 0. Два источника кода магазина сверяются. -----------------------------
 // `catalog.ts` (что реально опрашивает приложение) и `chizhik-regions.ts`

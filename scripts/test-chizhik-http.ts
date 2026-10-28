@@ -139,6 +139,10 @@ const adapter = new ChizhikAdapter();
     'домен не продублирован: адаптер отдаёт путь, а не полный URL',
   );
   assert.ok(items.every((i) => i.storeId === 'chizhik' && i.city === 'moscow'), 'сеть и город проставлены');
+  assert.ok(
+    items.every((i) => i.storeCode === 'HD87'),
+    'товар несёт код той точки, о которой просили: две точки сети иначе делят цену',
+  );
   assert.ok(items.every((i) => /^chizhik-\d+$/.test(i.canonicalId)), 'идентичность товара');
   await closeChizhikBrowser();
 }

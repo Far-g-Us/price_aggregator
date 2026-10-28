@@ -10,19 +10,22 @@
 // отписки, а канал позволяет нескольким слушателям, так что вторая подписка
 // на тот же ивент законна.
 import React from 'react';
-import { CITY_STORES } from '../shared/catalog';
+import { buildStoreLabels, pointKey, pointLabel } from '../shared/catalog';
 
-// Имя сети для плашки прогресса. Список собран из каталога, а не зашит рядом с
-// подпиской: новая сеть в CITY_STORES подхватится сама, иначе в прогрессе
-// появился бы внутренний код вместо названия.
-const STORE_LABEL: Record<string, string> = {};
-for (const city of Object.values(CITY_STORES)) {
-  for (const s of city) if (STORE_LABEL[s.storeId] === undefined) STORE_LABEL[s.storeId] = s.name;
-}
+// Подписи собираются в каталоге (buildStoreLabels), а не здесь: renderer не
+// покрыт тестами, а ошибка «подписываю по сетям вместо точек» невидима — вторая
+// точка сети просто молча не попадает в словарь.
+const LABELS = buildStoreLabels();
+const { byStore: STORE_LABEL, byPoint: POINT_LABEL } = LABELS;
 
 export function PollProgress(props: { onRunningChange?: (running: boolean) => void }): React.ReactElement | null {
   const { onRunningChange } = props;
-  const [progress, setProgress] = React.useState<{ done: number; total: number; storeId?: string } | null>(null);
+  const [progress, setProgress] = React.useState<{
+    done: number;
+    total: number;
+    storeId?: string;
+    storeCode?: string;
+  } | null>(null);
   // Флаг «идёт» держится в ref, а не в состоянии: сообщения прогресса идут
   // пачками по 4 в секунду, и обновление состояния на каждом уронило бы весь App
   // заново — ровно та перерисовка, ради которой этот лист и вынесен отдельно.
@@ -35,14 +38,19 @@ export function PollProgress(props: { onRunningChange?: (running: boolean) => vo
 
   React.useEffect(() => {
     if (!window.api) return;
-    const offProgress = window.api.onSchedulerProgress((done, total, storeId) => {
+    const offProgress = window.api.onSchedulerProgress((done, total, storeId, storeCode) => {
       if (!running.current) {
         running.current = true;
         notify.current?.(true);
       }
       // ТочныйOptionalPropertyTypes: ключ без значения туда не кладём — иначе
       // `storeId: undefined` не равен отсутствующему ключу по типу.
-      setProgress(storeId === undefined ? { done, total } : { done, total, storeId });
+      setProgress({
+        done,
+        total,
+        ...(storeId === undefined ? {} : { storeId }),
+        ...(storeCode === undefined ? {} : { storeCode }),
+      });
     });
     // Сводка приходит и по событию, и по возврату runScheduler: дубль нужен
     // для случая, когда проход завершился, пока лист ещё не смонтирован.
@@ -63,9 +71,18 @@ export function PollProgress(props: { onRunningChange?: (running: boolean) => vo
   // Оформление — как у остальных плашек приложения (`rounded-full border
   // border-line bg-card`): зелёного текста на светлом фоне 12px не хватает до
   // контраста AA, а `bg-accent/15` в проекте вообще не определён (нет --color-accent).
-  const name = progress.storeId === undefined ? null : STORE_LABEL[progress.storeId] ?? progress.storeId;
+  // Подпись точки, когда код известен, иначе имя сети: точка без кода — это
+  // либо отслеживание без точки (sentinel), либо событие до выбора точки.
+  const name =
+    progress.storeId === undefined
+      ? null
+      : progress.storeCode === undefined
+        ? (STORE_LABEL[progress.storeId] ?? progress.storeId)
+        : (POINT_LABEL[pointKey(progress.storeId, progress.storeCode)] ??
+          STORE_LABEL[progress.storeId] ??
+          progress.storeId);
   return (
-    <p className="m-0 mb-4 flex flex-wrap items-center gap-2 text-[13px] text-muted" role="status">
+    <p className="m-0 mb-4 flex flex-wrap items-center gap-2 text-xs text-muted" role="status">
       <span>Опрашиваю… {progress.done}/{progress.total}</span>
       {name !== null && (
         <span className="rounded-full border border-line bg-card px-2 py-0.5 text-[12px] font-medium text-primary-dark">

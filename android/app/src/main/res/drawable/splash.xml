@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Сплэш запуска: белый фон и иконка приложения по центру. Раньше здесь
+     стояли дефолтные splash.png Capacitor (синяя эмблема Capacitor) — их
+     и было видно при старте. Layer-list с gravity=center рисует bitmap
+     в натуральной плотности без растяжения на весь экран, а размер задаёт
+     android:width/height (API 23+, minSdk 24); плотности выбирает сам
+     @mipmap/ic_launcher, поэтому один файл покрывает все экраны. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+    <item
+        android:width="120dp"
+        android:height="120dp"
+        android:drawable="@mipmap/ic_launcher"
+        android:gravity="center" />
+</layer-list>

@@ -1,6 +1,6 @@
 import type { ScrapedProduct, StoreCategory } from '../../shared/types.js';
 import { readEnvFlag } from '../platform.js';
-import { injectedPlaywright } from './playwright-port.js';
+import { loadPlaywright } from './playwright-port.js';
 import { categoryIdFromUrl, normalize, type SearchItem } from './5ka-parse.js';
 
 const WEB = 'https://5ka.ru/';
@@ -124,24 +124,10 @@ let inFlight: Promise<Session> | null = null;
 // поэтому «сессия собрана после close» определяется простым сравнением.
 let epoch = 0;
 
-async function importPlaywright(): Promise<typeof import('playwright')> {
-  const injected = injectedPlaywright();
-  if (injected) return injected;
-  /* c8 ignore start — см. magnit.ts: в тестах порт подставляет Playwright
-     всегда, а ветка битой установки тестом не воспроизводится. */
-  try {
-    return await import('playwright');
-  } catch {
-    // Отдельно от отсутствия браузера: сам пакет playwright обязан ехать в
-    // сборку (он в dependencies). Если модуль не грузится — битая установка,
-    // лечится переустановкой. Отсутствие Firefox выглядит иначе: до launch
-    // дело не доходит, падает firefox.launch() со своим «Executable doesn't exist».
-throw new Error(
-      '5ka: не удалось загрузить playwright из сборки — приложение установлено повреждённо, переустанови его.',
-    );
-  }
-  /* c8 ignore stop */
-}
+  // Настоящий импорт playwright живёт только в Electron-оболочке: иначе бандлер
+  // Android-сборки пытается resolve'ить chromium-bidi. Понятный текст отказа —
+  // тоже в порте, вместе с подменой для тестов.
+  const importPlaywright = (): Promise<typeof import('playwright')> => loadPlaywright();
 
 // Признаки блокировки смотрим по заголовку и по факту наличия товаров:
 // сам 5ka.ru везде в разметке упоминает recaptcha, так что grep по HTML

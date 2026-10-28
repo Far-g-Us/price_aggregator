@@ -199,6 +199,15 @@ const healthyRoute = (searchBody: unknown = fixtureJson('lenta-search-2026-10-01
     2,
     'протухшая сессия заменена новой, а не использована дальше',
   );
+  // Привязка к магазину жила в старой сессии: на сервере её держит именно
+  // mode/set, а маркера магазина в выдаче Ленты нет вообще. Без повторной
+  // привязки повторный поиск ушёл бы в остаток ЧУЖОЙ точки, и мы бы этого
+  // не заметили: сверять выдачу не по чему.
+  assert.equal(
+    calls.filter((c) => c.url.endsWith('/delivery/mode/set')).length,
+    2,
+    'новая сессия привязана к магазину заново, а не унаследовала привязку старой',
+  );
 }
 
 // --- 8. Отказы самой выдачи: не-JSON, пустой ответ, ошибка jrpc, без result.
@@ -442,12 +451,13 @@ const healthyRoute = (searchBody: unknown = fixtureJson('lenta-search-2026-10-01
   assert.equal(lentaWeightLabel({ weight: { net: 800 } } as never), '0,8 кг', 'дробь отделяется запятой');
 
   // Картинка приходит в трёх размерах, и берётся лучший из пришедших.
-  const ctx = { city: 'moscow' };
+  const ctx = { city: 'moscow', externalStoreId: 'TEST' };
   const priced = { id: 1, name: 'Молоко', prices: { price: 100 } } as never;
   const onlyOriginal = normalizeLentaItem({ ...(priced as object), images: [{ original: 'https://img/o.png' }] } as never, ctx, null, false);
   assert.equal(onlyOriginal?.imageUrl, 'https://img/o.png', 'пришёл только original — берём его');
   const onlyPreview = normalizeLentaItem({ ...(priced as object), images: [{ preview: 'https://img/p.png' }] } as never, ctx, null, false);
   assert.equal(onlyPreview?.imageUrl, 'https://img/p.png', 'пришёл только preview — берём его');
+  assert.equal(onlyPreview?.storeCode, 'TEST', 'товар Ленты несёт код точки, о которой просили');
 
   // Лимит выдачи: лишние товары не разбираются, а не молча теряются.
   const many = {

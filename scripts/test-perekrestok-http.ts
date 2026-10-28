@@ -135,6 +135,10 @@ const adapter = new PerekrestokAdapter();
   // и ни breaker, ни глаз такое не заметили бы.
   assert.equal(items[0]?.price, 97.99, 'цена из копеек');
   assert.ok(items.every((i) => i.storeId === 'perekrestok' && i.city === 'moscow'), 'сеть и город проставлены');
+  assert.ok(
+    items.every((i) => i.storeCode === '2053'),
+    'товар несёт код той точки, о которой просили: две точки сети иначе делят цену',
+  );
   assert.ok(items.every((i) => /^perekrestok:\d+$/.test(i.canonicalId)), 'идентичность товара');
   await closePerekrestokBrowser();
 }

@@ -21,6 +21,7 @@ const item = (canonicalId: string, name: string, price: number): ScrapedProduct 
   canonicalId,
   storeId: 'magnit',
   city: 'moscow',
+  storeCode: 'TEST',
   name,
   unit: '1 шт',
   price,
@@ -42,7 +43,9 @@ class FakeAdapter implements StoreAdapter {
   async search(query: string, ctx: SearchCtx): Promise<ScrapedProduct[]> {
     return this.items
       .filter((i) => i.name.toLowerCase().includes(query.toLowerCase()))
-      .map((i) => ({ ...i, city: ctx.city, storeId: 'magnit' }));
+      // Адаптер отвечает за запрошенную точку и кладёт её код: код из справочника
+    // в фикстуре означал бы, что сеть ответила за чужую точку.
+    .map((i) => ({ ...i, city: ctx.city, storeId: 'magnit' as const, storeCode: ctx.externalStoreId }));
   }
 
   async fetchCategories(): Promise<StoreCategory[]> {
@@ -54,7 +57,7 @@ class FakeAdapter implements StoreAdapter {
   async fetchProduct(canonicalId: string, ctx: Parameters<StoreAdapter['fetchProduct']>[1]): Promise<ScrapedProduct> {
     const found = this.items.find((i) => i.canonicalId === canonicalId);
     if (!found) throw new Error(`magnit: товар ${canonicalId} не найден`);
-    return { ...found, city: ctx.city, storeId: 'magnit' };
+    return { ...found, city: ctx.city, storeId: 'magnit' as const, storeCode: ctx.externalStoreId };
   }
 }
 
@@ -76,6 +79,7 @@ const storage = {
     if (failWrite) throw new Error('диск только для чтения');
     real.writeDb(bytes);
   },
+  backupDb: (bytes: Uint8Array): void => real.backupDb(bytes),
 };
 
 const magnit = new FakeAdapter([

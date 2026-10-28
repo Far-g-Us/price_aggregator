@@ -1,0 +1,17 @@
+{
+    "appId": "ru.priceaggregator",
+    "appName": "Price Aggregator",
+    "webDir": "build-android",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

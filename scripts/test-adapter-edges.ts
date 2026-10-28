@@ -94,7 +94,7 @@ const html = (name: string): string => fs.readFileSync(`tests/fixtures/${name}`,
 {
   const fromArray = normalizeMagnitProduct(
     { name: 'Сыр', sku: '900', offers: [{ price: '199' }] },
-    { city: 'moscow', url: 'https://magnit.ru/product/900' },
+    { city: 'moscow', url: 'https://magnit.ru/product/900' , externalStoreId: 'TEST' },
   );
   assert.equal(fromArray?.price, 199, 'цена взята из offers-массива');
   assert.equal(fromArray?.canonicalId, 'magnit-900', 'id из sku');
@@ -102,13 +102,13 @@ const html = (name: string): string => fs.readFileSync(`tests/fixtures/${name}`,
 
   const withWeight = normalizeMagnitProduct(
     { name: 'Сыр', sku: '901', offers: { price: '199' }, weight: { value: 200, unitText: 'г' } },
-    { city: 'moscow', url: 'https://magnit.ru/product/901' },
+    { city: 'moscow', url: 'https://magnit.ru/product/901' , externalStoreId: 'TEST' },
   );
   assert.equal(withWeight?.unit, '200г', 'вес склеен из значения и единицы без разделителя');
 
   const soldOut = normalizeMagnitProduct(
     { name: 'Сыр', sku: '902', offers: { price: '10', availability: 'OutOfStock' } },
-    { city: 'moscow', url: 'https://magnit.ru/product/902' },
+    { city: 'moscow', url: 'https://magnit.ru/product/902' , externalStoreId: 'TEST' },
   );
   assert.equal(soldOut?.inStock, false, 'OutOfStock — товара нет');
 }

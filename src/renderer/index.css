@@ -19,11 +19,43 @@
   --color-okbg: #d4edda;
 }
 
-body {
-  background: var(--color-cream);
-  color: var(--color-ink);
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+:root {
+  /* Android 15+ при targetSdk 36 рисует окно приложения edge-to-edge:
+     статус-бар и жестовая навигация ложатся поверх страницы, и липкая
+     шапка с футером уезжают под них. Размеры этих полос приходят двумя
+     путями, и оба нужны:
+     1. Capacitor в режиме `insetsHandling: "css"` инжектит в документ
+        переменные `--safe-area-inset-*` — они точнее env() на старых
+        WebView. Сейчас включён режим "native" (см. capacitor.config.json):
+        инъекции нет, и она падала бы в лог с «Error injecting safe area
+        CSS», потому что случается до загрузки DOM. Переменная в цепочке
+        остаётся на случай возврата к "css".
+     2. Сам браузер отдаёт `env(safe-area-inset-*)` — на Chromium 140+ и
+        выше, если у страницы есть `viewport-fit=cover` (см. index.html).
+     Поэтому сначала инжект, а если его нет — env(). На Windows и на
+     Android 14/ниже обе величины нулевые, и правило там — no-op. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
+
+  body {
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* Липкий подвал перекрывает нижнюю полосу страницы, и браузер при переводе
+     фокуса скроллит элемент «в кадр», не зная про подвал: последняя строка
+     сетки, кнопки пагинации и звёздочки карточек оказывались под ним
+     (WCAG 2.2 SC 2.4.11 Focus Not Obscured). `scroll-padding-bottom` резервирует
+     место под подвал при любой прокрутке к элементу. Высота подвала приходит
+     измерением (--footer-h, ResizeObserver в App.tsx) и меняется вместе с
+     текстом и появлением кнопки «Прервать»; запасной размер — на телефон. */
+  html {
+    scroll-padding-bottom: calc(var(--footer-h, 7rem) + var(--safe-bottom));
+  }
 
 @media (prefers-reduced-motion: reduce) {
   * {

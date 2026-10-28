@@ -150,6 +150,7 @@ const adapter = new PyaterochkaAdapter();
   const base = productFixture;
   const numeric = normalize({ ...base, plu: '111', prices: [{ value: 55, placement_type: 'regular_primary' }] } as never, CTX);
   assert.equal(numeric?.price, 55, 'цена-число принимается');
+  assert.equal(numeric?.storeCode, '35XY', 'товар Пятёрки несёт код точки, о которой просили');
   const zero = normalize({ ...base, plu: '111', prices: { regular: '0' } } as never, CTX);
   assert.equal(zero, null, 'нулевая цена — не товар');
   const negative = normalize({ ...base, plu: '111', prices: { regular: '-5' } } as never, CTX);

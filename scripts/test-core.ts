@@ -85,6 +85,7 @@ class FakeAdapter implements StoreAdapter {
         canonicalId: `magnit-${query}-1`,
         storeId: 'magnit',
         city: ctx.city,
+        storeCode: '303857',
         name: `Молоко ПРАВИЛЬНОЕ 3,2%, ${900}мл`,
         price: 100 + this.calls,
         promoPrice: null,
@@ -102,6 +103,7 @@ class FakeAdapter implements StoreAdapter {
       canonicalId,
       storeId: 'magnit',
       city: ctx.city,
+      storeCode: '303857',
       name: 'Молоко ПРАВИЛЬНОЕ 3,2%, 900мл',
       price,
       promoPrice: null,
@@ -153,7 +155,14 @@ assert.equal(magnit?.ready, true, 'сеть ответила');
 assert.equal(magnit?.items.length, 1);
 assert.equal(magnit?.items[0]?.price, 101, 'цена из фейк-адаптера дошла до UI');
 
-const hist = await core.getHistory({ canonicalId: magnit?.items[0]?.canonicalId ?? '', storeId: 'magnit', city: 'moscow' });
+const hist = await core.getHistory({
+  canonicalId: magnit?.items[0]?.canonicalId ?? '',
+  storeId: 'magnit',
+  city: 'moscow',
+  // Точка — из ответа сети: именно этот код ядро записало в цену, и
+  // никакой другой график эта строка уже не отдаст.
+  storeCode: magnit?.items[0]?.storeCode ?? '',
+});
 assert.equal(hist.length, 1, 'запись в историю появилась без Electron и без файла');
 assert.equal(hist[0]?.price, 101);
 assert.ok((storage.dump()?.length ?? 0) > 0, 'в хранилище оболочки лежат непустые байты базы');
@@ -252,6 +261,7 @@ const price: ScrapedProduct = {
   canonicalId: 'magnit-core-1',
   storeId: 'magnit',
   city: 'moscow',
+  storeCode: '303857',
   name: 'Молоко',
   price: 100,
   promoPrice: null,
@@ -267,7 +277,7 @@ assert.equal(
 
 // 10. Ручная раскладка: пользователь забирает товар под управление.
 fake.failSecond = false;
-const scope = { canonicalId: 'magnit-молоко-1', storeId: 'magnit', city: 'moscow' };
+const scope = { canonicalId: 'magnit-молоко-1', storeId: 'magnit', city: 'moscow', storeCode: '303857' };
 const autoShelves = await core.getShelves(scope);
 assert.equal(autoShelves.manual, false, 'до правки раскладка автоматическая');
 assert.ok(autoShelves.categoryIds.includes('dairy'), `автораскладка положила товар на полку: ${JSON.stringify(autoShelves.categoryIds)}`);
@@ -320,7 +330,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
 // Проверка на живом ядре: без метки notified_price одна и та же цена ниже
 // порога слала бы уведомление на каждом опросе (каждые 6 ч).
 {
-  const scope = { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow' as const };
+  const scope = { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow' as const, storeCode: '303857' };
   await core.setFavorite({ ...scope, targetPrice: 1000 });
   // История с ценой ниже порога: сообщить надо.
   savePriceIfChanged(
@@ -329,6 +339,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
       canonicalId: 'fav-t',
       storeId: 'magnit',
       city: 'moscow',
+      storeCode: '303857',
       name: 'Пороговый',
       price: 90,
       inStock: true,
@@ -337,7 +348,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
   );
   assert.equal((await core.checkTargets('moscow')).length, 1, 'цена ниже порога уведомляется');
   await core.markNotifiedForTest([
-    { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow', price: 90 },
+    { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow', storeCode: '303857', price: 90 },
   ]);
   assert.equal(
     (await core.checkTargets('moscow')).length,
@@ -351,6 +362,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
       canonicalId: 'fav-t',
       storeId: 'magnit',
       city: 'moscow',
+      storeCode: '303857',
       name: 'Пороговый',
       price: 70,
       inStock: true,
@@ -359,7 +371,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
   );
   assert.equal((await core.checkTargets('moscow')).length, 1, 'новое снижение уведомляется');
   await core.markNotifiedForTest([
-    { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow', price: 70 },
+    { canonicalId: 'fav-t', storeId: 'magnit', city: 'moscow', storeCode: '303857', price: 70 },
   ]);
   // Цена ровно равна порогу — молчим: это не «упала ниже».
   saveFavorite(await openDb(storage), scope, 70);
@@ -372,6 +384,7 @@ assert.ok(afterRelease.categoryIds.includes('dairy'), `автораскладк�
       canonicalId: 'fav-t',
       storeId: 'magnit',
       city: 'moscow',
+      storeCode: '303857',
       name: 'Пороговый',
       price: 50,
       inStock: false,

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Content-Security-Policy: правила ресурсов документа. Сеть из renderer
+         не нужна (адаптеры ходят через нативный слой CapacitorHttp), но
+         sql.js на Android fetch'ает СВОЙ локальный бинарник
+         https://localhost/sql-wasm.wasm — потому connect-src 'self'
+         (same-origin, никаких чужих адресов), а компиляция WebAssembly по
+         CSP требует 'wasm-unsafe-eval' (он разрешает ТОЛЬКО wasm и не даёт
+         eval()). Сам по себе CSP сетевым барьером не является и барьером не
+         обещает быть: window.fetch в WebView приложения патчится
+         CapacitorHttp и уходит в нативный слой. Реальная изоляция — в
+         архитектуре: страницы сетей открываются в ОТДЕЛЬНЫХ plain-WebView
+         без моста (PageReaderPlugin), их код не может дозваться до bridge,
+         IndexedDB или куков приложения. Скрипты отладки (live-android.ts)
+         в APK не живут. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'"
+    />    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Цены</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Вход Android-сборки. Отдельный от index.html по двум причинам:
+         оболочка Android ставит window.api сама (топ-уровневый await), и в этот
+         бандл НЕ должен попасть Electron-код: main.tsx Windows-сборки остаётся
+         чистым, иначе в portable-exe уехали бы createCore, sql.js и динамический
+         импорт playwright. -->
+    <script type="module" src="/src/renderer/android/main-android.tsx"></script>
+  </body>
+</html>

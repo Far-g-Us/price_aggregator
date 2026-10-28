@@ -4,13 +4,17 @@ CREATE TABLE IF NOT EXISTS cities (
   name TEXT NOT NULL
 );
 
+-- Точка сети в городе. Идентичность магазина — это ТРИ вещи вместе: сеть,
+-- город и код точки. Поэтому ключ тройной: одна сеть в одном городе может
+-- иметь несколько точек (у Магнита в СПб их десятки), и цена всегда
+-- принадлежит конкретной точке, а не «магазину вообще».
 CREATE TABLE IF NOT EXISTS stores (
   id TEXT NOT NULL,              -- pyaterochka | magnit | lenta
   city TEXT NOT NULL REFERENCES cities(id),
   external_store_id TEXT NOT NULL, -- sapCode / shopCode / storeId
   name TEXT NOT NULL,
   address TEXT,
-  PRIMARY KEY (id, city)
+  PRIMARY KEY (id, city, external_store_id)
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -24,23 +28,38 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- склейка "один товар в разных сетях"
+-- склейка "один товар в разных сетях и точках"
+--
+-- store_code — часть ключа, а не украшение: store_sku и url описывают товар
+-- КОНКРЕТНОЙ точки, и без кода вторая точка затирает первую, а джойн по
+-- (canonical_id, store_id) открывает карточку чужой точки.
 CREATE TABLE IF NOT EXISTS product_links (
   canonical_id TEXT NOT NULL REFERENCES products(id),
   store_id TEXT NOT NULL,
+  city TEXT NOT NULL DEFAULT '',
+  store_code TEXT NOT NULL DEFAULT '?',
   store_sku TEXT NOT NULL,
   url TEXT,
   image_url TEXT,                -- переопределение картинки под сеть, если надо
   last_seen TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (canonical_id, store_id)
+  PRIMARY KEY (canonical_id, store_id, city, store_code)
 );
 
 -- история изменения цен с датой; пишем только если price/promo/inStock изменились
+--
+-- store_code — часть идентичности цены. Значение '?' означает «точка неизвестна»:
+-- так переносятся строки, написанные до появления точек, и они НИКОГДА не
+-- склеиваются с линией реальной точки: новая точка — это новая история, а не
+-- продолжение старой. Такая строка становится целью опроса, пока той же тройки
+-- «товар + сеть + город» нет ни в одной реальной точке; после первой же записи
+-- в реальную точку она перестаёт быть целью, иначе опрос спрашивал бы сеть
+-- дважды на один товар каждый цикл.
 CREATE TABLE IF NOT EXISTS prices_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   canonical_id TEXT NOT NULL,
   store_id TEXT NOT NULL,
   city TEXT NOT NULL,
+  store_code TEXT NOT NULL DEFAULT '?',
   price REAL NOT NULL,
   promo_price REAL,
   old_price REAL,
@@ -49,16 +68,23 @@ CREATE TABLE IF NOT EXISTS prices_history (
   collected_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_prices_lookup
-  ON prices_history (canonical_id, store_id, city, collected_at);
+  ON prices_history (canonical_id, store_id, city, store_code, collected_at);
 
--- Избранное с целевой ценой. Ключ (canonical_id, store_id, city), а не один
--- canonical_id: цена всегда конкретного магазина, поэтому и «избранное» —
--- конкретное предложение. Иначе отметка в Москве задела бы Ульяновск, и
+-- Избранное с целевой ценой. Ключ (canonical_id, store_id, city, store_code), а
+-- не один canonical_id: цена всегда конкретного магазина, поэтому и «избранное» —
+-- конкретное предложение. Иначе отметка в Москве задела бы Ульяновск, а
 -- уведомление сработало бы на чужой цене.
+--
+-- Перенесённые строки лежат с store_code = '?', и это значит «любая точка этой
+-- сети в этом городе», а не «точка неизвестна»: иначе отметка и раскладка
+-- перестали бы работать до первого опроса, а новая точка в городе потребовала бы
+-- размножения строк. Опрос при этом всегда пишет реальный код, поэтому линия
+-- точки не смешивается с общей.
 CREATE TABLE IF NOT EXISTS favorites (
   canonical_id TEXT NOT NULL REFERENCES products(id),
   store_id TEXT NOT NULL,
   city TEXT NOT NULL,
+  store_code TEXT NOT NULL DEFAULT '?',
   -- null = просто отметка без порога. 0 и отрицательные запрещены проверкой
   -- в services: цена не может быть нулём, и порог 0 означал бы «уведомлять
   -- всегда», что молча превратилось бы в шум.
@@ -68,7 +94,7 @@ CREATE TABLE IF NOT EXISTS favorites (
   -- про новое снижение: цена должна стать строго НИЖЕ последней уведомлённой.
   notified_price REAL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (canonical_id, store_id, city)
+  PRIMARY KEY (canonical_id, store_id, city, store_code)
 );
 CREATE INDEX IF NOT EXISTS idx_favorites_scope ON favorites (city, store_id);
 
@@ -99,8 +125,9 @@ CREATE INDEX IF NOT EXISTS idx_poll_meta_run ON poll_meta (last_run);
 CREATE TABLE IF NOT EXISTS poll_checklist (
   city TEXT NOT NULL,
   store_id TEXT NOT NULL,
+  store_code TEXT NOT NULL DEFAULT '?',
   canonical_id TEXT NOT NULL,
-  PRIMARY KEY (city, store_id, canonical_id)
+  PRIMARY KEY (city, store_id, store_code, canonical_id)
 );
 
 -- Ручное «это разные товары». Склейка по названию ошибается: у Магнита и
@@ -124,14 +151,18 @@ CREATE TABLE IF NOT EXISTS our_categories (
 );
 
 -- Товар может лежать в нескольких наших категориях (у сетей он в разных),
--- поэтому связь many-to-many. city держим, чтобы разделить раскладку по городам.
+-- поэтому связь many-to-many. city и store_code держим, чтобы разделить
+-- раскладку по городам и точкам. Перенесённые строки лежат с store_code = '?',
+-- то есть «любая точка этой сети в городе» — раскладка не должна теряться от
+-- того, что точки в справочнике добавили.
 CREATE TABLE IF NOT EXISTS product_categories (
   canonical_id TEXT NOT NULL REFERENCES products(id),
   store_id TEXT NOT NULL,
   city TEXT NOT NULL,
+  store_code TEXT NOT NULL DEFAULT '?',
   category_id TEXT NOT NULL REFERENCES our_categories(id),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (canonical_id, store_id, city, category_id)
+  PRIMARY KEY (canonical_id, store_id, city, store_code, category_id)
 );
 CREATE INDEX IF NOT EXISTS idx_product_categories_cat
   ON product_categories (city, category_id, store_id);
@@ -146,27 +177,28 @@ CREATE TABLE IF NOT EXISTS product_category_manual (
   canonical_id TEXT NOT NULL REFERENCES products(id),
   store_id TEXT NOT NULL,
   city TEXT NOT NULL,
+  store_code TEXT NOT NULL DEFAULT '?',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (canonical_id, store_id, city)
+  PRIMARY KEY (canonical_id, store_id, city, store_code)
 );
 CREATE INDEX IF NOT EXISTS idx_product_category_manual_scope
   ON product_category_manual (store_id, city);
 
 INSERT OR IGNORE INTO our_categories (id, name, parent_id, position) VALUES
   ('dairy', 'Молочное и яйца', NULL, 1),
-  ('dairy-milk', 'Молоко', NULL, 2),
-  ('dairy-fermented', 'Кефир и йогурты', NULL, 3),
-  ('dairy-cheese', 'Сыры', NULL, 4),
-  ('dairy-butter', 'Масло', NULL, 5),
+  ('dairy-milk', 'Молоко', 'dairy', 2),
+  ('dairy-fermented', 'Кефир и йогурты', 'dairy', 3),
+  ('dairy-cheese', 'Сыры', 'dairy', 4),
+  ('dairy-butter', 'Масло', 'dairy', 5),
   ('bakery', 'Хлеб и выпечка', NULL, 6),
-  ('bakery-bread', 'Хлеб и батоны', NULL, 7),
+  ('bakery-bread', 'Хлеб и батоны', 'bakery', 7),
   ('meat', 'Мясо и птица', NULL, 8),
-  ('meat-chicken', 'Курица и индейка', NULL, 9),
-  ('sausage', 'Колбасы', NULL, 10),
+  ('meat-chicken', 'Курица и индейка', 'meat', 9),
+  ('sausage', 'Колбасы', 'meat', 10),
   ('vegetables', 'Овощи', NULL, 11),
   ('fruit', 'Фрукты и ягоды', NULL, 12),
   ('groceries', 'Бакалея', NULL, 13),
-  ('groceries-flour', 'Мука', NULL, 14),
+  ('groceries-flour', 'Мука', 'groceries', 14),
   ('drinks', 'Напитки', NULL, 15),
   ('household', 'Быт и химия', NULL, 16)
 ON CONFLICT(id) DO UPDATE SET
@@ -300,6 +332,5 @@ VALUES
   ('lenta', 'tver', '3285', 'Лента'),
   ('lenta', 'kursk', '3375', 'Лента'),
   ('lenta', 'belgorod', '3253', 'Лента')
-ON CONFLICT(id, city) DO UPDATE SET
-  external_store_id = excluded.external_store_id,
+ON CONFLICT(id, city, external_store_id) DO UPDATE SET
   name = excluded.name;

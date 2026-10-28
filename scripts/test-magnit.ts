@@ -53,7 +53,7 @@ assert.equal(parseMagnitPrice('Скидка 20% 119 ₽'), 119);
 
 const category = JSON.parse(fs.readFileSync('tests/fixtures/magnit-category.json', 'utf-8'));
 assert.ok(category.offers.length >= 2, 'fixture: >= 2 offers');
-const first = normalizeMagnitOffer(category.offers[0], { city: 'moscow' });
+const first = normalizeMagnitOffer(category.offers[0], { city: 'moscow', externalStoreId: 'TEST' });
 assert.ok(first, 'first offer normalized');
 assert.equal(first?.canonicalId, 'magnit-1000483001');
 assert.equal(first?.storeId, 'magnit');
@@ -62,18 +62,18 @@ assert.ok(first?.imageUrl?.startsWith('https://'), 'image https');
 assert.ok(first?.url?.startsWith('https://magnit.ru/product/'), 'url');
 assert.equal(first?.inStock, true);
 
-assert.equal(normalizeMagnitOffer({ name: 'X' }, { city: 'moscow' }), null);
+assert.equal(normalizeMagnitOffer({ name: 'X' }, { city: 'moscow', externalStoreId: 'TEST' }), null);
 assert.equal(
   normalizeMagnitOffer(
     { name: 'X', url: 'https://magnit.ru/product/1-a', price: '0' },
-    { city: 'moscow' },
+    { city: 'moscow', externalStoreId: 'TEST' },
   ),
   null,
   'zero price rejected',
 );
 
 const product = JSON.parse(fs.readFileSync('tests/fixtures/magnit-product.json', 'utf-8'));
-const full = normalizeMagnitProduct(product, { city: 'moscow', url: product.url });
+const full = normalizeMagnitProduct(product, { city: 'moscow', url: product.url , externalStoreId: 'TEST' });
 assert.ok(full, 'product normalized');
 assert.equal(full?.canonicalId, 'magnit-1000483001');
 assert.equal(full?.price, 119);
@@ -84,13 +84,13 @@ assert.equal(full?.unit, '0.17кг');
 
 const gram = normalizeMagnitProduct(
   { name: 'Y', sku: '2', offers: { price: '50' }, weight: '170 г' },
-  { city: 'moscow', url: 'https://magnit.ru/product/2' },
+  { city: 'moscow', url: 'https://magnit.ru/product/2' , externalStoreId: 'TEST' },
 );
 assert.equal(gram?.unit, '170 г');
 
 const brandObj = normalizeMagnitProduct(
   { name: 'Z', sku: '3', offers: { price: '10' }, brand: { name: 'B' } },
-  { city: 'moscow', url: 'https://magnit.ru/product/3' },
+  { city: 'moscow', url: 'https://magnit.ru/product/3' , externalStoreId: 'TEST' },
 );
 assert.equal(brandObj?.brand, 'B');
 
@@ -144,7 +144,7 @@ assert.throws(() => parseMagnitCategoryPromos(promoHtml, '000000'), /чужог�
 assert.equal(
   normalizeMagnitOffer(
     { name: 'X', url: 'https://magnit.ru/product/1-a', price: '100' },
-    { city: 'moscow' },
+    { city: 'moscow', externalStoreId: 'TEST' },
     90,
   )?.oldPrice,
   null,
@@ -155,13 +155,13 @@ const searchHtml = fs.readFileSync('tests/fixtures/magnit-search.html', 'utf-8')
 const goods = parseMagnitSearchGoods(searchHtml, '473996');
 assert.ok(goods.length >= 2, 'goods parsed');
 assert.equal(goods[0]?.id, '9072651501');
-assert.equal(goodsToProducts(goods, { city: 'moscow' })[0]?.oldPrice, 199.99);
+assert.equal(goodsToProducts(goods, { city: 'moscow', externalStoreId: 'TEST' })[0]?.oldPrice, 199.99);
 
 // Живая выдача со скидками (Москва 303857, 2026-09): скидка приходит в
 // хвосте записи как пара "<oldPrice>","-<N>%", у части товаров её нет.
 const searchPromoHtml = fs.readFileSync('tests/fixtures/magnit-search-promo.html', 'utf-8');
 const promoGoods = parseMagnitSearchGoods(searchPromoHtml, '303857');
-const promoProducts = goodsToProducts(promoGoods, { city: 'moscow' });
+const promoProducts = goodsToProducts(promoGoods, { city: 'moscow', externalStoreId: 'TEST' });
 const saleItems = promoProducts.filter((p) => p.oldPrice != null);
 const plainItems = promoProducts.filter((p) => p.oldPrice == null);
 assert.ok(saleItems.length >= 3, `скидок в живой выдаче: ${saleItems.length}`);
@@ -272,7 +272,7 @@ const cards = cardsToProducts(
     { name: 'Без цены', href: '/product/222-b', img: '', texts: [] },
     { name: 'Мусор', href: '/other', img: '', texts: ['5 ₽'] },
   ],
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
   12,
 );
 assert.equal(cards.length, 1);
@@ -285,7 +285,7 @@ const noisyCards = cardsToProducts(
     { name: 'Клубная цена ниже', href: '/product/300-a', img: '', texts: ['200 ₽', '150 ₽'] },
     { name: 'Завышенная старая', href: '/product/301-a', img: '', texts: ['200 ₽', '5000 ₽'] },
   ],
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
   12,
 );
 assert.equal(noisyCards[0]?.oldPrice, null, 'oldPrice ниже цены отбрасывается');

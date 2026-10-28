@@ -1,7 +1,7 @@
 {
   "name": "price-aggregator",
-  "version": "1.3.0",
-  "description": "Локальный агрегатор цен продуктовых магазинов (Пятёрочка / Магнит / Лента / Светофор). Open source, для личного пользования.",
+  "version": "1.4.0",
+  "description": "Локальный агрегатор цен шести сетей по конкретному магазину и городу. Исходники открыты, лицензия PAL v1.0 (некоммерческая, с copyleft).",
   "main": "dist-electron/electron/main.js",
   "type": "module",
   "scripts": {
@@ -15,16 +15,33 @@
     "svetofor:shelves": "npx tsx scripts/live-svetofor-shelves.ts",
     "svetofor:cities": "npx tsx scripts/live-svetofor-cities.ts",
     "magnit:store": "npx tsx scripts/magnit-store.ts",
+    "magnit:fixture": "npx tsx scripts/capture-magnit-webgate.ts",
+    "magnit:card": "npx tsx scripts/capture-magnit-card.ts",
+    "icons:fetch": "npx tsx scripts/fetch-fontawesome-icons.ts",
+    "check:live": "npx tsx scripts/check-live.ts",
+    "backup:notes": "npx tsx scripts/backup-notes.ts",
+    "clean": "npx tsx scripts/clean.ts",
     "lenta:store": "npx tsx scripts/lenta-store.ts",
+    "test:magnit:webgate": "npx tsx --import ./scripts/quiet.mjs scripts/test-magnit-webgate.ts",
     "test:magnit": "npx tsx --import ./scripts/quiet.mjs scripts/test-magnit.ts",
     "test:5ka": "npx tsx --import ./scripts/quiet.mjs scripts/test-5ka.ts",
     "test:lenta": "npx tsx --import ./scripts/quiet.mjs scripts/test-lenta.ts",
     "test:taxonomy": "npx tsx --import ./scripts/quiet.mjs scripts/test-taxonomy.ts",
     "test:taxonomy-matcher": "npx tsx --import ./scripts/quiet.mjs scripts/test-taxonomy-matcher.ts",
     "test:matching": "npx tsx --import ./scripts/quiet.mjs scripts/test-matching.ts",
+    "test:filters": "npx tsx --import ./scripts/quiet.mjs scripts/test-filters.ts",
+    "test:http": "npx tsx --import ./scripts/quiet.mjs scripts/test-http.ts",
     "test:db": "npx tsx --import ./scripts/quiet.mjs scripts/test-db.ts",
+    "test:migration": "npx tsx --import ./scripts/quiet.mjs scripts/test-migration.ts",
     "test:scheduler": "npx tsx --import ./scripts/quiet.mjs scripts/test-scheduler.ts",
-    "test": "npm run test:core --silent && npm run test:core-edges --silent && npm run test:5ka --silent && npm run test:5ka-http --silent && npm run test:magnit --silent && npm run test:magnit-http --silent && npm run test:lenta --silent && npm run test:lenta-http --silent && npm run test:matching --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:release --silent && npm run test:svetofor --silent && npm run test:chizhik --silent && npm run test:chizhik-http --silent && npm run test:perekrestok --silent && npm run test:perekrestok-http --silent && npm run test:external --silent && npm run test:db --silent && npm run test:db-open --silent && npm run test:services --silent && npm run test:services-degraded --silent && npm run test:browser --silent && npm run test:adapter-edges --silent && npm run test:scheduler --silent",
+    "test:fast": "node scripts/run-tests.mjs",
+    "test:quiet": "node scripts/run-tests.mjs --quiet",
+    "test:coverage:fast": "c8 --reporter=text --reporter=json --all --include src --exclude src/renderer --exclude src/core/db/schema.ts --exclude src/shared/lenta-regions.ts --exclude src/shared/svetofor-regions.ts --exclude src/shared/chizhik-regions.ts --exclude src/shared/api.ts --exclude src/shared/types.ts --check-coverage --lines 100 --branches 100 --functions 100 --statements 100 node scripts/run-tests.mjs --quiet",
+    "android:sync": "vite build --config vite.android.config.ts && cap sync android",
+    "android:build": "npm run android:sync && cd android && gradlew.bat assembleDebug",
+    "android:install": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:run": "npm run android:install && adb shell am start -n ru.priceaggregator/.MainActivity",
+    "test:all": "npm run test:core --silent && npm run test:core-edges --silent && npm run test:5ka --silent && npm run test:5ka-http --silent && npm run test:5ka-page --silent && npm run test:magnit --silent && npm run test:magnit:webgate --silent && npm run test:magnit-http --silent && npm run test:lenta --silent && npm run test:lenta-http --silent && npm run test:http --silent && npm run test:matching --silent && npm run test:filters --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:release --silent && npm run test:svetofor --silent && npm run test:chizhik --silent && npm run test:chizhik-http --silent && npm run test:perekrestok --silent && npm run test:perekrestok-http --silent && npm run test:perekrestok-page --silent && npm run test:external --silent && npm run test:db --silent && npm run test:migration --silent && npm run test:db-open --silent && npm run test:services --silent && npm run test:services-degraded --silent && npm run test:browser --silent && npm run test:adapter-edges --silent && npm run test:scheduler --silent && npm run test:android-platform --silent",
     "predev": "npm run version:sync",
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "dev:vite": "vite",
@@ -54,7 +71,9 @@
     "test:lenta-http": "npx tsx --import ./scripts/quiet.mjs scripts/test-lenta-http.ts",
     "test:magnit-http": "npx tsx --import ./scripts/quiet.mjs scripts/test-magnit-http.ts",
     "test:5ka-http": "npx tsx --import ./scripts/quiet.mjs scripts/test-5ka-http.ts",
+    "test:5ka-page": "npx tsx --import ./scripts/quiet.mjs scripts/test-5ka-page.ts",
     "test:core-edges": "npx tsx --import ./scripts/quiet.mjs scripts/test-core-edges.ts",
+    "test:android-platform": "npx tsx --import ./scripts/quiet.mjs scripts/test-android-platform.ts",
     "test:browser": "npx tsx --import ./scripts/quiet.mjs scripts/test-browser-transport.ts",
     "test:adapter-edges": "npx tsx --import ./scripts/quiet.mjs scripts/test-adapter-edges.ts",
     "test:db-open": "npx tsx --import ./scripts/quiet.mjs scripts/test-db-open-errors.ts",
@@ -62,11 +81,20 @@
     "test:chizhik-http": "npx tsx --import ./scripts/quiet.mjs scripts/test-chizhik-http.ts",
     "test:perekrestok": "npx tsx --import ./scripts/quiet.mjs scripts/test-perekrestok.ts",
     "test:perekrestok-http": "npx tsx --import ./scripts/quiet.mjs scripts/test-perekrestok-http.ts",
+    "test:perekrestok-page": "npx tsx --import ./scripts/quiet.mjs scripts/test-perekrestok-page.ts",
     "chizhik:regions": "npx tsx scripts/gen-chizhik-regions.ts",
     "chizhik:live": "npx tsx scripts/live-chizhik.ts",
-    "chizhik:fixture": "npx tsx scripts/fetch-chizhik-fixture.ts"
+    "chizhik:fixture": "npx tsx scripts/fetch-chizhik-fixture.ts",
+    "test:seq": "npm run test:core --silent && npm run test:core-edges --silent && npm run test:5ka --silent && npm run test:5ka-http --silent && npm run test:5ka-page --silent && npm run test:magnit --silent && npm run test:magnit:webgate --silent && npm run test:magnit-http --silent && npm run test:lenta --silent && npm run test:lenta-http --silent && npm run test:http --silent && npm run test:matching --silent && npm run test:filters --silent && npm run test:taxonomy --silent && npm run test:taxonomy-matcher --silent && npm run test:icons --silent && npm run test:release --silent && npm run test:svetofor --silent && npm run test:chizhik --silent && npm run test:chizhik-http --silent && npm run test:perekrestok --silent && npm run test:perekrestok-http --silent && npm run test:perekrestok-page --silent && npm run test:external --silent && npm run test:db --silent && npm run test:migration --silent && npm run test:db-open --silent && npm run test:services --silent && npm run test:services-degraded --silent && npm run test:browser --silent && npm run test:adapter-edges --silent && npm run test:scheduler --silent && npm run test:android-platform --silent",
+    "test": "node scripts/run-tests.mjs",
+    "net:log": "node scripts/net-log-proxy.mjs",
+    "net:ca": "node scripts/make-proxy-ca.mjs"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@fortawesome/fontawesome-free": "^7.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
@@ -114,16 +142,23 @@
     "files": [
       "build-renderer/**/*",
       "dist-electron/**/*",
-      "package.json"
+      "package.json",
+      "NOTICE",
+      "assets/icons/LICENSE",
+      "assets/icons/CC-BY-4.0.txt"
     ],
     "extraResources": [
       {
-        "from": ".playwright-browsers",
-        "to": "browsers",
-        "filter": [
-          "firefox-*/**",
-          "winldd-*/**"
-        ]
+        "from": "NOTICE",
+        "to": "notices/NOTICE"
+      },
+      {
+        "from": "assets/icons/LICENSE",
+        "to": "notices/icons-LICENSE"
+      },
+      {
+        "from": "assets/icons/CC-BY-4.0.txt",
+        "to": "notices/icons-CC-BY-4.0.txt"
       }
     ],
     "nsis": {

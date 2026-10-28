@@ -58,6 +58,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pa-open-'));
       throw new Error('диск недоступен');
     },
     writeDb: () => {},
+    backupDb: () => {},
   };
   await assert.rejects(
     openDb(broken),
@@ -70,8 +71,8 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pa-open-'));
 {
   const fresh = fileStorageAt(path.join(dir, 'fk.db'));
   const db = await openDb(fresh);
-  const ghost = { canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow' };
-  const real = { canonicalId: 'есть-такой', storeId: 'magnit', city: 'moscow' };
+  const ghost = { canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' };
+  const real = { canonicalId: 'есть-такой', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' };
   db.run("INSERT INTO products (id, name, unit) VALUES ('есть-такой', 'Товар', '1 шт')");
 
   // Первая полка записывается нормально.
@@ -119,6 +120,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pa-open-'));
       throw new Error('диск недоступен');
     },
     writeDb: () => {},
+    backupDb: () => {},
   };
   const afterTasks: (() => void)[] = [];
   const core = createCore({

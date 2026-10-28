@@ -125,7 +125,7 @@ function attribute(item: SearchItem, name: string): string | undefined {
   return value || undefined;
 }
 
-export function normalize(raw: SearchItem, ctx: { city: string }): ScrapedProduct | null {
+export function normalize(raw: SearchItem, ctx: { city: string; externalStoreId: string }): ScrapedProduct | null {
   const plu = String(raw.plu ?? '');
   const name = String(raw.name ?? '').trim();
   if (!/^\d+$/.test(plu) || !name) return null;
@@ -140,6 +140,7 @@ export function normalize(raw: SearchItem, ctx: { city: string }): ScrapedProduc
     canonicalId: `5ka-${plu}`,
     storeId: 'pyaterochka',
     city: ctx.city,
+    storeCode: ctx.externalStoreId,
     name,
     unit:
       String(raw.property_clarification ?? '').trim() ||

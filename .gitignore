@@ -8,9 +8,18 @@ opencode.json
 
 CHANGELOG.md
 
+# Собранные Android-артефакты (GeckoView-спайк, Фаза 7б). APK весит десятки
+# мегабайт и в репозитории ему не место. Иконки build/icon.* отслеживаются
+# намеренно, поэтому правило точечное.
+build/*.apk
+build/*.aab
+build/apk/
+build/*.idsig
+
 # build (electron-builder кладёт установщик и portable в dist/)
 dist/
 build-renderer/
+build-android/
 dist-electron/
 out/
 # Промежуточная сборка electron-builder внутри проекта (build-exe.mjs).
@@ -25,6 +34,9 @@ out/
 *.exe
 *.msi
 *.nsis.*
+
+# Бэкап локальных знаний, если нет APPDATA (обычно цепочка — %APPDATA%).
+.appdata/
 
 # local DB / user data (цены и история — локальные, в репо не нужны)
 *.db

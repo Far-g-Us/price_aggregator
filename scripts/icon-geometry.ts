@@ -4,16 +4,71 @@
 // CategoryIcon.tsx и не проверялось ничем. Набор разъехался: у «колбасы»
 // контур вылезал за поле (x от 2), а центры bbox стояли с 10,7 до 15,2.
 //
-// Здесь разбор M L H V C S A Z в обоих регистрах, с относительными дельтами
-// и точным bbox дуг по параметризации endpoint → center. Его использует
-// `test-icons.ts`. Дублировать разбор нельзя: из-за двух копий инструмент
-// починки считал bbox «на глаз» и портил рисунок — такой инструмент удалён,
-// а числа в иконках выправлены вручную и зафиксированы тестом.
-export const FIELD_MIN = 3;
-export const FIELD_MAX = 21;
-export const CENTER = 12;
-/** Допуск центра bbox: пол-юнита незаметно, юнит — уже «прыгающая» колонка. */
-export const CENTER_TOL = 0.6;
+// Иконки набора — Font Awesome Free (CC BY 4.0), и сетка у них другая:
+// 960 юнитов = 24 px, viewBox «0 −960 960 960». Правило то же самое, только
+// в юнитах набора: глиф не выходит за свою сетку и стоит по центру.
+//
+// Здесь разбор M L H V C S A Q T Z в обоих регистрах, с относительными
+// дельтами и точным bbox дуг по параметризации endpoint → center, а
+// квадратичных — по экстремумам производной. Его использует `test-icons.ts`.
+// Дублировать разбор нельзя: из-за двух копий инструмент починки считал
+// bbox «на глаз» и портил рисунок — такой инструмент удалён, а числа в
+// иконках зафиксированы тестом.
+
+/** Квадрат иконки: 24×24 — как у самого приложения (h-8 w-8 и крупнее). */
+export const FIELD = 24;
+/**
+ * Большая сторона ЧЕРНИЛ иконки в юнитах квадрата: 20 из 24, то есть поля по 2
+ * юнита с каждой стороны.
+ *
+ * Общая СЕТКА не даёт общей оптики: в шрифтовом наборе высота чернил гуляет
+ * (у Font Awesome — от 514 до 880 юнитов исходника, в 1,7 раза), и часть
+ * иконок читалась бы как «крупный знак», часть — как «мелкий значок в пустом
+ * квадрате». Это та же «прыгающая колонка», ради которой набор и брался.
+ *
+ * Что она НЕ даёт — одинаковой ПЛОТНОСТИ чернил: у «ножки» это две тонкие
+ * палки, у «зерна» — восемь залитых точек. Плотность выровнять можно было бы
+ * по площади, но это правка самих глифов, а не раскладки: набор Font Awesome
+ * сбалансирован по плотности, и ломать его своей нормализацией не стоит.
+ */
+export const INK_TARGET = 20;
+/**
+ * Нижняя кромка чернил в юнитах квадрата: одинаковая у всех.
+ *
+ * В плитке полки под иконкой подпись, и зритель цепляется за НИЗ чернил — если
+ * он гуляет (у набора от −40 до −280 юнитов исходника, то есть 6,7 px в сетке
+ * полок), иконка «провисает» к подписи.
+ */
+export const INK_BOTTOM = 22;
+/** Центр по горизонтали: одинаковый у всех. */
+export const INK_CENTER_X = 12;
+
+/** Масштаб и сдвиг, приводящие глиф к общей оптике набора. */
+export interface GlyphFit {
+  s: number;
+  dx: number;
+  dy: number;
+}
+
+/** Нормализация глифа: общий вес, общая нижняя кромка, центр по горизонтали. */
+export function normalizeGlyph(box: Box): GlyphFit {
+  const w = box.maxX - box.minX;
+  const h = box.maxY - box.minY;
+  const max = Math.max(w, h);
+  const s = max > 0 ? INK_TARGET / max : 1;
+  const cx = (box.minX + box.maxX) / 2;
+  return { s, dx: INK_CENTER_X - s * cx, dy: INK_BOTTOM - s * box.maxY };
+}
+
+/** Bbox глифа после нормализации — то, что реально видно. */
+export function normalizedBox(box: Box, fit: GlyphFit): Box {
+  return {
+    minX: fit.dx + fit.s * box.minX,
+    minY: fit.dy + fit.s * box.minY,
+    maxX: fit.dx + fit.s * box.maxX,
+    maxY: fit.dy + fit.s * box.maxY,
+  };
+}
 
 export interface Box {
   minX: number;
@@ -23,25 +78,22 @@ export interface Box {
 }
 
 export interface IconShape {
-  /** Исходная геометрия: `d="…"` либо `<circle cx cy r>`. */
-  raw: string;
-  /** Позиция фигуры внутри тела иконки — фигуры идут в порядке документа. */
-  at: number;
-  /** Стиль фигуры. Отсутствует = фигура не размечена (тест должен поймать). */
-  style: 'SOFT' | 'LINE' | 'FAINT' | undefined;
-  /** Разобранные числа для переноса/масштаба (null для circle — см. circle). */
-  kind: 'path' | 'circle';
-  d?: string;
-  cx?: number;
-  cy?: number;
-  r?: number;
+  /** Разобранный путь глифа. */
+  d: string;
+  /** Bbox после нормализации оптики — то, что видно на экране. */
   box: Box;
 }
 
 export interface IconGeometry {
   id: string;
+  /** Имя иконки в наборе (для отчёта и проверки, что набор один). */
+  name: string;
+  /** Объявленная нормализация оптики (её проверяет тест). */
+  fit: GlyphFit;
+  /** Исходный bbox глифа, до нормализации. */
+  raw: Box;
+  /** Bbox после нормализации — то, что видно на экране. */
   box: Box;
-  elements: number;
   shapes: IconShape[];
 }
 
@@ -72,6 +124,47 @@ function sampleCubic(
       box,
       u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3,
       u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3,
+    );
+  }
+}
+
+/**
+ * Точный bbox квадратичной кривой: экстремумы по производной (плюс концы).
+ * Нужна для путей набора — там кривые заданы командами `q`/`t`.
+ */
+function sampleQuadratic(
+  box: Box,
+  x0: number,
+  y0: number,
+  cx: number,
+  cy: number,
+  x1: number,
+  y1: number,
+): void {
+  add(box, x0, y0);
+  add(box, x1, y1);
+  const extremum = (a: number, b: number, c: number): number | null => {
+    const den = a - 2 * b + c;
+    if (Math.abs(den) < 1e-9) return null;
+    const t = (a - b) / den;
+    return t > 0 && t < 1 ? t : null;
+  };
+  const tx = extremum(x0, cx, x1);
+  if (tx !== null) {
+    const u = 1 - tx;
+    add(
+      box,
+      u * u * x0 + 2 * u * tx * cx + tx * tx * x1,
+      u * u * y0 + 2 * u * tx * cy + tx * tx * y1,
+    );
+  }
+  const ty = extremum(y0, cy, y1);
+  if (ty !== null) {
+    const u = 1 - ty;
+    add(
+      box,
+      u * u * x0 + 2 * u * ty * cx + ty * ty * x1,
+      u * u * y0 + 2 * u * ty * cy + ty * ty * y1,
     );
   }
 }
@@ -132,7 +225,7 @@ function sampleArc(
 /** Разбор `d` в bbox. Понимает абсолютные и относительные команды. */
 export function pathBox(d: string): Box {
   const box = emptyBox();
-  const tokens = d.match(/[MLHVCAZSmlhvcazs]|-?\d*\.?\d+/g) ?? [];
+  const tokens = d.match(/[MLHVCAZSQTLmlhvcazsqtl]|-?\d*\.?\d+/g) ?? [];
   let i = 0;
   let x = 0;
   let y = 0;
@@ -143,8 +236,11 @@ export function pathBox(d: string): Box {
     if (!Number.isFinite(v)) throw new Error(`CategoryIcon: не число в пути «${d}» (токен ${i} из ${tokens.length})`);
     return v;
   };
-  const isCmd = (t: string | undefined): boolean => !!t && /^[MLHVCAZSmlhvcazs]$/.test(t);
+  const isCmd = (t: string | undefined): boolean => !!t && /^[MLHVCAZSQTLmlhvcazsqtl]$/.test(t);
   let lastCtrl: { x: number; y: number } | null = null;
+  // Контрольная точка последней квадратичной кривой: нужна команде `t`, где
+  // она отражается от предыдущей (в пути набора это `T`/`t`).
+  let lastQuadCtrl: { x: number; y: number } | null = null;
   while (i < tokens.length) {
     if (isCmd(tokens[i])) {
       cmd = String(tokens[i]);
@@ -159,6 +255,7 @@ export function pathBox(d: string): Box {
         y = rel ? y + dy : dy;
         cmd = rel ? 'l' : 'L';
         lastCtrl = null;
+        lastQuadCtrl = null;
         add(box, x, y);
         break;
       }
@@ -168,6 +265,7 @@ export function pathBox(d: string): Box {
         x = rel ? x + dx : dx;
         y = rel ? y + dy : dy;
         lastCtrl = null;
+        lastQuadCtrl = null;
         add(box, x, y);
         break;
       }
@@ -175,6 +273,7 @@ export function pathBox(d: string): Box {
         const dx = num();
         x = rel ? x + dx : dx;
         lastCtrl = null;
+        lastQuadCtrl = null;
         add(box, x, y);
         break;
       }
@@ -182,6 +281,7 @@ export function pathBox(d: string): Box {
         const dy = num();
         y = rel ? y + dy : dy;
         lastCtrl = null;
+        lastQuadCtrl = null;
         add(box, x, y);
         break;
       }
@@ -200,6 +300,7 @@ export function pathBox(d: string): Box {
         const y3 = rel ? y + ey : ey;
         sampleCubic(box, x, y, x1, y1, x2, y2, x3, y3);
         lastCtrl = { x: x2, y: y2 };
+        lastQuadCtrl = null;
         x = x3;
         y = y3;
         break;
@@ -217,8 +318,39 @@ export function pathBox(d: string): Box {
         const y3 = rel ? y + ey : ey;
         sampleCubic(box, x, y, x1, y1, x2, y2, x3, y3);
         lastCtrl = { x: x2, y: y2 };
+        lastQuadCtrl = null;
         x = x3;
         y = y3;
+        break;
+      }
+      case 'Q': {
+        const p1x = num();
+        const p1y = num();
+        const ex = num();
+        const ey = num();
+        const x1 = rel ? x + p1x : p1x;
+        const y1 = rel ? y + p1y : p1y;
+        const x2 = rel ? x + ex : ex;
+        const y2 = rel ? y + ey : ey;
+        sampleQuadratic(box, x, y, x1, y1, x2, y2);
+        lastQuadCtrl = { x: x1, y: y1 };
+        lastCtrl = null;
+        x = x2;
+        y = y2;
+        break;
+      }
+      case 'T': {
+        const ex = num();
+        const ey = num();
+        const x2 = rel ? x + ex : ex;
+        const y2 = rel ? y + ey : ey;
+        const x1: number = lastQuadCtrl ? 2 * x - lastQuadCtrl.x : x;
+        const y1: number = lastQuadCtrl ? 2 * y - lastQuadCtrl.y : y;
+        sampleQuadratic(box, x, y, x1, y1, x2, y2);
+        lastQuadCtrl = { x: x1, y: y1 };
+        lastCtrl = null;
+        x = x2;
+        y = y2;
         break;
       }
       case 'A': {
@@ -234,11 +366,14 @@ export function pathBox(d: string): Box {
         const y2 = rel ? y + ey : ey;
         sampleArc(box, x, y, rx, ry, largeArc, sweep, x2, y2);
         lastCtrl = null;
+        lastQuadCtrl = null;
         x = x2;
         y = y2;
         break;
       }
       case 'Z':
+        lastCtrl = null;
+        lastQuadCtrl = null;
         break;
       default:
         throw new Error(`CategoryIcon: команда «${cmd}» не поддержана`);
@@ -247,61 +382,30 @@ export function pathBox(d: string): Box {
   return box;
 }
 
-const merge = (into: Box, b: Box): void => {
-  into.minX = Math.min(into.minX, b.minX);
-  into.minY = Math.min(into.minY, b.minY);
-  into.maxX = Math.max(into.maxX, b.maxX);
-  into.maxY = Math.max(into.maxY, b.maxY);
-};
-
 /**
- * Какой стиль стоит сразу после фигуры — «{...SOFT}», «{...LINE}», «{...FAINT}».
- *
- * Ищем ВНУТРИ своего тега JSX: поиск по всему оставшемуся телу подхватывал
- * стиль СЛЕДУЮЩЕЙ фигуры, и снятие `{...LINE}` с кружка проходило тест
- * незамеченным. Граница тега — `/>`.
+ * Разбирает блок ICONS файла иконок: записи вида
+ * `id: { name: '…', d: '…', s: …, dx: …, dy: … }`.
  */
-function styleAfter(body: string, at: number): 'SOFT' | 'LINE' | 'FAINT' | undefined {
-  const tagEnd = body.indexOf('/>', at);
-  const tail = body.slice(at, tagEnd >= 0 ? tagEnd + 2 : at + 400);
-  const m = tail.match(/\.\.\.(SOFT|LINE|FAINT)\b/);
-  return m ? (m[1] as 'SOFT' | 'LINE' | 'FAINT') : undefined;
-}
-
-/** Разбирает весь блок PATHS файла иконок. */
 export function parseIcons(src: string): IconGeometry[] {
-  const from = src.indexOf('const PATHS');
+  const from = src.indexOf('const ICONS');
   const to = src.indexOf('export function CategoryIcon');
   if (from < 0 || to < 0 || to <= from) {
-    throw new Error('CategoryIcon.tsx: не найден блок PATHS или граница блока');
+    throw new Error('CategoryIcon.tsx: не найден блок ICONS или граница блока');
   }
   const block = src.slice(from, to);
   const out: IconGeometry[] = [];
-  const entryRe = /^\s{2}'?([a-z0-9_-]+)'?:\s*\(([\s\S]*?)\n  \),/gm;
+  const entryRe =
+    /^\s{2}'?([a-z0-9_-]+)'?:\s*\{\s*name:\s*'([^']+)',\s*d:\s*'([^']+)',\s*s:\s*([\d.]+),\s*dx:\s*(-?[\d.]+),\s*dy:\s*(-?[\d.]+)\s*\},/gm;
   let match: RegExpExecArray | null;
   while ((match = entryRe.exec(block)) !== null) {
     const id = match[1] ?? '';
-    const body = match[2] ?? '';
-    const box = emptyBox();
-    const shapes: IconShape[] = [];
-    for (const d of body.matchAll(/\bd="([^"]+)"/g)) {
-      const raw = d[0];
-      const value = d[1] ?? '';
-      const b = pathBox(value);
-      merge(box, b);
-      shapes.push({ kind: 'path', raw, d: value, box: b, at: d.index, style: styleAfter(body, d.index) });
-    }
-    for (const c of body.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)) {
-      const cx = Number(c[1]);
-      const cy = Number(c[2]);
-      const r = Number(c[3]);
-      const b: Box = { minX: cx - r, minY: cy - r, maxX: cx + r, maxY: cy + r };
-      merge(box, b);
-      shapes.push({ kind: 'circle', raw: c[0], cx, cy, r, box: b, at: c.index, style: styleAfter(body, c.index) });
-    }
-    // Порядок документа важен для починки: замена идёт по позициям внутри тела.
-    shapes.sort((a, b) => a.at - b.at);
-    out.push({ id, box, elements: shapes.length, shapes });
+    const name = match[2] ?? '';
+    const d = match[3] ?? '';
+    const fit: GlyphFit = { s: Number(match[4]), dx: Number(match[5]), dy: Number(match[6]) };
+    const raw = pathBox(d);
+    const b = normalizedBox(raw, fit);
+    const shapes: IconShape[] = [{ d, box: b }];
+    out.push({ id, name, fit, raw, box: b, shapes });
   }
   return out;
 }

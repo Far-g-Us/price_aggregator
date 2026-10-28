@@ -7,6 +7,10 @@ const api: RendererApi = {
   getPrices: (args: PricesQuery) => ipcRenderer.invoke('prices:get', args),
   openExternal: (url: string) => ipcRenderer.invoke('external:open', url),
   getCatalog: (args: { city?: string }) => ipcRenderer.invoke('catalog:get', args),
+  getSupportedNetworks: () => ipcRenderer.invoke('supported-networks') as Promise<string[]>,
+  downloadUpdate: () => ipcRenderer.invoke('updates:download') as Promise<void>,
+  installBrowser: () => ipcRenderer.invoke('browser:install') as Promise<{ ok: boolean; message: string }>,
+  browserStatus: () => ipcRenderer.invoke('browser:status') as Promise<{ installed: boolean; message: string }>,
   getCategory: (args: { city?: string; url?: string }) => ipcRenderer.invoke('category:get', args),
   getOurCategories: (args: { city?: string }) => ipcRenderer.invoke('ourcategories:get', args),
   getOurCategory: (args: { city?: string; id?: string }) => ipcRenderer.invoke('ourcategory:get', args),
@@ -19,19 +23,30 @@ const api: RendererApi = {
   splitProducts: (args: SplitPair) => ipcRenderer.invoke('splits:set', args),
   removeSplit: (args: SplitPair) => ipcRenderer.invoke('splits:remove', args),
   getSplitPairs: (args: { city: string }) => ipcRenderer.invoke('splits:pairs', args),
-  getHistory: (args: { canonicalId: string; storeId: string; city: string }) =>
+  getHistory: (args: { canonicalId: string; storeId: string; city: string; storeCode: string }) =>
     ipcRenderer.invoke('history:get', args),
   getSchedulerStatus: () => ipcRenderer.invoke('scheduler:status'),
   cancelScheduler: () => ipcRenderer.invoke('scheduler:cancel'),
-  runScheduler: (args?: { city?: string; storeIds?: string[] }) => ipcRenderer.invoke('scheduler:run', args),
+  runScheduler: (args?: { city?: string; pointKeys?: string[] }) =>
+    ipcRenderer.invoke('scheduler:run', args),
   setCurrentCity: (city: string) => ipcRenderer.invoke('city:set', { city }),
-  setCurrentStores: (city: string, storeIds: string[] | null) =>
-    ipcRenderer.invoke('stores:set', { city, storeIds }),
-onSchedulerProgress: (cb: (done: number, total: number, storeId?: string) => void) => {
+  setCurrentStores: (city: string, pointKeys: string[] | null) =>
+    ipcRenderer.invoke('stores:set', { city, pointKeys }),
+  onSchedulerProgress: (
+    cb: (done: number, total: number, storeId?: string, storeCode?: string) => void,
+  ) => {
     const h = (_e: unknown, v: unknown) => {
-      const o = v as { done: unknown; total: unknown; storeId?: unknown };
+      const o = v as { done: unknown; total: unknown; storeId?: unknown; storeCode?: unknown };
       if (typeof o.done !== 'number' || typeof o.total !== 'number') return;
-      cb(o.done, o.total, typeof o.storeId === 'string' ? o.storeId : undefined);
+      // Код точки едет вместе с кодом сети: без него подпись прогресса у двух
+      // точек одной сети неотличима — то есть плашка врала бы ровно там, ради
+      // чего поточная поддержка и заводилась.
+      cb(
+        o.done,
+        o.total,
+        typeof o.storeId === 'string' ? o.storeId : undefined,
+        typeof o.storeCode === 'string' ? o.storeCode : undefined,
+      );
     };
     ipcRenderer.on('scheduler:progress', h);
     return () => {

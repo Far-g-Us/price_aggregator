@@ -1,6 +1,7 @@
 import type { ScrapedProduct, StoreAdapter } from '../../shared/types.js';
 import { CITY_TO_SLUG, LENTA_REGIONS } from '../../shared/lenta-regions.js';
 import { ProductLookupError } from '../adapter-errors.js';
+import { httpFetch } from '../http.js';
 
 /** Ответ сети обязан быть про того же товара, о котором просили. */
 export function assertLentaAnswered(canonicalId: string, product: ScrapedProduct): void {
@@ -309,7 +310,7 @@ export function lentaWeightLabel(item: LentaItem): string | undefined {
 
 export function normalizeLentaItem(
   item: LentaItem,
-  ctx: { city: string },
+  ctx: { city: string; externalStoreId: string },
   alias: string | null,
   requiredMarker = true,
 ): ScrapedProduct | null {
@@ -325,6 +326,7 @@ export function normalizeLentaItem(
     canonicalId,
     storeId: 'lenta',
     city: ctx.city,
+    storeCode: ctx.externalStoreId,
     name: item.name,
     price,
     // promoPrice всегда null: цена по акции У Ленты — это и есть prices.price
@@ -362,7 +364,7 @@ export function normalizeLentaItem(
 
 export function normalizeLentaSearch(
   raw: LentaSearchResponse,
-  ctx: { city: string },
+  ctx: { city: string; externalStoreId: string },
   alias: string | null,
   limit: number,
 ): ScrapedProduct[] {
@@ -389,6 +391,10 @@ interface LentaSession {
   deviceId: string;
   domain: string;
   city: string;
+  // Точка, ради которой сессия заведена. Сессия привязывается к магазину на
+  // сервере (delivery/mode/set), поэтому на две точки города она общая быть
+  // НЕ может: вторая перепривязала бы первую, и цены ездили бы между точками.
+  storeId: string;
   boundStoreId: string | null;
   boundAt: number;
   at: number;
@@ -433,6 +439,8 @@ async function jsonOrThrow(res: Response, url: string): Promise<unknown> {
 export class LentaAdapter implements StoreAdapter {
   readonly storeId = 'lenta' as const;
 
+  // Ключ сессии — пара «город + точка». Общий ключ на город означал бы, что
+  // две точки города делят одну сессию, а привязка к магазину переписывается.
   private sessions = new Map<string, LentaSession>();
   private inflight = new Map<string, Promise<LentaSession>>();
   private aliases = new Map<string, string | null>();
@@ -474,15 +482,15 @@ export class LentaAdapter implements StoreAdapter {
     if (init.form) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
     }
-    const init2: RequestInit = {
+    const payload = init.form ?? (init.body === undefined ? undefined : JSON.stringify(init.body));
+    // Через httpFetch, а не fetch: на Android патченный Capacitor fetch теряет
+    // таймаут на POST, и запрос с провисшим соединением повис бы навсегда.
+    const res = await httpFetch(url, {
       method: init.method,
       headers,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      redirect: 'follow',
-    };
-    const payload = init.form ?? (init.body === undefined ? undefined : JSON.stringify(init.body));
-    if (payload !== undefined) init2.body = payload;
-    const res = await fetch(url, init2);
+      timeoutMs: TIMEOUT_MS,
+      ...(payload === undefined ? {} : { body: payload }),
+    });
     if (!res.ok) {
       if (res.status === 409) {
         const why = await res.text();
@@ -495,10 +503,19 @@ export class LentaAdapter implements StoreAdapter {
       // этот GET Qrator режет всегда, повторять его бессмысленно (флажок
       // wafBlocksApiGateway выставляется в alias()).
       if (retryOnAuth && (res.status === 401 || res.status === 403) && !url.endsWith('/delivery/mode')) {
-        if (this.sessions.get(init.session.city) === init.session) {
-          this.sessions.delete(init.session.city);
-          const fresh = await this.session(init.session.city);
-          if (fresh !== init.session) return this.request<T>(url, { ...init, session: fresh }, false);
+        const key = `${init.session.city}:${init.session.storeId}`;
+        if (this.sessions.get(key) === init.session) {
+          this.sessions.delete(key);
+          // Псевдонимы точки тоже сбрасываем: сессии они принадлежат, а новая
+          // сессия без привязки вернула бы остаток чужой точки.
+          this.aliases.delete(key);
+          const fresh = await this.session(init.session.city, init.session.storeId);
+          if (fresh !== init.session) {
+            // Привязка на сервере жила в старой сессии, поэтому новая обязана
+            // привязаться заново, иначе повтор ушёл бы в точку, выбранную ранее.
+            await this.bindStore(fresh, init.session.storeId);
+            return this.request<T>(url, { ...init, session: fresh }, false);
+          }
         }
       }
       throw new Error(describeStatus(res, url));
@@ -512,28 +529,30 @@ export class LentaAdapter implements StoreAdapter {
   // приложении не хранятся. DeviceId в Head ОБЯЗАТЕЛЕН: без него сеть
   // отвечает 200, но Status: failure и Utkapi_Exception_EmptyDeviceId —
   // то есть тихо, без ошибки на нашей стороне.
-  private async session(city: string): Promise<LentaSession> {
-    const cached = this.sessions.get(city);
+  private async session(city: string, storeId: string): Promise<LentaSession> {
+    const key = `${city}:${storeId}`;
+    const cached = this.sessions.get(key);
     // TTL обязателен: процесс живёт днями, а токен у сети не бессрочный. Без
     // этой проверки кэш отдавал бы протухшую сессию вечно.
     if (cached && Date.now() - cached.at < SESSION_TTL_MS) return cached;
     // Дедупликация параллельных входов: юзер ищет, пока идёт опрос. Без неё оба
     // потока строили бы свою сессию, второй перетирал бы первый в кэше, и
     // ретрай по 401 у первого не сработал бы (guard сверяет объект из кэша).
-    const running = this.inflight.get(city);
+    const running = this.inflight.get(key);
     if (running) return running;
-    const promise = this.createSession(city);
-    this.inflight.set(city, promise);
+    const promise = this.createSession(city, storeId);
+    this.inflight.set(key, promise);
     try {
       return await promise;
     } finally {
-      this.inflight.delete(city);
+      this.inflight.delete(key);
     }
   }
 
-  private async createSession(city: string): Promise<LentaSession> {
+  private async createSession(city: string, storeId: string): Promise<LentaSession> {
     const bootstrap: LentaSession = {
       sessionToken: '',
+      storeId,
       // Web Crypto есть и в Node, и в WebView — в отличие от node:crypto.
       deviceId: globalThis.crypto.randomUUID(),
       domain: lentaDomain(city),
@@ -568,8 +587,29 @@ export class LentaAdapter implements StoreAdapter {
     const token = out.Body?.SessionToken;
     if (!token) throw new Error('lenta: sessionGet не вернул SessionToken (смена API?)');
     bootstrap.sessionToken = token;
-    this.sessions.set(city, bootstrap);
+    this.sessions.set(`${city}:${storeId}`, bootstrap);
     return bootstrap;
+  }
+
+  /**
+   * Серверная привязка сессии к точке — единственное подтверждение магазина у
+   * Ленты (маркера в выдаче нет), поэтому она обязана повторяться на КАЖДОЙ
+   * свежей сессии. Сессия после 401/403 — свежая: без привязки повторный
+   * запрос ушёл бы в остаток чужой точки.
+   */
+  private async bindStore(session: LentaSession, storeId: string): Promise<void> {
+    const set = await this.request<{ storeId?: number | string; type?: string; message?: string }>(
+      `${LENTA_API}/delivery/mode/set`,
+      { method: 'POST', session, body: { type: DELIVERY_MODE, storeId: Number(storeId) } },
+      // Ретрая по 401 здесь быть не должно: привязка зовётся на свежей сессии,
+      // и повтор внутри неё просто повторил бы отказ.
+      false,
+    );
+    if (!sameLentaStore(set.storeId, storeId)) {
+      throw new Error(`lenta: сервер выбрал магазин ${String(set.storeId)} вместо ${storeId}`);
+    }
+    session.boundStoreId = storeId;
+    session.boundAt = Date.now();
   }
 
   // Выбор магазина: серверная привязка сессии к точке, не куки (крафтить
@@ -583,20 +623,12 @@ export class LentaAdapter implements StoreAdapter {
   private async alias(ctx: { city: string; externalStoreId: string }): Promise<string | null> {
     const storeId = assertLentaStoreId(ctx.externalStoreId);
     const cacheKey = `${ctx.city}:${storeId}`;
-    const session = await this.session(ctx.city);
+    const session = await this.session(ctx.city, storeId);
     const boundFresh = Date.now() - session.boundAt < STORE_BIND_TTL_MS;
     if (this.aliases.has(cacheKey) && session.boundStoreId === storeId && boundFresh) {
       return this.aliases.get(cacheKey) ?? null;
     }
-    const set = await this.request<{ storeId?: number | string; type?: string; message?: string }>(
-      `${LENTA_API}/delivery/mode/set`,
-      { method: 'POST', session, body: { type: DELIVERY_MODE, storeId: Number(storeId) } },
-    );
-    if (!sameLentaStore(set.storeId, storeId)) {
-      throw new Error(`lenta: сервер выбрал магазин ${String(set.storeId)} вместо ${storeId}`);
-    }
-    session.boundStoreId = storeId;
-    session.boundAt = Date.now();
+    await this.bindStore(session, storeId);
     let alias: string | null = null;
     // GET api-gateway Qrator режет с части сетей ВСЕГДА (401). Один раз узнав
     // об этом, больше не тратим на него запрос: сверять по alias нечем, а
@@ -657,7 +689,7 @@ export class LentaAdapter implements StoreAdapter {
     for (const query of lentaNameQueries(name)) {
       const res = await this.request<LentaSearchResponse>(`${LENTA_ORIGIN}/jrpc/searchItems`, {
         method: 'POST',
-        session: await this.session(ctx.city),
+        session: await this.session(ctx.city, ctx.externalStoreId),
         body: lentaSearchBody(query, PRODUCT_SEARCH_PAGE),
       });
       if (res.error) {
@@ -699,7 +731,7 @@ export class LentaAdapter implements StoreAdapter {
     const item = await this.findByName(id, name, ctx);
     // Маркера магазина в выдаче нет (см. assertLentaItemStore), привязка держится
     // на сессии, подтверждённой mode/set.
-    const product = normalizeLentaItem(item, { city: ctx.city }, alias, false);
+    const product = normalizeLentaItem(item, { city: ctx.city, externalStoreId: ctx.externalStoreId }, alias, false);
     if (!product) {
       // id мы уже нашли в выдаче, значит normalize вернул null из-за отсутствия
       // name или price — это дрейф формата, а не «товар снят». Сетевой класс:
@@ -721,7 +753,7 @@ export class LentaAdapter implements StoreAdapter {
     const alias = await this.alias(ctx);
     const res = await this.request<LentaSearchResponse>(`${LENTA_ORIGIN}/jrpc/searchItems`, {
       method: 'POST',
-      session: await this.session(ctx.city),
+      session: await this.session(ctx.city, ctx.externalStoreId),
       body: lentaSearchBody(query, SEARCH_LIMIT),
     });
     if (res.error) throw new Error(`lenta: jrpc searchItems -> ${String(res.error.message ?? res.error.code)}`);

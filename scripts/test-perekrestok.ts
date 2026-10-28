@@ -20,7 +20,7 @@ import {
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(resolve(process.cwd(), 'tests/fixtures/perekrestok', name), 'utf8'));
 
-const ctx = { city: 'moscow' as const, sapId: '2053' };
+const ctx = { city: 'moscow' as const, externalStoreId: '2053', sapId: '2053' };
 
 const milk = fixture('feed-moloko.json');
 const promo = fixture('feed-promo.json');

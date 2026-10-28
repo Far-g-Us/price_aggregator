@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Фон adaptive-иконки — цвет бренда (тот же, что кнопки в интерфейсе).
+     Раньше здесь был белый заглушечный от Capacitor, и наш логотип стоял
+     поверх белого квадрата: иконка на телефоне выглядела чужой. -->
+<resources>
+    <color name="ic_launcher_background">#0F9D58</color>
+</resources>

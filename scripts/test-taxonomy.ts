@@ -38,13 +38,22 @@ for (const c of OUR_CATEGORIES) {
   const queries = new Set(c.queries);
   assert.equal(queries.size, c.queries.length, `запросы уникальны в ${c.id}`);
 }
-// Плоский список — осознанное решение (вложенность снята в пользу плиток, как
-// у витрины сети). Проверяем данные, а не функции дерева: those уже удалены,
-// и проверка через них была бы зелёной по коду, которого в приложении нет.
+// Иерархия полок: широкая полка и её уточнения. Раньше все полки были
+// корневыми, и в интерфейсе «Молоко» стояло рядом с «Молочным и яйцом» как
+// вторая такая же полка — читалось как дубль. Теперь у узкой полки есть
+// родитель, и она показана как подборка внутри широкой.
 assert.ok(
-  OUR_CATEGORIES.every((c) => c.parentId === null),
-  'все полки корневые: список плоский, вложенности нет',
+  OUR_CATEGORIES.some((c) => c.parentId !== null),
+  'есть полки-уточнения с родителем',
 );
+for (const c of OUR_CATEGORIES) {
+  if (c.parentId === null) continue;
+  assert.ok(
+    OUR_CATEGORIES.some((p) => p.id === c.parentId),
+    `родитель уточнения существует: ${c.id} → ${c.parentId}`,
+  );
+  assert.notEqual(c.parentId, c.id, 'полка не является своим родителем');
+}
 assert.equal(ourCategoryById('нет-такой'), undefined);
 const toView = (c: (typeof OUR_CATEGORIES)[number]) => ({
   id: c.id,
@@ -59,9 +68,9 @@ const roots = rootShelves(all);
 assert.ok(roots.length > 0, 'без раскрытия видны корни');
 assert.ok(roots.every((c) => c.parentId === null), 'в списке только корневые полки');
 assert.equal(
-  roots.length,
+  roots.length + all.filter((c) => c.parentId !== null).length,
   all.length,
-  'плоский список показывает все полки, а не только корни дерева',
+  'каждая полка либо корень, либо уточнение своего корня — потеряться некому',
 );
 const withVirtual: OurCategoryView = {
   id: '__unassigned__',
@@ -75,14 +84,14 @@ assert.ok(
   rootShelves([...all, withVirtual]).every((c) => c.virtual !== true),
   'виртуальная полка не рисуется в общем списке',
 );
-// Фильтр rootShelves обязан быть покрыт НЕ-плоским входом: полка с
-// проставленным родителем иначе молча исчезла бы из списка — без ошибки и без
-// диагностики, то есть полка просто не показывалась бы.
+// Фильтр rootShelves: полки-уточнения (с родителем) и виртуальная полка в
+// общий список корней не попадают — уточнения рисуются отдельно, своей
+// строкой, иначе широкая полка и её подборка снова читались бы как дубль.
 const withNested = { ...withVirtual, id: 'x-nested', name: 'Х', parentId: 'dairy' };
 assert.equal(
   rootShelves([...all, withNested]).length,
-  all.length,
-  'полка с проставленным родителем отфильтровывается, а не показывается',
+  all.filter((c) => c.parentId === null).length,
+  'полка с проставленным родителем отфильтровывается: уточнения идут отдельно',
 );
 
 // Дерево в БД совпадает с кодом — иначе раскладка молча разъедется.
@@ -102,13 +111,21 @@ for (const [id, name, parentId] of rows) {
 // сида; у реального пользователя в файле осталась старая иерархия, и чинить её
 // обязана повторная инициализация схемы при каждом открытии БД. Приём взят из
 // test-db (там так же пересевается stores).
-db.run("UPDATE our_categories SET parent_id = 'dairy' WHERE id IN ('dairy-milk', 'bakery-bread')");
+// Иерархия восстанавливается пересевом: у полки-уточнения должен быть
+// родитель, и после пересева он снова на месте. Раньше иерархии не было
+// вовсе, и тест проверял обратное (что её нет) — теперь она часть данных.
+db.run("UPDATE our_categories SET parent_id = NULL WHERE parent_id IS NOT NULL");
 db.exec(SCHEMA);
-const afterReseed = db.exec('SELECT COUNT(*) FROM our_categories WHERE parent_id IS NOT NULL')?.[0]?.values[0]?.[0];
-assert.equal(
-  Number(afterReseed ?? 0),
-  0,
-  'повторная инициализация схемы чинит протухшую иерархию в существующей базе',
+const restored = db.exec(
+  'SELECT id, parent_id FROM our_categories WHERE parent_id IS NOT NULL ORDER BY id',
+)?.[0]?.values ?? [];
+const expectedTree = OUR_CATEGORIES.filter((c) => c.parentId !== null)
+  .map((c) => [c.id, c.parentId])
+  .sort();
+assert.deepEqual(
+  restored.map((r) => [String(r[0]), String(r[1])]).sort(),
+  expectedTree,
+  'повторная инициализация схемы восстанавливает иерархию полок',
 );
 
 for (const city of CITIES) {
@@ -124,13 +141,13 @@ for (const city of CITIES) {
 // Раскладка товара по нашим категориям: many-to-many, повтор не плодит строки.
 const first = ourCategoryById('dairy');
 assert.ok(first);
-const price = { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', name: 'Тест', price: 100 };
+const price = { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', name: 'Тест', price: 100 };
 assert.equal(savePriceIfChanged(db, price), 'inserted');
 const rowsIn = [
-  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', categoryId: 'dairy' },
-  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', categoryId: 'dairy' },
-  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', categoryId: 'dairy-milk' },
-  { canonicalId: 'x-1', storeId: 'pyaterochka', city: 'moscow', categoryId: 'dairy' },
+  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', categoryId: 'dairy' },
+  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', categoryId: 'dairy' },
+  { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', categoryId: 'dairy-milk' },
+  { canonicalId: 'x-1', storeId: 'pyaterochka', city: 'moscow', storeCode: 'TEST', categoryId: 'dairy' },
 ];
 saveProductCategory(db, rowsIn);
 const link = db.exec('SELECT COUNT(*) FROM product_categories')[0]?.values[0]?.[0];
@@ -143,7 +160,7 @@ assert.deepEqual(mine, ['dairy', 'dairy-milk'], 'товар лежит в нес
 
 // Город в ключе: тот же товар в другом городе — отдельная запись.
 saveProductCategory(db, [
-  { canonicalId: 'x-1', storeId: 'magnit', city: 'ulyanovsk', categoryId: 'dairy' },
+  { canonicalId: 'x-1', storeId: 'magnit', city: 'ulyanovsk', storeCode: 'TEST', categoryId: 'dairy' },
 ]);
 const perCity = db.exec(
   `SELECT city, COUNT(*) FROM product_categories
@@ -157,14 +174,14 @@ assert.equal(fkOn, 1, 'PRAGMA foreign_keys включён');
 assert.throws(
   () =>
     saveProductCategory(db, [
-      { canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow', categoryId: 'dairy' },
+      { canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', categoryId: 'dairy' },
     ]),
   'FK не даёт ссылаться на несуществующий товар',
 );
 assert.throws(
   () =>
     saveProductCategory(db, [
-      { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', categoryId: 'нет-такой' },
+      { canonicalId: 'x-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', categoryId: 'нет-такой' },
     ]),
   'FK не даёт ссылаться на несуществующую категорию',
 );

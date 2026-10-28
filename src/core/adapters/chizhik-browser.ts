@@ -14,7 +14,7 @@
 // браузер, а магазины в одном городе разные и каждая сессия своя.
 
 import { readEnvFlag } from '../platform.js';
-import { injectedPlaywright } from './playwright-port.js';
+import { loadPlaywright } from './playwright-port.js';
 
 const WEB = 'https://app.chizhik.club';
 const TIMEOUT_MS = 60_000;
@@ -35,20 +35,10 @@ const BACKOFF_MS = 5000;
  */
 const SESSION_ATTEMPTS = 2;
 
-async function importPlaywright(): Promise<typeof import('playwright')> {
-  const injected = injectedPlaywright();
-  if (injected) return injected;
-  /* c8 ignore start — в тестах порт подставляет Playwright всегда, а ветка
-     битой установки тестом не воспроизводится (как в 5ka-browser и magnit). */
-  try {
-    return await import('playwright');
-  } catch {
-    throw new Error(
-      'chizhik: не удалось загрузить playwright из сборки — приложение установлено повреждённо, переустанови его.',
-    );
-  }
-  /* c8 ignore stop */
-}
+  // Настоящий импорт playwright живёт только в Electron-оболочке: иначе бандлер
+  // Android-сборки пытается resolve'ить chromium-bidi. Понятный текст отказа —
+  // тоже в порте, вместе с подменой для тестов.
+  const importPlaywright = (): Promise<typeof import('playwright')> => loadPlaywright();
 
 /** Признак блокировки по заголовку страницы. */
 function assertBlockPage(title: string): void {

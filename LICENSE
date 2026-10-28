@@ -1,0 +1,148 @@
+Price Aggregator License (PAL) v1.0
+Copyright (c) 2026 Price Aggregator contributors
+
+A source-available, non-commercial, copyleft license. It is NOT an OSI-approved
+open source license: commercial use is not permitted without a separate written
+permission from the copyright holder.
+
+Preamble. This project is a personal price aggregator for grocery networks.
+Most of its value comes from the effort of people who fix things, report bugs
+and send improvements back. The license below therefore (a) forbids selling
+the software or any derivative of it, (b) requires that anyone who publishes
+a modified version publishes the complete corresponding source code under this
+same license, and (c) asks — without legally requiring it — that improvements
+be offered to the main repository first, so that everyone benefits from them.
+
+Third-party components are NOT covered by this license. They keep their own
+licenses, listed in NOTICE. In particular the category icons in assets/icons/
+are Font Awesome Free (Solid) by Fonticons, Inc., licensed under the Creative
+Commons Attribution 4.0 (texts in assets/icons/CC-BY-4.0.txt and
+assets/icons/LICENSE). The icons were MODIFIED: scaled and shifted into a
+common 24x24 frame (see assets/icons/README.md), as CC BY 4.0 section 3(a)
+requires that changes be indicated.
+
+TERMS
+
+1. Definitions
+   "License" — this document, version 1.0.
+   "Work" — the software, its source code, and any documentation distributed
+   with it, as published in the repository github.com/Far-g-Us/price_aggregator
+   and described in the NOTICE file.
+   "You" — the individual or legal entity exercising the rights granted here.
+   "Derivative" — a modified or adapted Work, or another work based upon the
+   Work. A work that is not based upon the Work (for example, a program
+   written from scratch to the same specification) is not a Derivative and is
+   governed by copyright law alone.
+   "Contribution" — any original work of authorship submitted for inclusion in
+   the Work by You or on Your behalf, including modifications to existing work.
+   "Notice" — the copyright, license and attribution notices required to be
+   preserved under section 5.
+   "Owner" — the copyright holder of the Work, identified in the NOTICE file.
+
+2. Grant of rights
+   Subject to the terms of this License, the copyright holder grants You a
+   worldwide, royalty-free, non-exclusive, non-transferable license to use,
+   copy, modify and create Derivative Works of the Work, and to distribute the
+   Work and Derivative Works, PROVIDED THAT:
+   a) You do not use the Work or any Derivative of it for commercial purposes.
+      "Commercial purposes" means any use whose primary purpose is to obtain
+      revenue, monetary or otherwise, including selling, licensing for fee,
+      charging for access, or operating a paid service based on the Work.
+      Non-commercial use includes personal, educational, research and
+      non-profit use. A separate written permission from the Owner (or from
+      the copyright holders jointly, where the Work has several) lifts this
+      restriction for the use it names.
+   b) If You distribute the Work or a Derivative of it, You must publish the
+      complete corresponding source code of the version You distribute, under
+      this same License, and make it available to every recipient at no
+      charge. This is the copyleft obligation: the source of a distributed
+      version must be as freely usable as the binary it accompanies.
+   c) You preserve all copyright, patent, trademark and attribution notices
+      of the Work, including this License, the NOTICE file, and the notices
+      of third-party components.
+   d) You state the changes You made to the Work in a file named CHANGES.md
+      placed in the root of the distribution, and keep that file for as long as
+      You distribute the version. The file is a plain list of what You changed
+      and why; no format is prescribed.
+   e) You do not use the names, trademarks, logos or domain names of the
+      copyright holder or of any contributor except to state the origin of
+      the Work and to reproduce the NOTICE contents. A derivative that
+      modifies the Work must not use the name of the Work itself; it must use
+      a name that makes clear it is a modified version and is not endorsed by
+      the copyright holder.
+   f) You comply with the terms of the licenses of all third-party
+      components You distribute together with the Work. The rights granted in
+      section 2 apply to the Work only and do not restrict, revoke or replace
+      the rights granted by those third-party licenses.
+
+3. Requests for improvement (not a restriction)
+   The Owner asks that improvements be proposed to the main repository first,
+   so that the whole project benefits from them. This section is a request,
+   not a condition: the rights in section 2 extend to forks and to independent
+   works (works not based upon the Work, see section 1), and nothing in this
+   License forbids them. If You publish a Derivative, You are encouraged to
+   open an issue or a pull request in the main repository describing the
+   change, and to send the improvement upstream where You are willing to do so.
+
+4. Patents
+   Each contributor grants You and every other contributor a non-exclusive,
+   worldwide, royalty-free license under the contributor's essential patent
+   claims to make, have made, use, offer for sale, sell, import and otherwise
+   transfer the Work, and to modify and distribute Derivative Works of the
+   Work, for the duration of the contributor's patents covering those claims.
+   This grant terminates automatically for a contributor and any of its
+   licensees if that contributor or any of its licensees brings patent
+   litigation or other patent enforcement action against the Work or any
+   Derivative of it. The Work is provided as is: the Owner makes no warranty
+   that the Work does not infringe the patents of third parties, and the
+   license grant above is the only patent-related permission given here.
+   This section grants rights under patents only; it does not widen the
+   restriction on commercial use in section 2(a), and no patent license is
+   granted for any use that section 2(a) forbids.
+
+5. Preservation of notices
+   You must keep intact all copyright, patent, trademark and attribution
+   notices, this License, the NOTICE file and any notice required by a
+   third-party license, in all copies and Derivative Works of the Work that
+   You distribute. You may add Your own notices, and You may not remove or
+   alter the notices of others. Where the Work contains a NOTICE file, the
+   notices it lists must be reproduced in the Derivative's NOTICE file or in
+   a notice accompanying the Derivative.
+   Nothing in this License limits the right to use the names of third parties
+   and their products and services for identification or to describe the
+   origin of the Work, including naming the grocery networks the application
+   reads prices from. This nominative use does not extend to the Owner's own
+   name and marks, which section 2(e) protects.
+
+6. Termination
+   This License terminates automatically if You breach any of its terms. On
+   termination You must stop distributing the Work and every Derivative of it
+   and remove it from every medium on which You distributed it. Sections 4
+   (patents), 7 (disclaimer of warranty), 8 (limitation of liability) and 9
+   (general) survive termination.
+
+7. Disclaimer of warranty
+   THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. THE ENTIRE RISK AS TO
+   QUALITY AND PERFORMANCE OF THE WORK IS WITH YOU.
+
+8. Limitation of liability
+   IN NO EVENT AND UNDER NO LEGAL THEORY SHALL ANY CONTRIBUTOR BE LIABLE TO
+   YOU FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL, CONSEQUENTIAL, EXEMPLARY
+   OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, GOODWILL OR OTHER
+   LOSS, ARISING OUT OF THE USE OR INABILITY TO USE THE WORK, EVEN IF SUCH
+   CONTRIBUTOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+9. General
+   This License is governed by the laws of the jurisdiction in which the Owner
+   resides, without regard to its conflict-of-law provisions. If any provision
+   of this License is held unenforceable, the remaining provisions stay in
+   force. This License may be modified only by the Owner in a versioned
+   document; contributions to the Work are licensed under this License,
+   Version 1.0, and not under a modified version. Any Contribution You submit
+   is licensed to the Owner under this same License, Version 1.0. The Work is
+   licensed as a whole under this License, and individual files or parts of it
+   are not licensed separately, unless the Owner states otherwise.
+
+END OF TERMS

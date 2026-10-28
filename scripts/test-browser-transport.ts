@@ -32,9 +32,16 @@ const MAGNIT_HTML =
 
 const realFetch = globalThis.fetch;
 let fetchMode: 'fail' | 'empty' = 'fail';
+// Сколько раз фейковый fetch отдаёт «сеть недоступна» подряд, прежде чем
+// ответить. Нужно для проверки повтора прямого запроса у Магнита: разовый
+// сетевой сбой обязан лечиться повтором, а не запуском браузера.
+let failStreak = Number.POSITIVE_INFINITY;
 globalThis.fetch = (async (input: string | URL | Request) => {
   const url = String(input instanceof URL ? input : typeof input === 'string' ? input : input.url);
-  if (fetchMode === 'fail') throw new Error(`fake fetch: сеть недоступна (${url})`);
+  if (fetchMode === 'fail' && failStreak > 0) {
+    failStreak -= 1;
+    throw new Error(`fake fetch: сеть недоступна (${url})`);
+  }
   return {
     ok: true,
     status: 200,
@@ -676,17 +683,44 @@ const withCardDom = (): void => {
   );
   fetchMode = 'fail';
 
-  // Страница без следа кода магазина — тоже чужая.
+  // Страница без следа кода магазина — тоже чужая. Текста должно быть
+  // достаточно, чтобы ветка «почти пустая» не перехватила случай: пустая
+  // страница — это сбой загрузки, а полная без кода — уже чужая точка.
   withCardDom();
-  install([{ url: 'https://magnit.ru/catalog/1-', html: '<html><body>чужой магазин</body></html>' }], {
-    title: 'Магнит',
-  });
+  install(
+    [
+      {
+        url: 'https://magnit.ru/catalog/1-',
+        html: `<html><body><h1>Каталог магазина</h1><p>${'Товары и цены в вашем магазине. '.repeat(6)}</p></body></html>`,
+      },
+    ],
+    {
+      title: 'Магнит',
+    },
+  );
   fetchMode = 'empty';
   const foreign = new MagnitAdapter();
   await assert.rejects(
     () => foreign.fetchCategoryProducts('https://magnit.ru/catalog/1-', { city: 'moscow', externalStoreId: '473996' }),
     /чужой магазин/,
     'страница без shopCode отвергнута, а не принята за свою',
+  );
+  fetchMode = 'fail';
+
+  // Почти пустая страница — это НЕ «чужой магазин»: витрина не догрузилась.
+  // Разные выводы и разное лечение (повтор против сверки кода), поэтому и
+  // сообщение отдельное (живая находка 2026-11-11: сбой загрузки приходил
+  // именно как «чужой магазин?»).
+  withCardDom();
+  install([{ url: 'https://magnit.ru/catalog/1-', html: '<html><body>   </body></html>' }], {
+    title: 'Магнит',
+  });
+  fetchMode = 'empty';
+  const blank = new MagnitAdapter();
+  await assert.rejects(
+    () => blank.fetchCategoryProducts('https://magnit.ru/catalog/1-', { city: 'moscow', externalStoreId: '473996' }),
+    /не догрузилась/,
+    'недогруженная страница названа сбоем загрузки, а не чужим магазином',
   );
   fetchMode = 'fail';
 
@@ -724,6 +758,7 @@ const withCardDom = (): void => {
   const product = await new MagnitAdapter().fetchProduct('magnit-1000483001', {
     city: 'moscow',
     externalStoreId: '473996',
+    name: 'Молоко',
   });
   assert.equal(product.price, 119, 'карточка из @graph разобрана');
   globalThis.fetch = previousFetch;
@@ -901,6 +936,7 @@ const withCardDom = (): void => {
   (globalThis as { document?: unknown }).document = { querySelectorAll: () => [], getElementById: () => null };
   const h = install([{ url: 'https://magnit.ru/search?term=молоко', html: MAGNIT_HTML }], { title: 'Магнит' });
   h.page.selectorMissing = true;
+  failStreak = Number.POSITIVE_INFINITY;
   assert.deepEqual(
     await new MagnitAdapter().search('молоко', { city: 'moscow', externalStoreId: '473996' }),
     [],
@@ -908,6 +944,31 @@ const withCardDom = (): void => {
   );
   await close5kaBrowser();
   dropDocument();
+
+  // Разовый сетевой сбой лечится повтором прямого запроса, а не запуском
+  // браузера (живая находка 2026-11-11: полка дважды отвалилась на первом же
+  // запросе с «fetch failed», хотя та же сеть секундой раньше отвечала за 1 с).
+  {
+    let calls = 0;
+    const realFetch = globalThis.fetch;
+    const searchHtml = fs.readFileSync('tests/fixtures/magnit-search.html', 'utf8');
+    (globalThis as { fetch: typeof fetch }).fetch = (async (input: string | URL | Request) => {
+      calls += 1;
+      if (calls === 1) throw new TypeError('fetch failed');
+      const url = String(input instanceof URL ? input : typeof input === 'string' ? input : input.url);
+      return { ok: true, status: 200, url, text: async () => searchHtml } as unknown as Response;
+    }) as typeof fetch;
+    try {
+      // Ответ сети нужен на ВТОРОЙ попытке: сначала рвётся, потом отдаёт выдачу.
+      const retried = await new MagnitAdapter().search('молоко', { city: 'moscow', externalStoreId: '473996' });
+      assert.equal(calls, 2, `прямой запрос повторён ровно один раз (было попыток: ${calls})`);
+      assert.ok(retried.length > 0, 'после повтора выдача получена без браузера');
+    } finally {
+      // Подмена снимается в finally: упавший кейс иначе утащил бы за собой весь
+      // остальной прогон по чужому fetch, и падение выглядело бы мистикой.
+      globalThis.fetch = realFetch;
+    }
+  }
 
   // Пейлоад без товара: ссылки на витрину есть, товаров нет.
   const empty = '<html><body><script id="__NUXT_DATA__" type="application/json">["x"]</script><a href="/product/1?shopCode=473996">x</a></body></html>';

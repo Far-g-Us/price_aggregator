@@ -1,0 +1,202 @@
+{
+  "_note": "Живой ответ magnit.ru/webgate/v2/goods/search, магазин 473996, 2026-10-19. Урезан до трёх товаров: форма ответа — контракт (pagination.totalCount различает «переименование» и «сбой сети»).",
+  "category": null,
+  "containerConfig": {
+    "media": {
+      "backgroundColor": "#FFF5F5F5",
+      "cornerRadius": 12
+    }
+  },
+  "correctedTerm": null,
+  "fastCategories": [],
+  "items": [
+    {
+      "badges": [
+        {
+          "backgroundColor": "#FF5858",
+          "text": "Финальная цена",
+          "textColor": "#FFFFFF"
+        }
+      ],
+      "catalogType": "3",
+      "gallery": [
+        {
+          "type": "IMAGE",
+          "url": "https://images-foodtech.magnit.ru/Sftzxm5zuYoRIBWwbwO4UevCRLVxGvNeOKRl7KPY0Xk/rs:fit:416:416/plain/s3://img-dostavka/uf/cb0/cb0a0e8448b20b3c67d22b038c163059/2f88b45c79fa83dc4f26f37b6387f9b4.jpeg@webp"
+        }
+      ],
+      "id": "1000427075",
+      "isAdditionalActionRequired": false,
+      "isBiometryRequired": false,
+      "isForAdults": false,
+      "isInFavorites": null,
+      "isLowStock": null,
+      "name": "Молоко сгущенное Алексеевское с сахаром 8.5% 360г",
+      "needPassport": false,
+      "orderProperties": {
+        "minOrderQuantity": 1,
+        "orderStepQuantity": 1
+      },
+      "orders": null,
+      "pickupOnly": false,
+      "price": 13999,
+      "productId": "1000427075",
+      "promoTag": "01a0a93f-377d-74db-9524-b829d257ec4b",
+      "promotion": {
+        "discountPercent": 33,
+        "endDate": "1970-01-01T00:00:00Z",
+        "isPromotion": true,
+        "oldPrice": 20999
+      },
+      "quantity": 6,
+      "ratings": {
+        "commentsCount": 288,
+        "external": null,
+        "rating": 5,
+        "scoresCount": 4529
+      },
+      "seoCode": "alekseevskoe_moloko_sgushchennoe_s_sakharom_8_5_360g",
+      "service": "core_mm",
+      "skuGroupId": null,
+      "skuIds": null,
+      "storeCode": "473996",
+      "targetCart": "core_mm",
+      "weighted": {
+        "isWeighted": false,
+        "minStep": null,
+        "shelfLabel": null,
+        "shelfWeight": null,
+        "step": null,
+        "unitLabel": null,
+        "unitPrice": null
+      }
+    },
+    {
+      "badges": [],
+      "catalogType": "3",
+      "gallery": [
+        {
+          "type": "IMAGE",
+          "url": "https://images-foodtech.magnit.ru/gmD8bONTieDrwCa7vtntNgNA5nilUNXInK_dr9nHWSE/rs:fit:416:416/plain/s3://img-dostavka/uf/e46/e46c5a871f08933011e393638f6ec31b/86ddb59e5cc9d4e1db914279f6d35845.jpeg@webp"
+        }
+      ],
+      "id": "1000251959",
+      "isAdditionalActionRequired": false,
+      "isBiometryRequired": false,
+      "isForAdults": false,
+      "isInFavorites": null,
+      "isLowStock": null,
+      "name": "Молоко Козельское Молоко пастеризованное 3.2% 930г",
+      "needPassport": false,
+      "orderProperties": {
+        "minOrderQuantity": 1,
+        "orderStepQuantity": 1
+      },
+      "orders": null,
+      "pickupOnly": false,
+      "price": 10499,
+      "productId": "1000251959",
+      "promotion": {
+        "discountPercent": null,
+        "endDate": "2026-11-10T23:59:59Z",
+        "isPromotion": true,
+        "oldPrice": null
+      },
+      "quantity": 13,
+      "ratings": {
+        "commentsCount": 26,
+        "external": null,
+        "rating": 4.9,
+        "scoresCount": 451
+      },
+      "seoCode": "kozelskoe_moloko_moloko_past_3_2_930g_pl_but_agrof_optina_6",
+      "service": "core_mm",
+      "skuGroupId": null,
+      "skuIds": null,
+      "storeCode": "473996",
+      "targetCart": "core_mm",
+      "weighted": {
+        "isWeighted": false,
+        "minStep": null,
+        "shelfLabel": null,
+        "shelfWeight": null,
+        "step": null,
+        "unitLabel": null,
+        "unitPrice": null
+      }
+    },
+    {
+      "badges": [],
+      "catalogType": "3",
+      "gallery": [
+        {
+          "type": "IMAGE",
+          "url": "https://images-foodtech.magnit.ru/ZU8dvyDFLJrCgCBFTqBhbYTjY769st8HN4H0g1P_Zqk/rs:fit:416:416/plain/s3://img-dostavka/uf/c34/c34b7e38a6ca5c756f0c7097a0ddf65d/33f47a0979187fa1c63e803554d5d464.jpeg@webp"
+        },
+        {
+          "type": "IMAGE",
+          "url": "https://images-foodtech.magnit.ru/dOBCyb_PzF5ISMyZ1uEfxcXZRnv4ueuEZpaKchET38w/rs:fit:416:416/plain/s3://img-dostavka/uf/7d4/7d4c0d724a16672351f82ef9b209c4fe/3170a196aef6b16699ba1b30074bd90a.jpeg@webp"
+        },
+        {
+          "type": "IMAGE",
+          "url": "https://images-foodtech.magnit.ru/kl9Pg0qaJEsS1kvcCQnCFuLvFURk83kqXA736TftnEI/rs:fit:416:416/plain/s3://img-dostavka/uf/98e/98e14e18dd69938dcda160f3f98ce224/2e340b9811f5d7b717cc937a3a66f7f4.jpeg@webp"
+        }
+      ],
+      "id": "1000565461",
+      "isAdditionalActionRequired": false,
+      "isBiometryRequired": false,
+      "isForAdults": false,
+      "isInFavorites": null,
+      "isLowStock": null,
+      "name": "Напиток банановый Nemoloko 1л",
+      "needPassport": false,
+      "orderProperties": {
+        "minOrderQuantity": 1,
+        "orderStepQuantity": 1
+      },
+      "orders": null,
+      "pickupOnly": false,
+      "price": 12399,
+      "productId": "1000565461",
+      "promotion": {
+        "discountPercent": 11,
+        "endDate": "1970-01-01T00:00:00Z",
+        "isPromotion": true,
+        "oldPrice": 13999
+      },
+      "quantity": 3,
+      "ratings": {
+        "commentsCount": 186,
+        "external": null,
+        "rating": 4.7,
+        "scoresCount": 1113
+      },
+      "seoCode": "nemoloko_napitok_bananovyy_1l_t_pak",
+      "service": "core_mm",
+      "skuGroupId": null,
+      "skuIds": null,
+      "storeCode": "473996",
+      "targetCart": "core_mm",
+      "weighted": {
+        "isWeighted": false,
+        "minStep": null,
+        "shelfLabel": null,
+        "shelfWeight": null,
+        "step": null,
+        "unitLabel": null,
+        "unitPrice": null
+      }
+    }
+  ],
+  "offerCategoryIds": null,
+  "pagination": {
+    "hasMore": true,
+    "limit": 36,
+    "nextOffset": 37,
+    "offset": 0,
+    "totalCount": 67
+  },
+  "resultId": "383e63f7-9b62-442a-bdce-99766828a599",
+  "term": "молоко",
+  "videoDelay": 1
+}

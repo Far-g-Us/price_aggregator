@@ -9,12 +9,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createCore, UNASSIGNED_ID } from '../src/core/services.js';
-import { closeDb, openDb, releaseProductShelves, saveLastRun } from '../src/core/db/db.js';
+import { closeDb, openDb, releaseProductShelves, saveFavorite, saveLastRun } from '../src/core/db/db.js';
 import type { Database } from 'sql.js';
 import { fileStorageAt } from '../electron/node-files.js';
 import { ProductLookupError } from '../src/core/adapter-errors.js';
 import { OUR_CATEGORIES } from '../src/shared/taxonomy.js';
-import { CITY_STORES } from '../src/shared/catalog.js';
+import { CITY_STORES, storesForCity } from '../src/shared/catalog.js';
+
+// Код точки Магнита в Москве: фикстуры отметок и истории обязаны называть
+// ту же точку, что и запись в базу, иначе они попадут в чужую линию.
+const MAGNIT_CODE = storesForCity('moscow', 'magnit')[0]?.externalStoreId ?? '';
 import type { ScrapedProduct, StoreAdapter, StoreCategory } from '../src/shared/types.js';
 import type { CoreDeps } from '../src/core/platform.js';
 // печатает ошибки — в тестах это шум, мешающий прочитать результат.
@@ -34,6 +38,7 @@ const item = (canonicalId: string, name: string, price: number): ScrapedProduct 
   canonicalId,
   storeId: 'magnit',
   city: 'moscow',
+  storeCode: 'TEST',
   name,
   unit: '1 шт',
   price,
@@ -73,7 +78,9 @@ class EdgeAdapter implements StoreAdapter {
     }
     return this.items
       .filter((i) => i.name.toLowerCase().includes(query.toLowerCase()))
-      .map((i) => ({ ...i, city: ctx.city }));
+      // Код точки — из контекста запроса: адаптер отвечает за точку, которую
+      // просили, и кладёт её код в товар.
+      .map((i) => ({ ...i, city: ctx.city, storeCode: ctx.externalStoreId }));
   }
 
   async fetchCategories(): Promise<StoreCategory[]> {
@@ -87,7 +94,7 @@ class EdgeAdapter implements StoreAdapter {
 
   async fetchCategoryProducts(_url: string, ctx: SearchCtx): Promise<ScrapedProduct[]> {
     if (this.failCategory) throw new Error('magnit: витрина недоступна');
-    return this.items.map((i) => ({ ...i, city: ctx.city }));
+    return this.items.map((i) => ({ ...i, city: ctx.city, storeCode: ctx.externalStoreId }));
   }
 
   async fetchProduct(canonicalId: string, ctx: ProductCtx): Promise<ScrapedProduct> {
@@ -97,7 +104,8 @@ class EdgeAdapter implements StoreAdapter {
     const found = this.items.find((i) => i.canonicalId === canonicalId);
     if (!found && !this.answerAnyProduct) throw new ProductLookupError('нет товара', canonicalId);
     const target = found ?? item(canonicalId, 'Любой товар', 40);
-    return this.cheap ? { ...target, price: 100, city: ctx.city } : { ...target, city: ctx.city };
+    const withCode = { ...target, city: ctx.city, storeCode: ctx.externalStoreId };
+    return this.cheap ? { ...withCode, price: 100 } : withCode;
   }
 }
 
@@ -112,6 +120,7 @@ const brokenStorage = {
     throw new Error('диск недоступен');
   },
   writeDb: () => {},
+  backupDb: () => {},
 };
 let failWrite = false;
 const real = fileStorageAt(path.join(tmpDir, 'e.db'));
@@ -124,6 +133,7 @@ const storage = {
     if (failWrite) throw new Error('диск только для чтения');
     real.writeDb(bytes);
   },
+  backupDb: (bytes: Uint8Array): void => real.backupDb(bytes),
 };
 
 const magnit = new EdgeAdapter([item('e-milk', 'Молоко ПРАВИЛЬНОЕ 3,2%, 930мл', 119)]);
@@ -197,8 +207,8 @@ const db = await openDb(storage);
 await core.searchPrices({ query: 'молоко' });
 await core.searchPrices({ query: 'сыр' });
 // Опрос идёт только по отслеживаемым, поэтому без отметки его не будет.
-await core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', targetPrice: null });
-await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'moscow', targetPrice: null });
+await core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: null });
+await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: null });
 
 // --- 4. ProductLookupError в опросе: товара нет, сеть не виновата. ---------
 {
@@ -320,7 +330,12 @@ await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'mosc
 
 // --- 11. Откаты транзакций: несуществующий товар и битая привязка. --------
 {
-  const ghost = { canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow' };
+  const ghost = {
+    canonicalId: 'нет-такого',
+    storeId: 'magnit',
+    city: 'moscow',
+    storeCode: 'TEST',
+  };
   assert.throws(
     () => releaseProductShelves(db, { ...ghost, canonicalId: undefined as unknown as string }),
     /bind|unsupported type/i,
@@ -334,6 +349,22 @@ await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'mosc
   );
   assert.equal(countRows(db, 'product_category_manual'), manualBefore, 'чужие строки не тронуты');
   assert.equal(countRows(db, 'product_categories'), catsBefore, 'и полки тоже');
+
+  // Отметка избранного: та же гарантия. Важно именно то, что перенесённая
+  // строка ('?') не пропала вместе с откатом: если бы её удаление было вне
+  // транзакции, битая привязка оставила бы товар без избранного вообще.
+  saveFavorite(db, ghost, 100);
+  const favoritesBefore = countRows(db, 'favorites');
+  assert.throws(
+    () => saveFavorite(db, { ...ghost, canonicalId: undefined as unknown as string }, 50),
+    /bind|unsupported type/i,
+    'битая привязка в отметке откатывается',
+  );
+  assert.equal(
+    countRows(db, 'favorites'),
+    favoritesBefore,
+    'и перенесённая отметка осталась: удаление и вставка — одна транзакция',
+  );
 }
 
 // --- 12. Опрос с «медленным» товаром: в лог попадает замер. ---------------
@@ -384,7 +415,7 @@ const forgetRun = async (): Promise<void> => {
 // --- 14. История с битым аргументом: пусто, а не исключение. ---------------
 {
   assert.deepEqual(
-    await core.getHistory({ canonicalId: undefined as unknown as string, storeId: 'magnit', city: 'moscow' }),
+    await core.getHistory({ canonicalId: undefined as unknown as string, storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE }),
     [],
     'без canonicalId история пустая и без обращения к базе',
   );
@@ -396,6 +427,7 @@ const forgetRun = async (): Promise<void> => {
       canonicalId: 'e-milk',
       storeId: { nope: true } as unknown as string,
       city: 'moscow',
+      storeCode: MAGNIT_CODE,
     }),
     [],
     'битое значение ключа не роняет интерфейс',
@@ -406,12 +438,12 @@ const forgetRun = async (): Promise<void> => {
 // --- 15. Порог должен быть положительным числом. ---------------------------
 {
   await assert.rejects(
-    () => core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', targetPrice: 0 }),
+    () => core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: 0 }),
     /целевая цена должна быть положительным числом/,
     'порог 0 — это «уведомлять всегда», и он запрещён',
   );
   await assert.rejects(
-    () => core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', targetPrice: Number.NaN }),
+    () => core.setFavorite({ canonicalId: 'e-milk', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: Number.NaN }),
     /целевая цена должна быть положительным числом/,
     'NaN — тоже не цена',
   );
@@ -420,7 +452,7 @@ const forgetRun = async (): Promise<void> => {
 // --- 16. Уведомление приходит с названием сети, а не «magnit». -------------
 {
   // Порог выше цены, потом цена падает ниже порога — и опрос об этом узнаёт.
-  await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'moscow', targetPrice: 250 });
+  await core.setFavorite({ canonicalId: 'e-cheese', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: 250 });
   magnit.cheap = true;
   const res = await core.runScheduler({ city: 'moscow' });
   magnit.cheap = false;
@@ -753,7 +785,7 @@ const forgetRun = async (): Promise<void> => {
   // вводит в заблуждение сильнее, чем честный код.
   db.run("INSERT INTO products (id, name, unit) VALUES ('e-stray', 'Товар из прошлой сети', '1 шт')");
   db.run(
-    "INSERT INTO prices_history (canonical_id, store_id, city, price, in_stock) VALUES ('e-stray', 'nostore', 'krasnodar', 77, 1)",
+    "INSERT INTO prices_history (canonical_id, store_id, city, store_code, price, in_stock) VALUES ('e-stray', 'nostore', 'krasnodar', '?', 77, 1)",
   );
   // Адаптер, отвечающий на любой товар: опрос должен пройти целиком, иначе
   // уведомления о снижении цены просто не отправятся.
@@ -777,7 +809,7 @@ const forgetRun = async (): Promise<void> => {
 
   // Порог ниже цены в городе, которого нет в справочнике: уведомление всё
   // равно должно прийти, но с кодом сети вместо её названия.
-  await core30.setFavorite({ canonicalId: 'e-stray', storeId: 'nostore', city: 'krasnodar', targetPrice: 100 });
+  await core30.setFavorite({ canonicalId: 'e-stray', storeId: 'nostore', city: 'krasnodar', storeCode: 'nostore-code', targetPrice: 100 });
   notices.length = 0;
   // Опрос идёт по текущему городу, и пороги проверяются только его: город с
   // чужим кодом сети — это отдельный случай, а не «все города сразу».
@@ -812,10 +844,10 @@ const forgetRun = async (): Promise<void> => {
   // Чужая строка в кэше категории: полка не должна показывать её как свою.
   db.run("INSERT INTO products (id, name, unit) VALUES ('e-foreign', 'Сыр чужой сети', '1 шт')");
   db.run(
-    "INSERT INTO prices_history (canonical_id, store_id, city, price, in_stock) VALUES ('e-foreign', 'nostore', 'moscow', 500, 1)",
+    "INSERT INTO prices_history (canonical_id, store_id, city, store_code, price, in_stock) VALUES ('e-foreign', 'nostore', 'moscow', '?', 500, 1)",
   );
   db.run(
-    "INSERT INTO product_categories (canonical_id, store_id, city, category_id) VALUES ('e-foreign', 'nostore', 'moscow', 'dairy-cheese')",
+    "INSERT INTO product_categories (canonical_id, store_id, city, store_code, category_id) VALUES ('e-foreign', 'nostore', 'moscow', '?', 'dairy-cheese')",
   );
   const withForeign = await core31.getOurCategory({ city: 'moscow', id: shelf.id });
   assert.equal(
@@ -830,6 +862,7 @@ const forgetRun = async (): Promise<void> => {
     canonicalId: 'e-page',
     storeId: 'magnit',
     city: 'moscow',
+    storeCode: MAGNIT_CODE,
     targetPrice: 500,
   });
   // Опрос спрашивает отслеживаемые товары, а их в базе накопилось много и не
@@ -850,12 +883,12 @@ const forgetRun = async (): Promise<void> => {
 // Строка в истории может остаться, а товара в products уже нет: уведомление
 // всё равно должно прийти — с id вместо названия, а не молча пропасть.
 {
-  db.run("INSERT INTO prices_history (canonical_id, store_id, city, price, in_stock) VALUES ('e-ghost', 'magnit', 'moscow', 40, 1)");
+  db.run("INSERT INTO prices_history (canonical_id, store_id, city, store_code, price, in_stock) VALUES ('e-ghost', 'magnit', 'moscow', '303857', 40, 1)");
   // Опрос здесь запускать нельзя: он создал бы строку в products и подписал
   // товар, а проверка именно про товар без названия. Поэтому пороги смотрим
   // напрямую — так же, как их видит опрос.
   const ghostCore = createCore(deps);
-  await ghostCore.setFavorite({ canonicalId: 'e-ghost', storeId: 'magnit', city: 'moscow', targetPrice: 90 });
+  await ghostCore.setFavorite({ canonicalId: 'e-ghost', storeId: 'magnit', city: 'moscow', storeCode: MAGNIT_CODE, targetPrice: 90 });
   // Избранное само создаёт товар-заглушку (saveFavorite), поэтому случай «подписи
   // нет» — это удалённая строка products при живом избранном. Так бывает после
   // чистки базы, и подпись в уведомлении тогда обязана быть не пустой.
@@ -942,6 +975,7 @@ const forgetRun = async (): Promise<void> => {
       throw new Error('диск недоступен');
     },
     writeDb: () => {},
+    backupDb: () => {},
   };
   const brokenShelf = await createCore({
     ...deps,
@@ -969,6 +1003,34 @@ const forgetRun = async (): Promise<void> => {
     /историю|база|сеть/i,
     'и без базы полка объясняет, чего не хватает',
   );
+  // Та же полка, но сеть отвечает частично И товары подходят: при сломанной базе
+  // кэша полки взять неоткуда, и полка обязана сказать «часть запросов не удалась»,
+  // а не «ни один запрос не сработал» — успешный запрос-то был.
+  let calls = 0;
+  const partly: StoreAdapter = {
+    storeId: 'magnit',
+    async search() {
+      calls += 1;
+      if (calls === 1) throw new Error('сеть молчит на первом запросе');
+      return [item('e-kefir', 'Кефир 3,2% 930мл', 89)];
+    },
+    async fetchProduct(id: string) {
+      return item(id, 'Кефир 3,2% 930мл', 89);
+    },
+  };
+  const partialShelf = await createCore({
+    ...deps,
+    adapters: new Map<string, StoreAdapter>([['magnit', partly]]),
+    storage: broken,
+  }).getOurCategory({ city: 'moscow', id: 'dairy-fermented' });
+  const partialRow = partialShelf.find((r) => r.storeId === 'magnit');
+  assert.ok((partialRow?.items.length ?? 0) > 0, 'частичный ответ всё же показан');
+  assert.match(
+    partialRow?.error ?? '',
+    /часть запросов не удалась|сеть не ответила/,
+    `и назван частичный отказ, а не полный молчание: ${partialRow?.error ?? ''}`,
+  );
+
   closeDb();
 }
 

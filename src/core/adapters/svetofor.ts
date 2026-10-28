@@ -496,7 +496,7 @@ export function svetoforOfferDate(offer: { d?: unknown }): number | null {
  */
 export function normalizeSvetoforOffer(
   offer: SvetoforOffer,
-  ctx: { city: string; domain: string },
+  ctx: { city: string; domain: string; externalStoreId: string },
 ): ScrapedProduct | null {
   const name = String(offer.name ?? '')
     .replace(/\s+/g, ' ')
@@ -511,6 +511,7 @@ export function normalizeSvetoforOffer(
     canonicalId: svetoforCanonicalId(id),
     storeId: 'svetofor',
     city: ctx.city,
+    storeCode: ctx.externalStoreId,
     name,
     price,
     promoPrice: null,
@@ -873,7 +874,7 @@ export class SvetoforAdapter implements StoreAdapter {
     const out: ScrapedProduct[] = [];
     for (const offer of list) {
       if (!matches(offer, needle)) continue;
-      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain });
+      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain, externalStoreId: ctx.externalStoreId });
       if (product) out.push(product);
       if (out.length >= 40) break;
     }
@@ -896,7 +897,7 @@ export class SvetoforAdapter implements StoreAdapter {
       // из названия ломает фичу «разные товары» (разделитель пары — пробел).
       if (offer.id === undefined || String(offer.id).trim() === '') continue;
       if (svetoforCanonicalId(offer.id) !== canonicalId) continue;
-      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain });
+      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain, externalStoreId: ctx.externalStoreId });
       if (product) return product;
       // Наш `id` в прайсе есть, но строка без цены или без названия. Искать дальше
       // по названию нельзя: под этим `canonicalId` в историю уехал бы ЧУЖОЙ товар.
@@ -918,7 +919,7 @@ export class SvetoforAdapter implements StoreAdapter {
         );
       }
       const normalized = byName
-        .map((offer) => normalizeSvetoforOffer(offer, { city: ctx.city, domain }))
+        .map((offer) => normalizeSvetoforOffer(offer, { city: ctx.city, domain, externalStoreId: ctx.externalStoreId }))
         .filter((product): product is ScrapedProduct => product !== null);
       // Совпадения по своему `canonicalId` здесь быть не может: id-цикл выше
       // уже вернул бы такой товар, а строки без цены или названия в `normalized`
@@ -1023,7 +1024,7 @@ canHandleCategoryUrl(categoryUrl: string): boolean {
         cut = true;
         break;
       }
-      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain });
+      const product = normalizeSvetoforOffer(offer, { city: ctx.city, domain, externalStoreId: ctx.externalStoreId });
       if (product) out.push(product);
     }
     if (cut) {

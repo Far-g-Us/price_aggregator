@@ -23,7 +23,7 @@ const data = JSON.parse(fs.readFileSync(fixture, 'utf-8')) as {
 
 assert.ok(data.products.length >= 4, 'fixture: >= 4 products');
 
-const first = normalize(data.products[0] as never, { city: 'moscow' });
+const first = normalize(data.products[0] as never, { city: 'moscow', externalStoreId: 'TEST' });
 assert.ok(first, 'first product normalized');
 assert.equal(first?.canonicalId, '5ka-3255206');
 assert.equal(first?.storeId, 'pyaterochka');
@@ -37,7 +37,7 @@ assert.ok(first?.imageUrl?.startsWith('https://catalog-images.x5static.net/'), '
 assert.equal(first?.url, 'https://5ka.ru/product/3255206/', 'короткая ссылка редиректит на slug');
 assert.ok(first?.name.includes('Домик в деревне'), 'name kept');
 
-const all = data.products.map((p) => normalize(p as never, { city: 'moscow' }));
+const all = data.products.map((p) => normalize(p as never, { city: 'moscow', externalStoreId: 'TEST' }));
 assert.equal(all.length, data.products.length, 'все товары нормализовались');
 assert.equal(new Set(all.map((p) => p?.canonicalId)).size, data.products.length, 'plu уникальны');
 for (const p of all) {
@@ -56,25 +56,25 @@ interface RawProduct {
 }
 const multibuyRaw = (data.products as unknown[] as RawProduct[]).find((p) => p.plu === 4439523);
 assert.ok(multibuyRaw, 'фикстура содержит акционный товар');
-const multibuy = normalize(multibuyRaw as never, { city: 'moscow' });
+const multibuy = normalize(multibuyRaw as never, { city: 'moscow', externalStoreId: 'TEST' });
 assert.equal(multibuy?.price, 59.99);
 assert.equal(multibuy?.promoPrice, null, 'мультибай-скидка не выдаётся как цена товара');
 assert.equal(multibuyRaw.prices.cpd_promo_price, '47.99', 'скидка в cpd_promo_price');
 assert.equal(multibuyRaw.prices.discount, null, 'у этого мультибай-товара обычной скидки нет — discount null');
 assert.equal(
-  normalize({ ...multibuyRaw, promo: null } as never, { city: 'moscow' })?.promoPrice,
+  normalize({ ...multibuyRaw, promo: null } as never, { city: 'moscow', externalStoreId: 'TEST' })?.promoPrice,
   47.99,
   'без rebate cpd_promo_price считается обычной акцией и уходит в promoPrice',
 );
 
-assert.equal(normalize({ plu: 1, name: 'X' } as never, { city: 'moscow' }), null, 'нет цены');
-assert.equal(normalize({ plu: 1, prices: { regular: '0' } } as never, { city: 'moscow' }), null, 'нулевая цена');
-assert.equal(normalize({ plu: 'abc', name: 'X', prices: { regular: 10 } } as never, { city: 'moscow' }), null, 'plu не число');
-assert.equal(normalize({ plu: 1, name: '', prices: { regular: 10 } } as never, { city: 'moscow' }), null, 'нет имени');
+assert.equal(normalize({ plu: 1, name: 'X' } as never, { city: 'moscow', externalStoreId: 'TEST' }), null, 'нет цены');
+assert.equal(normalize({ plu: 1, prices: { regular: '0' } } as never, { city: 'moscow', externalStoreId: 'TEST' }), null, 'нулевая цена');
+assert.equal(normalize({ plu: 'abc', name: 'X', prices: { regular: 10 } } as never, { city: 'moscow', externalStoreId: 'TEST' }), null, 'plu не число');
+assert.equal(normalize({ plu: 1, name: '', prices: { regular: 10 } } as never, { city: 'moscow', externalStoreId: 'TEST' }), null, 'нет имени');
 
 const promo = normalize(
   { plu: 7, name: 'Y', prices: { regular: '100', discount: '79.99', markdown: '120' } } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(promo?.price, 100);
 assert.equal(promo?.promoPrice, 79.99);
@@ -82,32 +82,32 @@ assert.equal(promo?.oldPrice, 120);
 
 const dirty = normalize(
   { plu: 9, name: 'W', prices: { regular: '100', discount: '150', markdown: '40' } } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(dirty?.promoPrice, null, 'discount выше regular не считается акцией');
 assert.equal(dirty?.oldPrice, null, 'markdown ниже regular отбрасывается');
 
 const noClarity = normalize(
   { plu: 10, name: 'U', property_clarification: '  ', uom: 'шт', prices: { regular: '10' } } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(noClarity?.unit, 'шт', 'пустая фасовка не оставляет unit пустым');
 
 const noFlag = normalize(
   { plu: 11, name: 'T', prices: { regular: '10' } } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(noFlag?.inStock, false, 'без is_available не выдумываем наличие');
 
 const out = normalize(
   { plu: 8, name: 'Z', prices: { regular: '50' }, is_available: false } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(out?.inStock, false, 'is_available=false -> нет в наличии');
 
 // Карточка товара: prices — МАССИВ, плюс бренд/описание/вес в attributes.
 const card = JSON.parse(fs.readFileSync(cardFixture, 'utf-8')) as Record<string, unknown>;
-const full = normalize(card as never, { city: 'moscow' });
+const full = normalize(card as never, { city: 'moscow', externalStoreId: 'TEST' });
 assert.ok(full, 'product card normalized');
 assert.equal(full?.canonicalId, '5ka-3255206');
 assert.equal(full?.price, 89.99);
@@ -130,7 +130,7 @@ const saleCard = normalize(
       { value: '179.99', placement_type: 'sale_primary' },
     ],
   } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(saleCard?.price, 219.99);
 assert.equal(saleCard?.promoPrice, 179.99, 'цена ниже regular = акция');
@@ -138,7 +138,7 @@ assert.equal(saleCard?.oldPrice, null);
 
 const priceWithoutRegular = normalize(
   { plu: 5, name: 'A', prices: [{ value: '10', placement_type: 'sale_primary' }] } as never,
-  { city: 'moscow' },
+  { city: 'moscow', externalStoreId: 'TEST' },
 );
 assert.equal(priceWithoutRegular?.price, 10, 'без regular_primary берём первый элемент');
 assert.equal(priceWithoutRegular?.promoPrice, null);
@@ -150,7 +150,7 @@ const soldOut = JSON.parse(
 ) as Record<string, unknown>;
 assert.deepEqual(soldOut.prices, [], 'фикстура: пустой prices у товара вне наличия');
 assert.equal(soldOut.is_available, false);
-assert.equal(normalize(soldOut as never, { city: 'moscow' }), null, 'без цены товар отбрасывается');
+assert.equal(normalize(soldOut as never, { city: 'moscow', externalStoreId: 'TEST' }), null, 'без цены товар отбрасывается');
 
 // Живой раздел «Скидки недели» (Москва 35XY, 2026-09, категория
 // skidki-nedeli--251C17046): здесь скидка ОБЫЧНАЯ — в `prices.discount`,
@@ -164,7 +164,7 @@ const promoData = JSON.parse(fs.readFileSync(promoFixture, 'utf-8')) as {
 };
 const plainSale = promoData.products.find((p) => p.prices.discount != null);
 assert.ok(plainSale, 'в разделе скидок есть обычная скидка');
-const plain = normalize(plainSale as never, { city: 'moscow' });
+const plain = normalize(plainSale as never, { city: 'moscow', externalStoreId: 'TEST' });
 assert.equal(plain?.price, Number(plainSale.prices.regular));
 assert.equal(plain?.promoPrice, Number(plainSale.prices.discount), 'обычная скидка -> promoPrice');
 assert.ok(
@@ -178,7 +178,7 @@ const multibuySale = promoData.products.find(
 );
 if (multibuySale) {
   assert.equal(
-    normalize(multibuySale as never, { city: 'moscow' })?.promoPrice,
+    normalize(multibuySale as never, { city: 'moscow', externalStoreId: 'TEST' })?.promoPrice,
     null,
     'мультибай не выдаётся как цена товара',
   );
@@ -221,7 +221,7 @@ const smallOnly = {
   ...(data.products[0] as Record<string, unknown>),
   image_links: { small: ['https://catalog-images.x5static.net/product/1-main/320x320.jpeg'] },
 };
-const smallProduct = normalize(smallOnly as never, { city: 'moscow' });
+const smallProduct = normalize(smallOnly as never, { city: 'moscow', externalStoreId: 'TEST' });
 assert.ok(smallProduct, 'товар с одной лишь small-картинкой нормализуется');
 assert.ok(
   (smallProduct?.imageUrl ?? '').endsWith('/800x800.jpeg'),
@@ -303,7 +303,7 @@ const nextData = (stores: Record<string, string>) =>
       pageProps: {
         props: {
           isServerRendered: true,
-          ctxStore: JSON.stringify({ city: 'msk' }),
+          ctxStore: JSON.stringify({ city: 'msk', externalStoreId: 'TEST' }),
           catalogStore: JSON.stringify({ page: 1, storeId: stores.catalog ?? '', sections: [] }),
           productStore: JSON.stringify({
             product: { plu: 70723, name: 'Сливки', prices: { price: 20799 } },

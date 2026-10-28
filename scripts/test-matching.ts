@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { groupStoreCount } from '../src/shared/result-filters.js';
 import { groupByProduct, matchSplitKey, normalizeName, parseSplitKey, sameProduct, splitPairKey } from '../src/shared/matching.js';
 import type { ScrapedProduct } from '../src/shared/types.js';
 
@@ -7,6 +8,7 @@ function item(over: Partial<ScrapedProduct> & { name: string }): ScrapedProduct 
     canonicalId: 't-1',
     storeId: 'magnit',
     city: 'moscow',
+    storeCode: 'TEST',
     price: 100,
     promoPrice: null,
     oldPrice: null,
@@ -77,6 +79,59 @@ assert.equal(
   'дубль canonicalId не сеет вторую цену',
 );
 
+// --- Две точки одной сети: сравнение цен между точками --------------------
+// Товар, который вернули обе точки Магнита. Сеть одна, canonicalId один и
+// тот же (sku общий), различается только код точки. До шага 6 дедупликация
+// шла по storeId, и второе предложение уходило в continue — сравнение между
+// точками не отображалось физически.
+const pointA = item({
+  canonicalId: 'magnit-pt1',
+  storeCode: 'PT-A',
+  name: 'Молоко Домик в деревне 3.2% 930мл',
+  brand: 'Домик',
+  price: 119,
+});
+const pointB = item({
+  canonicalId: 'magnit-pt1',
+  storeCode: 'PT-B',
+  name: 'Молоко Домик в деревне 3.2% 930мл',
+  brand: 'Домик',
+  price: 105,
+});
+const pointGroups = groupByProduct([pointA, pointB]);
+assert.equal(pointGroups.length, 1, 'две точки одной сети — одна карточка, а не две');
+assert.equal(pointGroups[0]?.offers.length, 2, 'обе точки показаны в карточке');
+assert.deepEqual(
+  pointGroups[0]?.offers.map((o) => o.storeCode).sort(),
+  ['PT-A', 'PT-B'],
+  'в карточке видно код каждой точки',
+);
+assert.equal(new Set(pointGroups.map((g) => g.key)).size, 1, 'ключ карточки уникален');
+assert.match(pointGroups[0]?.key ?? '', /:PT-[AB]:magnit-pt1$/, 'ключ карточки включает код точки');
+
+// Тот же товар из той же точки дважды (повторный ответ, витрина и поиск) —
+// дубль, и лишней строки в карточке быть не должно.
+const dupPoint = groupByProduct([pointA, { ...pointA, price: 119 }]);
+assert.equal(dupPoint[0]?.offers.length, 1, 'тот же товар той же точки — один оффер');
+assert.equal(dupPoint.length, 1, 'тот же товар той же точки — одна карточка');
+
+// Две точки одной сети плюс другая сеть: карточка одна, сетей две.
+const pointAndOther = groupByProduct([
+  pointA,
+  pointB,
+  item({ canonicalId: '5ka-pt1', storeId: 'pyaterochka', storeCode: '5KA-A', name: 'Молоко Домик в деревне 3.2% 930мл', brand: 'Домик' }),
+]);
+assert.equal(pointAndOther.length, 1, 'карточка склеила и точки, и сеть');
+assert.equal(pointAndOther[0]?.offers.length, 3, 'три предложения в одной карточке');
+assert.equal(groupStoreCount(pointAndOther[0]!), 2, 'две точки Магнита — это одна сеть');
+
+// Разные товары одной точки по-прежнему в разных карточках: точка не должна
+// склеивать 200 мл с 900 мл, это разные товары одного магазина.
+const twoVariants = groupByProduct([
+  item({ canonicalId: 'magnit-pt2', storeCode: 'PT-A', name: 'Молоко 3.2% 200мл' }),
+  item({ canonicalId: 'magnit-pt3', storeCode: 'PT-A', name: 'Молоко 3.2% 900мл' }),
+]);
+assert.equal(twoVariants.length, 2, 'разные товары одной точки остаются разными карточками');
 // --- Ручной разрыв склейки ----------------------------------------------
 // Сценарий, из-за которого разрыв и нужен: у Пятёрки и Магнита нет общего
 // штрих-кода, и Jaccard не отличает «Сыр сливочный 200г» от «Сыр сливочный

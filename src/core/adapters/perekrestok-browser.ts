@@ -21,7 +21,7 @@
 //    `content.sapId`, и это единственное, что можно сверить.
 
 import { readEnvFlag } from '../platform.js';
-import { injectedPlaywright } from './playwright-port.js';
+import { loadPlaywright } from './playwright-port.js';
 
 const WEB = 'https://www.perekrestok.ru';
 const CATALOG = `${WEB}/catalog/`;
@@ -40,20 +40,10 @@ const SESSION_ATTEMPTS = 2;
 /** Сколько секунд ждём токен и `_SPUID`: куки ставятся сайтом уже после загрузки. */
 const CREDENTIAL_ATTEMPTS = 30;
 
-async function importPlaywright(): Promise<typeof import('playwright')> {
-  const injected = injectedPlaywright();
-  if (injected) return injected;
-  /* c8 ignore start — в тестах порт подставляет Playwright всегда, а ветка
-     битой установки тестом не воспроизводится (как в 5ka-browser и chizhik). */
-  try {
-    return await import('playwright');
-  } catch {
-    throw new Error(
-      'perekrestok: не удалось загрузить playwright из сборки — приложение установлено повреждённо, переустанови его.',
-    );
-  }
-  /* c8 ignore stop */
-}
+  // Настоящий импорт playwright живёт только в Electron-оболочке: иначе бандлер
+  // Android-сборки пытается resolve'ить chromium-bidi. Понятный текст отказа —
+  // тоже в порте, вместе с подменой для тестов.
+  const importPlaywright = (): Promise<typeof import('playwright')> => loadPlaywright();
 
 /** Антибот-заголовок вместо нормальной страницы: каталог сети не откроется. */
 function assertBlockPage(title: string): void {

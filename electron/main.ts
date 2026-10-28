@@ -21,7 +21,7 @@ import { MAX_FEED_BYTES, RELEASES_PAGE_URL, isNewerVersion, readFeedVersion } fr
 import { isExternalAllowed, urlForLog } from './external-links.js';
 import type { CoreDeps } from '../src/core/platform.js';
 import type { StoreAdapter } from '../src/shared/types.js';
-import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
+import { CITIES, pointKeysForCity } from '../src/shared/catalog.js';
 import {
   dbFile,
   describeFirefoxProblem,
@@ -32,11 +32,16 @@ import {
   isDev,
   nodeBackground,
   resolveBrowsersPath,
+  installFirefox,
   userDataDir,
 } from './node-platform.js';
+import { installNodePlaywright } from './node-playwright.js';
 
 const { autoUpdater } = electronUpdaterPkg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Playwright живёт только здесь: в src/core лежит порт (см. node-playwright.ts).
+installNodePlaywright();
 
 let win: BrowserWindow | null = null;
 
@@ -247,10 +252,17 @@ const checkPortableRelease = (): Promise<PortableCheck> => {
   return pending;
 };
 
+// Обновление НЕ скачивается само и НЕ ставится само: пользователь должен
+// нажать кнопку. Иначе скомпрометированный релиз (или подменённый манифест)
+// тихо установился бы при выходе из приложения — без сверки подписи издателя
+// (её проверяет electron-updater, только если в сборке задан `publisherName`)
+// и без единого вопроса пользователю.
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
 autoUpdater.on('update-available', (info) => {
-  electronShell.notify(`Доступна версия ${info.version}, скачиваю…`);
+  electronShell.notify(`Доступна версия ${info.version} — обновить можно в приложении`);
   win?.webContents.send('updates:available', info.version);
-  void autoUpdater.downloadUpdate();
 });
 
 autoUpdater.on('update-downloaded', (info) => {
@@ -318,11 +330,43 @@ ipcMain.handle('updates:install', () => {
   autoUpdater.quitAndInstall(false, true);
 });
 
+// Скачивание обновления — только по явному клику пользователя (см. выше):
+// автоматическая загрузка и установка при выходе означали бы, что скомпрометированный
+// релиз ставится сам.
+ipcMain.handle('updates:download', () => {
+  void autoUpdater.downloadUpdate();
+});
+
+// Установка браузера для Пятёрки, Чижика и Перекрёстка. Firefox не вшит в
+// установщик (около 340 МБ из 210 МБ сборки), поэтому ставится по требованию:
+// пользователь сам решает, нужны ли ему эти три сети.
+ipcMain.handle('browser:install', async (): Promise<{ ok: boolean; message: string }> =>
+  installFirefox((line) => log.info('browser install:', line)),
+);
+
+ipcMain.handle('browser:status', (): { installed: boolean; message: string } => {
+  try {
+    const found = resolveBrowsersPath();
+    return found
+      ? { installed: true, message: `браузер на месте: ${found}` }
+      : { installed: false, message: describeFirefoxProblem() };
+  } catch (err) {
+    return {
+      installed: false,
+      message: `не удалось определить браузер: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+});
+
 ipcMain.handle('prices:get', async (_e, args?: PricesQuery): Promise<StorePrices[]> => getCore().searchPrices(args));
 
-ipcMain.handle('catalog:get', async (_e, args?: { city?: string }): Promise<StoreCatalog[]> =>
-  getCore().getCatalogs(args),
-);
+  ipcMain.handle('catalog:get', async (_e, args?: { city?: string }): Promise<StoreCatalog[]> =>
+    getCore().getCatalogs(args),
+  );
+
+  // Сети с адаптером в этой сборке. Интерфейс считает по нему доступные
+  // точки: на Android адаптеров три, а справочник городов — на все шесть.
+  ipcMain.handle('supported-networks', (): string[] => getCore().getSupportedNetworks());
 
 ipcMain.handle('category:get', async (_e, args?: { city?: string; url?: string }): Promise<StorePrices[]> =>
   getCore().getCategoryProducts(args),
@@ -351,20 +395,35 @@ ipcMain.handle('favorites:get', (_e, args: { city: string }) => getCore().getFav
   ipcMain.handle('splits:set', (_e, args: SplitPair) => getCore().splitProducts(args));
   ipcMain.handle('splits:remove', (_e, args: SplitPair) => getCore().removeSplit(args));
   ipcMain.handle('splits:pairs', (_e, args: { city: string }) => getCore().getSplitPairs(args));
-  ipcMain.handle('history:get', (_e, args?: { canonicalId?: string; storeId?: string; city?: string }) =>
-    getCore().getHistory(args),
-  );
+// Код точки в аргументах обязателен на всех трёх слоях (renderer, preload,
+// здесь). А проверка на границе — тоже: без неё битый или старый вызов без кода
+// уехал бы в ядро и вернул пустую историю, то есть «у товара никогда не было
+// замеров».
+    ipcMain.handle(
+      'history:get',
+      (_e, args?: { canonicalId?: string; storeId?: string; city?: string; storeCode?: string }) => {
+        if (!args?.canonicalId || !args.storeId || !args.city || !args.storeCode) {
+          throw new Error('history:get: нужны canonicalId, storeId, city и storeCode');
+        }
+        return getCore().getHistory({
+          canonicalId: args.canonicalId,
+          storeId: args.storeId,
+          city: args.city,
+          storeCode: args.storeCode,
+        });
+      },
+    );
 
 ipcMain.handle('scheduler:status', () => getCore().schedulerStatus());
 
 ipcMain.handle(
-'scheduler:run',
-      async (_e, args?: { city?: string; storeIds?: string[] }) =>
-        getCore().runScheduler({
-          ...(args?.city ? { city: knownCity(args.city) } : {}),
-...(args?.storeIds === undefined ? {} : { storeIds: knownStores(args.city, args.storeIds) }),
-        }),
-  );
+  'scheduler:run',
+  async (_e, args?: { city?: string; pointKeys?: string[] }) =>
+    getCore().runScheduler({
+      ...(args?.city ? { city: knownCity(args.city) } : {}),
+      ...(args?.pointKeys === undefined ? {} : { pointKeys: knownPoints(args.city, args.pointKeys) }),
+    }),
+);
 
   // Прерывание идущего опроса. Возвращаем `false`, когда идти нечего: кнопка
   // может остаться нажатой после завершения прогона, и «я остановил» на
@@ -382,27 +441,30 @@ const knownCity = (value: unknown): string => {
   return value;
 };
 ipcMain.handle('city:set', (_e, args: { city: string }) => getCore().setCurrentCity(knownCity(args?.city)));
-    // Выбор сетей приходит из интерфейса, поэтому проверяем его по справочнику
-    // города: иначе опечатка или сеть из другого города молча расширила бы опрос
-    // (или, наоборот, убила бы его целиком — это молчаливое «проверено 0»).
-    const knownStores = (cityValue: unknown, value: unknown): string[] => {
-      const city = knownCity(cityValue);
-      if (!Array.isArray(value)) throw new Error('stores:set: список сетей должен быть массивом или null');
-      const available = new Set<string>((CITY_STORES[city] ?? []).map((s) => s.storeId));
-      const unknownStore = value.find((id) => typeof id !== 'string' || !available.has(id));
-      if (unknownStore !== undefined) {
-        throw new Error(`stores:set: сеть ${String(unknownStore).slice(0, 40)} не найдена в городе ${city}`);
-      }
-      return [...new Set(value as string[])];
-    };
+    // Выбор магазинов приходит из интерфейса, поэтому проверяем его по справочнику
+  // ГОРОДА и по паре «сеть + код точки»: иначе опечатка или точка чужого города
+  // молча расширила бы опрос (или, наоборот, убила бы его целиком — это
+  // молчаливое «проверено 0»).
+  const knownPoints = (cityValue: unknown, value: unknown): string[] => {
+    const city = knownCity(cityValue);
+    if (!Array.isArray(value)) throw new Error('stores:set: список магазинов должен быть массивом или null');
+    const available = new Set<string>(pointKeysForCity(city));
+    const unknown = value.find((id) => typeof id !== 'string' || !available.has(id));
+    if (unknown !== undefined) {
+      throw new Error(
+        `stores:set: магазин ${String(unknown).slice(0, 40)} не найден в городе ${city}`,
+      );
+    }
+    return [...new Set(value as string[])];
+  };
 
-    ipcMain.handle('stores:set', (_e, args: { city: string; storeIds: string[] | null }) => {
-      if (args?.storeIds === null || args?.storeIds === undefined) {
-        getCore().setCurrentStores(null);
-        return;
-      }
-      getCore().setCurrentStores(knownStores(args?.city, args.storeIds));
-    });
+  ipcMain.handle('stores:set', (_e, args: { city: string; pointKeys: string[] | null }) => {
+    if (args?.pointKeys === null || args?.pointKeys === undefined) {
+      getCore().setCurrentStores(null);
+      return;
+    }
+    getCore().setCurrentStores(knownPoints(args?.city, args.pointKeys));
+  });
 
 app.whenReady().then(async () => {
   // Путь к браузеру Playwright знает только оболочка: ядро не читает process.

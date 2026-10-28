@@ -2,8 +2,18 @@
 //
 // Раньше там было написано «сетка 24×24, содержимое живёт в поле 3..21 с
 // центром 12,12» — и ничего этого не проверялось. Набор разъехался: у
-// «колбасы» контур вылезал за поле (x от 2), а центры bbox стояли с 10,7 до
-// 15,2 вместо 12,12, и колонка полок «прыгала» тем заметнее, чем мельче рендер.
+// «колбасы» контур вылезал за поле, а центры рисунка стояли с 10,7 до 15,2
+// вместо 12,12, и колонка полок «прыгала» тем заметнее, чем мельче рендер.
+//
+// Теперь набор — Font Awesome Free (Solid), и проверяется то, что на самом
+// деле держит колонку ровной:
+//   • у каждой полки есть иконка, лишних нет;
+//   • ОБЩИЙ ВЕС (большая сторона чернил) и ОБЩАЯ НИЖНЯЯ КРОМКА — это и есть
+//     «единая оптика»: без них часть иконок читалась бы как «крупный знак»,
+//     часть — как «мелкий значок в пустом квадрате»;
+//   • путь в приложении — ТОТ ЖЕ, что в исходнике набора и в шапке README
+//     (провенанс: «иконки в приложении и в шапке — одни и те же»);
+//   • в файле один viewBox (24×24) и один способ заливки.
 //
 // Разбор путей живёт в `icon-geometry.ts` — единственная копия. Две копии
 // разбора уже стоили нам порченного рисунка, когда инструмент починки считал
@@ -12,12 +22,19 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { OUR_CATEGORIES } from '../src/shared/taxonomy.js';
-import { CENTER, CENTER_TOL, FIELD_MAX, FIELD_MIN, parseIcons } from './icon-geometry.js';
+import {
+  FIELD,
+  INK_BOTTOM,
+  INK_CENTER_X,
+  INK_TARGET,
+  normalizeGlyph,
+  normalizedBox,
+  parseIcons,
+  pathBox,
+} from './icon-geometry.js';
 
 const SRC = fs.readFileSync(path.resolve(import.meta.dirname, '../src/renderer/CategoryIcon.tsx'), 'utf8');
 const icons = parseIcons(SRC);
-const byStyle = (id: string, style: 'SOFT' | 'LINE' | 'FAINT'): number =>
-  icons.find((i) => i.id === id)?.shapes.filter((s) => s.style === style).length ?? 0;
 
 // 1) На каждую нашу категорию есть иконка, и лишних иконок нет.
 const ids = icons.map((i) => i.id);
@@ -32,68 +49,69 @@ for (const id of ids) {
 }
 assert.ok(ids.includes('__unassigned__'), 'нужен fallback для товаров вне полок');
 
-// 2) Геометрия: поле и центр — это и есть проверка «единой системы».
-for (const { id, box } of icons) {
+// 2) Общая оптика: одинаковый вес и одинаковая нижняя кромка. Это и есть
+//    «единая система»: без этого колонка прыгает по вертикали.
+for (const { id, raw, fit, box } of icons) {
+  const expected = normalizeGlyph(raw);
   assert.ok(
-    box.minX >= FIELD_MIN && box.minY >= FIELD_MIN && box.maxX <= FIELD_MAX && box.maxY <= FIELD_MAX,
-    `«${id}» выходит за поле ${FIELD_MIN}..${FIELD_MAX}: ` +
-      `x ${box.minX.toFixed(2)}..${box.maxX.toFixed(2)}, y ${box.minY.toFixed(2)}..${box.maxY.toFixed(2)}`,
+    Math.abs(fit.s - expected.s) < 0.001 &&
+      Math.abs(fit.dx - expected.dx) < 0.5 &&
+      Math.abs(fit.dy - expected.dy) < 0.5,
+    `у «${id}» нормализация оптики не совпадает с расчётной ` +
+      `(s ${fit.s} против ${expected.s.toFixed(5)})`,
+  );
+  const w = box.maxX - box.minX;
+  const h = box.maxY - box.minY;
+  const max = Math.max(w, h);
+  assert.ok(
+    Math.abs(max - INK_TARGET) <= 0.5,
+    `у «${id}» вес ${max.toFixed(1)} юнитов, а у набора ${INK_TARGET} — иконка «прыгает»`,
+  );
+  assert.ok(
+    Math.abs(box.maxY - INK_BOTTOM) <= 0.5,
+    `у «${id}» нижняя кромка ${box.maxY.toFixed(1)}, а у набора ${INK_BOTTOM} — иконка провисает к подписи`,
   );
   const cx = (box.minX + box.maxX) / 2;
-  const cy = (box.minY + box.maxY) / 2;
   assert.ok(
-    Math.abs(cx - CENTER) <= CENTER_TOL && Math.abs(cy - CENTER) <= CENTER_TOL,
-    `«${id}» смещена от центра ${CENTER},${CENTER}: центр ${cx.toFixed(2)},${cy.toFixed(2)}`,
+    Math.abs(cx - INK_CENTER_X) <= 0.5,
+    `у «${id}» центр по горизонтали ${cx.toFixed(1)}, а у набора ${INK_CENTER_X}`,
+  );
+  // Глиф внутри своего квадрата.
+  assert.ok(
+    box.minX >= 0 && box.minY >= 0 && box.maxX <= FIELD && box.maxY <= FIELD,
+    `у «${id}» глиф выходит за квадрат ${FIELD}×${FIELD}: ` +
+      `x ${box.minX.toFixed(1)}..${box.maxX.toFixed(1)}, y ${box.minY.toFixed(1)}..${box.maxY.toFixed(1)}`,
   );
 }
 
-// 3) Толщина линий одна: иначе на мелком размере одна иконка «тяжелее».
-const widths = [...SRC.matchAll(/strokeWidth:\s*([\d.]+)/g)].map((m) => m[1]);
-assert.ok(widths.length > 0, 'не найдено ни одного strokeWidth');
-assert.equal(new Set(widths).size, 1, `толщина линий разная: ${[...new Set(widths)].join(', ')}`);
+// 3) Один набор — один viewBox, и он ЗАДАНО: иконка с чужим viewBox съехала бы
+//    по оптическому центру, и колонка снова «прыгала» бы.
+const viewBoxes = [...SRC.matchAll(/viewBox="([^"]+)"/g)].map((m) => m[1]);
+assert.ok(viewBoxes.length > 0, 'в CategoryIcon.tsx нет ни одного viewBox');
+assert.equal(new Set(viewBoxes).size, 1, `viewBox'ы разные: ${[...new Set(viewBoxes)].join(', ')}`);
+assert.equal(viewBoxes[0], '0 0 24 24', `viewBox набора изменён: ${viewBoxes[0]}`);
 
-// 4) Все три стиля объявлены: удаление FAINT оставило бы систему наполовину
-//    рассыпанной, а тест молчал бы.
-const styleDecl = (name: string): string => SRC.match(new RegExp(`const ${name} = \\{([^}]*)\\}`))?.[1] ?? '';
-for (const style of ['SOFT', 'LINE', 'FAINT'] as const) {
-  const decl = styleDecl(style);
-  assert.ok(decl.length > 0, `стиль ${style} не объявлен`);
-  assert.ok(/fill:/.test(decl), `в стиле ${style} нет fill — фигура отрендерится чёрной по умолчанию`);
-}
-assert.ok(/strokeWidth:/.test(styleDecl('SOFT')) && /strokeWidth:/.test(styleDecl('LINE')), 'у силуэта и детали должна быть обводка');
+// 4) Цвет задаётся один раз через currentColor: иначе смена палитры (янтарный
+//    акцент виртуальной полки) разъехалась бы с заливкой контуров.
+assert.ok(/fill="currentColor"/.test(SRC), 'иконки заливаются не через currentColor');
+assert.ok(/var\(--color-primary\)/.test(SRC), 'цвет иконки задан не из палитры приложения');
+assert.ok(/var\(--color-warnline\)/.test(SRC), 'акцентный цвет иконки задан не из палитры приложения');
 
-// 5) Разметка фигур: у каждой есть стиль. Фигура без стиля отрендерилась бы
-//    дефолтной чёрной заливкой — силуэт чёрным на зелёном, и это проходилось.
-for (const { id, shapes } of icons) {
-  for (const s of shapes) {
-    assert.ok(s.style, `у «${id}» фигура без стиля (SOFT/LINE/FAINT): ${s.raw.slice(0, 40)}…`);
-  }
-}
-
-// 6) Детализация: у иконки есть и силуэт, и деталь. Проверка «хотя бы два
-//    элемента» была слабой: у большинства иконок 3–4 элемента, и снятие
-//    одной детали её не замечало.
-//    Fallback «вне полок» — намеренно «голый» знак списка, без заливки: с
-//    силуэтом он читался бы как ещё один товар.
-for (const { id, elements, shapes } of icons) {
-  assert.ok(elements >= 3, `у «${id}» всего ${elements} элемент(ов) — это почти силуэт`);
-  // Деталь — это читаемый контур (LINE ≈ 3.8:1). FAINT (≈1.8:1) — «воздух»
-  // и тень: он законен как фон, но не может считаться деталью, иначе проверка
-  // прощала бы иконку без деталей.
-  const details = shapes.filter((s) => s.style === 'LINE').length;
-  assert.ok(details > 0, `у «${id}» нет ни одной читаемой детали (LINE)`);
-  if (id !== '__unassigned__') {
-    assert.ok(byStyle(id, 'SOFT') > 0, `у «${id}» нет залитого силуэта`);
-  }
+// 5) Провенанс: путь в приложении — ТОТ ЖЕ, что в исходнике набора.
+for (const { id, name, shapes } of icons) {
+  const srcPath = path.resolve(import.meta.dirname, '..', 'assets', 'icons', `${name}.svg`);
+  assert.ok(fs.existsSync(srcPath), `нет исходника иконки ${name} (assets/icons/${name}.svg)`);
+  const raw = fs.readFileSync(srcPath, 'utf8');
+  assert.ok(raw.includes('<svg'), `исходник ${name} не SVG`);
+  const source = /d="([^"]+)"/.exec(raw)?.[1] ?? '';
+  assert.equal(shapes[0]?.d, source, `путь «${id}» в приложении разошёлся с исходником ${name}.svg`);
 }
 
-// 7) Баннер README. Отдельный файл, но рисуется теми же иконками и стоит
+// 6) Баннер README. Отдельный файл, но рисуется теми же иконками и стоит
 //    первым экраном репозитория, а tsc/vite/build его не читают вообще.
-//    Ровно поэтому сюда попала проверка структуры: лишняя кавычка в
-//    `scale(1.3333)""` не ломала ни один прогон, но делала standalone-SVG
-//    невалидным XML — GitHub отдавал бы битую картинку вместо шапки.
-//    Проверяем: атрибуты строго name="value", иконки стоят на сетке шага 54
-//    по оптическому центру строки, а контраст текста на плашках держит AA.
+//    Ровно поэтому сюда попали проверки: лишняя кавычка в `scale(1.3333)""` не
+//    ломала ни один прогон, но делала standalone-SVG невалидным XML — GitHub
+//    отдавал бы страницу с ошибкой парсера вместо шапки.
 let heroContrast = Infinity;
 const heroPath = path.resolve(import.meta.dirname, '../assets/readme/hero.svg');
 assert.ok(fs.existsSync(heroPath), 'нет assets/readme/hero.svg — шапка README пропала, а тест молчал бы');
@@ -106,29 +124,51 @@ assert.ok(fs.existsSync(heroPath), 'нет assets/readme/hero.svg — шапка
   const bare = hero.replace(/<!--[\s\S]*?-->/g, '');
   assert.ok(!bare.includes('&'), 'в hero.svg & без сущности — файл невалиден как XML');
   assert.ok(!bare.includes('--'), 'в hero.svg -- вне комментария — файл невалиден как XML');
-  const iconGroups = [...hero.matchAll(/<g transform="translate\((\d+),(\d+)\) scale\(([\d.]+)\)"/g)];
+  // Баланс тегов: лишний `</g>` ломал XML, и шапка показывалась как ошибка
+  // парсера (такое уже было с лишними кавычками).
+  const opens = (bare.match(/<g[\s>]/g) ?? []).length;
+  const closes = (bare.match(/<\/g>/g) ?? []).length;
+  assert.equal(opens, closes, `в hero.svg теги <g> и </g> не сбалансированы: ${opens} и ${closes}`);
+
+  // Иконки полок: те же пути, что в приложении, и правильная позиция.
+  const iconGroups = [
+    ...hero.matchAll(
+      /<g transform="translate\(640,([\d.]+)\) scale\(([\d.]+)\)">\s*<g transform="translate\((-?[\d.]+)[ ,](-?[\d.]+)\) scale\(([\d.]+)\)"><path d="([^"]+)"[^>]*\/><\/g>/g,
+    ),
+  ];
   assert.equal(iconGroups.length, 4, `в hero.svg ожидалось 4 иконки полок, найдено ${iconGroups.length}`);
-  // Строки баннера: [baseline, id полки]. Привязка по id, а не по номеру —
-  // иначе вставка новой категории в CategoryIcon.tsx молча переспарила бы
-  // строки и проверка выдала бы фантомное расхождение.
-  const rows: [number, string][] = [[152, 'dairy'], [206, 'bakery'], [260, 'meat'], [314, 'vegetables']];
+  // Строки баннера: [baseline, id полки]. Порядок зашит по id, а не вычисляется
+  // из самого файла: вычисление сделало бы проверку тождеством.
+  const rows: [number, string][] = [
+    [184, 'dairy'],
+    [234, 'bakery'],
+    [284, 'meat'],
+    [334, 'vegetables'],
+  ];
   iconGroups.forEach((m, i) => {
-    const [, x, y, scale] = m;
+    const [, tyRaw, scaleRaw, dxRaw, dyRaw, sRaw, d] = m;
     const [baseline, id] = rows[i] ?? [];
     const icon = icons.find((ic) => ic.id === id);
     assert.ok(icon && baseline !== undefined, `полка ${i + 1}: нет baseline или иконки «${id}»`);
-    const centerY = (icon.box.minY + icon.box.maxY) / 2;
-    const scaleN = Number(scale);
+    // Тот же путь, что в приложении: иначе «одни и те же иконки» — только слова.
+    assert.equal(d, icon!.shapes[0]?.d, `иконка полки ${i + 1} («${id}») в шапке — не та, что в приложении`);
+    assert.ok(
+      Math.abs(Number(dxRaw) - icon!.fit.dx) <= 0.5 &&
+        Math.abs(Number(dyRaw) - icon!.fit.dy) <= 0.5 &&
+        Math.abs(Number(sRaw) - icon!.fit.s) <= 0.001,
+      `нормализация оптики иконки полки ${i + 1} («${id}») в шапке разошлась с приложением`,
+    );
+    // Позиция: оптический центр строки (baseline − 0.35·fontsize) минус центр
+    // чернил иконки (12 юнитов) в масштабе шапки.
+    const scale = Number(scaleRaw);
     const optical = baseline - 0.35 * 20;
-    const got = Number(y) + centerY * scaleN;
-    // Допуск 0.5, а не 1: у иконок с точным центром 12,0 сдвиг на юнит
-    // давал ровно 1.0 и проходил. Реальные расхождения сейчас ≤ 0.4.
+    const got = Number(tyRaw) + 12 * scale;
     assert.ok(
       Math.abs(got - optical) <= 0.5,
-      `иконка полоки ${i + 1} («${icon.id}») стоит на ${got.toFixed(1)}, оптический центр строки ${optical}`,
+      `иконка полки ${i + 1} («${id}») стоит на ${got.toFixed(1)}, оптический центр строки ${optical}`,
     );
-    assert.equal(Number(x), 640, `иконка полоки ${i + 1} должна стоять на x=640`);
   });
+
   // Контраст текста по WCAG, выведенный из самого файла, а не из списка пар:
   // захардкоженный список проверял бы уже несуществующие сочетания и молчал бы
   // после правки. Поверхность берётся по колонке: x ≥ 612 — белая карточка,
@@ -145,7 +185,10 @@ assert.ok(fs.existsSync(heroPath), 'нет assets/readme/hero.svg — шапка
   let worstContrast = Infinity;
   for (const tag of hero.match(/<text\b[^<>]*>[^<>]*<\/text>/g) ?? []) {
     const fill = /fill="(#[0-9a-f]{6})"/.exec(tag)?.[1];
-    const xRaw = /x="(-?\d+)"/.exec(tag)?.[1];
+    // Дробный x законен: подпись чипа сети центрируется и стоит на полупикселе
+    // (903,5). Запрещать дробь значило бы запрещать text-anchor="middle" —
+    // ради одного этого правила проверка молча выпала бы из контраста.
+    const xRaw = /x="(-?\d+(?:\.\d+)?)"/.exec(tag)?.[1];
     const size = Number(/font-size="([\d.]+)"/.exec(tag)?.[1] ?? '16');
     // Без fill или x текст молча выпал бы из проверки, а без x ещё и получил
     // бы кремовую поверхность вместо белой карточки. Оба атрибута обязательны.
@@ -167,17 +210,18 @@ assert.ok(fs.existsSync(heroPath), 'нет assets/readme/hero.svg — шапка
   heroContrast = worstContrast;
 }
 
-// Запас виден ДО того, как сработает проверка: иконка, едущая ровно на
-// грани допуска, — это сигнал подтянуть её, а не «упереться и упасть».
+// Запас виден ДО того, как сработает проверка: иконка, едущая ровно на грани
+// допуска, — это сигнал подтянуть её, а не «упереться и упасть».
 const worst = icons
   .map((i) => ({
     id: i.id,
-    dc: Math.max(Math.abs((i.box.minX + i.box.maxX) / 2 - CENTER), Math.abs((i.box.minY + i.box.maxY) / 2 - CENTER)),
+    dw:
+      Math.abs(Math.max(i.box.maxX - i.box.minX, i.box.maxY - i.box.minY) - INK_TARGET) +
+      Math.abs(i.box.maxY - INK_BOTTOM),
   }))
-  .sort((a, b) => b.dc - a.dc)[0];
+  .sort((a, b) => b.dw - a.dw)[0];
 console.log(
-  `icons geometry: ALL GREEN — иконок ${icons.length}, поле ${FIELD_MIN}..${FIELD_MAX}, ` +
-    `центр ${CENTER}±${CENTER_TOL}, обводка ${widths[0]}, худшее отклонение центра ` +
-    `${worst?.id} ${(worst?.dc ?? 0).toFixed(2)}; hero.svg: 4 иконки по сетке, худший контраст текста ` +
-    `${heroContrast.toFixed(2)}:1`,
+  `icons geometry: ALL GREEN — иконок ${icons.length}, квадрат ${FIELD}×${FIELD}, вес ${INK_TARGET}±0.5, ` +
+    `нижняя кромка ${INK_BOTTOM}±0.5, худшее отклонение ${worst?.id} ${(worst?.dw ?? 0).toFixed(2)}; ` +
+    `hero.svg: 4 иконки по оптическому центру, худший контраст текста ${heroContrast.toFixed(2)}:1`,
 );

@@ -5,6 +5,7 @@ import { app, Notification, shell } from 'electron';
 import log from 'electron-log';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import type { AppShell, BackgroundTasks, CoreLogger } from '../src/core/platform.js';
 import { isExternalAllowed, urlForLog } from './external-links.js';
@@ -51,18 +52,107 @@ function firefoxReadyAt(root: string, revision: string): boolean {
 }
 
 /**
- * Каталоги, в которых ищем браузеры, в порядке приоритета. В сборке Firefox
- * лежит в resources рядом с exe: рабочий каталог упакованного приложения равен
- * папке exe, и «.playwright-browsers» там не ищется. В разработке — в корне
- * репозитория, но только когда приложение не упаковано: внутри app.asar этот
- * путь существует и писать туда нельзя. Один список на поиск и на диагностику:
- * разъехавшиеся копии дают в лог правду, которой сам поиск не пользовался.
+ * Каталоги, в которых ищем браузеры, в порядке приоритета.
+ *
+ * Firefox НЕ вшивается в установщик: он весит около 340 МБ, а нужен только
+ * трём сетям (Пятёрка, Чижик, Перекрёсток) — из-за него установщик весил
+ * 210 МБ. Теперь браузер ставится по требованию в каталог пользователя, и
+ * порядок поиска такой:
+ *   1. `resources/browsers` рядом с exe — если браузер всё-таки положил
+ *      установщик (или пользователь положил руками);
+ *   2. `userData/browsers` — куда его ставит сам приложение;
+ *   3. `.playwright-browsers` в корне репозитория — только в разработке:
+ *      внутри app.asar этого пути нет и писать туда нельзя.
+ *
+ * Один список на поиск и на диагностику: разъехавшиеся копии дают в лог
+ * правду, которой сам поиск не пользовался.
  */
 function browserRoots(): string[] {
   const roots: string[] = [];
   if (process.resourcesPath) roots.push(path.join(process.resourcesPath, 'browsers'));
+  roots.push(path.join(app.getPath('userData'), 'browsers'));
+  // Дефолтный каталог самого Playwright: `npx playwright install firefox`
+  // кладёт браузер именно туда, и туда же попадёт браузер, поставленный
+  // пользователем вручную. Без этого поиска мы говорили бы «браузера нет»
+  // про браузер, который Playwright запустил бы без проблем.
+  const local = process.env.LOCALAPPDATA;
+  if (local) roots.push(path.join(local, 'ms-playwright'));
   if (!app.isPackaged) roots.push(path.join(app.getAppPath(), '.playwright-browsers'));
   return roots;
+}
+
+/** Каталог, куда приложение само ставит Firefox по требованию. */
+export function userBrowsersDir(): string {
+  return path.join(app.getPath('userData'), 'browsers');
+}
+
+/**
+ * Установка Firefox по требованию.
+ *
+ * Firefox не вшивается в установщик (около 340 МБ из 210 МБ сборки), а нужен
+ * только трём сетям. Ставит его сам Playwright — он умеет и качать, и
+ * распаковывать, и знает нужную ревизию: запускаем `playwright install
+ * firefox` с PLAYWRIGHT_BROWSERS_PATH, указывающим на каталог пользователя.
+ *
+ * Из приложения Node запускается как ELECTRON_RUN_AS_NODE: иначе откроется
+ * ещё одно окно вместо выполнения скрипта.
+ */
+export function installFirefox(
+  onProgress: (line: string) => void,
+): Promise<{ ok: boolean; message: string }> {
+  const dir = userBrowsersDir();
+  const req = createRequire(import.meta.url);
+  let cli: string;
+  try {
+    // `require.resolve('playwright/cli.js')` не работает: в `exports` пакета
+    // playwright подпути `./cli.js` нет (там только `.`, `./package.json` и
+    // несколько `./lib/*`), и Node бросает ERR_PACKAGE_PATH_NOT_EXPORTED.
+    // Идём через package.json — он экспортируется — и строим путь рядом.
+    const pkgJson = req.resolve('playwright/package.json');
+    cli = path.join(path.dirname(pkgJson), 'cli.js');
+    if (!fs.existsSync(cli)) throw new Error(`по пути ${cli} нет файла установщика`);
+  } catch (err) {
+    return Promise.resolve({
+      ok: false,
+      message: `не найден установщик браузера (playwright) в сборке: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+  return new Promise((resolve) => {
+    const child = spawn(
+      process.execPath,
+      [cli, 'install', 'firefox'],
+      {
+        env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: dir, ELECTRON_RUN_AS_NODE: '1' },
+        windowsHide: true,
+      },
+    );
+    let last = '';
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString();
+      if (text.trim() === '' || text === last) return;
+      last = text;
+      onProgress(text.trim().slice(0, 200));
+    });
+    child.stderr?.on('data', (chunk: Buffer) => onProgress(chunk.toString().trim().slice(0, 200)));
+    child.on('error', (err) => resolve({ ok: false, message: `установка не началась: ${err.message}` }));
+    child.on('close', (code) => {
+      if (code === 0) {
+        // Playwright читает PLAYWRIGHT_BROWSERS_PATH ОДИН раз — при первом
+        // импорте. Поэтому переменную надо выставить сразу, а сеть всё равно
+        // заработает только после перезапуска приложения: об этом и говорим
+        // пользователю прямо, а не молча ждём, что сети оживут сами.
+        process.env.PLAYWRIGHT_BROWSERS_PATH = dir;
+        const found = resolveBrowsersPath();
+        resolve(
+          found
+            ? { ok: true, message: `браузер установлен: ${found}. Перезапустите приложение — сети заработают.` }
+            : { ok: false, message: 'установщик отработал, но браузер не найден' },
+        );
+      } else {
+        resolve({ ok: false, message: `установка браузера прервалась (код ${code ?? '—'})` });
+      }
+    });
+  });
 }
 
 /**

@@ -211,7 +211,7 @@ function pieceUnit(raw: ChizhikItem['price_piece_unit']): string | null {
   return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : null;
 }
 
-export function normalizeChizhikItem(raw: ChizhikItem, ctx: { city: string }): ScrapedProduct | null {
+export function normalizeChizhikItem(raw: ChizhikItem, ctx: { city: string; externalStoreId: string }): ScrapedProduct | null {
   const plu = String(raw.plu ?? '');
   const name = String(raw.name ?? '').trim();
   if (!/^\d+$/.test(plu) || !name) return null;
@@ -225,6 +225,7 @@ export function normalizeChizhikItem(raw: ChizhikItem, ctx: { city: string }): S
     canonicalId: `chizhik-${plu}`,
     storeId: 'chizhik',
     city: ctx.city,
+    storeCode: ctx.externalStoreId,
     name,
     unit:
       String(raw.property_clarification ?? '').trim() ||

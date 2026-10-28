@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import { CITY_TO_SLUG, LENTA_REGIONS, lentaRegionByCity, lentaRegionBySlug } from '../src/shared/lenta-regions.js';
-import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
+import { CITIES, storesForCity } from '../src/shared/catalog.js';
 import {
   aliasFromDeliveryMode,
   assertLentaStoreId,
@@ -23,7 +23,7 @@ import {
 } from '../src/core/adapters/lenta.js';
 import { isProductLookupError } from '../src/core/adapter-errors.js';
 
-const ctx = { city: 'moscow' as const };
+const ctx = { city: 'moscow', externalStoreId: 'TEST' } as const;
 const ALIAS = '3090';
 
 const card = JSON.parse(fs.readFileSync('tests/fixtures/lenta-product.json', 'utf-8')) as LentaItem;
@@ -58,7 +58,7 @@ assert.equal(lentaRegionByCity('saint-petersburg')?.slug, 'spb', 'lentaRegionByC
 // Ярославль, добавленные ради живого магазина Светофора) в её справочнике
 // отсутствует, и требовать обратного значило бы требовать несуществующей точки.
 for (const city of CITIES) {
-  const lenta = (CITY_STORES[city.id] ?? []).find((s) => s.storeId === 'lenta');
+  const lenta = storesForCity(city.id, 'lenta')[0];
   if (lenta === undefined) {
     assert.equal(
       lentaRegionByCity(city.id),

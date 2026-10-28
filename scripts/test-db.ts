@@ -3,8 +3,26 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { CITIES, CITY_STORES } from '../src/shared/catalog.js';
 import {
+  buildStoreLabels,
+  CITIES,
+  CITY_STORES,
+  networksForCity,
+  pointKey,
+  pointKeysForCity,
+  pointLabel,
+  readyStoresForCity,
+  resultBlockVisible,
+  storeByCode,
+  UNKNOWN_POINT_LABEL,
+  storeIdsForCity,
+  storesForCity,
+  uniqueByNetwork,
+  unknownPointLabel,
+} from '../src/shared/catalog.js';
+import type { PointKey } from '../src/shared/catalog.js';
+import {
+  SCHEMA_VERSION,
   closeDb,
   clearPollChecklist,
   getLastRun,
@@ -49,6 +67,12 @@ const seededStores = (): Map<string, string> => {
   const rows = db.exec(`SELECT id, city, external_store_id FROM stores`)[0]?.values ?? [];
   return new Map(rows.map((r) => [`${String(r[0])}:${String(r[1])}`, String(r[2])]));
 };
+// Ключ с кодом: одна сеть в городе может иметь несколько точек, и сверять их
+// по паре «сеть+город» больше нельзя — вторая точка затёрла бы первую.
+const seededPoints = (): Map<string, string> => {
+  const rows = db.exec(`SELECT id, city, external_store_id FROM stores`)[0]?.values ?? [];
+  return new Map(rows.map((r) => [`${String(r[0])}:${String(r[1])}:${String(r[2])}`, String(r[2])]));
+};
 // ВСЕ магазины из конфига, включая ready:false: сид в schema.sql тоже держит
 // выключенные строки (так же, как Пятёрку вне Москвы), и сверка обязана видеть
 // расхождение, если кто-то добавит город в конфиг, но забудет про SQL.
@@ -59,6 +83,14 @@ const expectedStores = (): Map<string, string> =>
       stores.map((s) => [`${s.storeId}:${city}`, s.externalStoreId]),
     ),
   );
+// Тот же справочник, но ключ с кодом точки: по паре «сеть+город» несколько
+// точек уже не различить.
+const expectedPoints = (): Set<string> =>
+  new Set(
+    Object.entries(CITY_STORES).flatMap(([city, stores]) =>
+      stores.map((s) => `${s.storeId}:${city}:${s.externalStoreId}`),
+    ),
+  );
 
 const seeded = seededStores();
 const expected = expectedStores();
@@ -67,23 +99,199 @@ for (const [key, id] of expected) {
 }
 assert.equal(seeded.size, expected.size, 'в stores нет лишних строк');
 
+// Смена кода в справочнике больше НЕ обновляет строку: код точки входит в
+// первичный ключ, поэтому новый код — это новая точка, а старая остаётся со
+// своим кодом и своей историей. Иначе кривые двух магазинов склеились бы в одну.
 db.run(`UPDATE stores SET external_store_id = 'stale'`);
 db.exec(SCHEMA);
-const reseeded = seededStores();
-for (const [key, id] of expected) {
-  assert.equal(reseeded.get(key), id, `повторный seed обновляет протухший код: ${key}`);
+const reseeded = seededPoints();
+for (const key of expectedPoints()) {
+  assert.ok(reseeded.has(key), `повторный seed не затирает точку ${key}`);
+  assert.ok(
+    reseeded.has(`${key.split(':').slice(0, 2).join(':')}:stale`),
+    `старая точка осталась в сиде отдельной строкой: ${key}`,
+  );
 }
 
 const seededCities = db.exec(`SELECT id FROM cities`)[0]?.values.map((r) => String(r[0])) ?? [];
 for (const c of CITIES) {
   assert.ok(seededCities.includes(c.id), `город засеян: ${c.id}`);
-  assert.ok((CITY_STORES[c.id] ?? []).length > 0, `у города есть магазины: ${c.id}`);
+  assert.ok(storesForCity(c.id).length > 0, `у города есть магазины: ${c.id}`);
 }
 assert.equal(seededCities.length, CITIES.length, 'в cities нет лишних строк');
+
+// Код точки уникален внутри пары (сеть, город). Это опора фазы 6: две записи с
+// одинаковым кодом — это одна и та же точка, записанная дважды, и цены такой
+// пары склеились бы в одну линию, как будто точек две, а на самом деле одна.
+// Проверка ловит ошибку в справочнике, а не в базе.
+for (const [city, stores] of Object.entries(CITY_STORES)) {
+  const codes = stores.map((s) => `${s.storeId}:${s.externalStoreId}`);
+  const dupes = codes.filter((c, i) => codes.indexOf(c) !== i);
+  assert.deepEqual(
+    dupes,
+    [],
+    `в городе ${city} повторяется код точки: ${[...new Set(dupes)].join(', ')}`,
+  );
+  const names = new Set(stores.map((s) => `${s.storeId}:${s.name}`));
+  assert.equal(
+    names.size,
+    stores.length,
+    `у точек одной сети в городе ${city} разные имена — иначе в UI они неразличимы`,
+  );
+  // storeByCode обязан находить каждую точку и не путать точки разных сетей,
+  // даже если коды у них совпадают.
+  for (const s of stores) {
+    assert.equal(
+      storeByCode(s.storeId, city, s.externalStoreId)?.externalStoreId,
+      s.externalStoreId,
+      `storeByCode находит точку ${s.storeId}:${s.externalStoreId} в городе ${city}`,
+    );
+  }
+  assert.deepEqual(
+    storeIdsForCity(city),
+    [...new Set(stores.map((s) => s.storeId))],
+    'сети города перечислены без повторов',
+  );
+  // Сетевой уровень: по одной записи на сеть, и это первая точка. Renderer вне
+  // покрытия, поэтому проверяем здесь — иначе функция осталась бы непроверенной
+  // до появления второй точки, где она как раз и нужна.
+  assert.deepEqual(
+    networksForCity(city).map((s) => s.storeId),
+    [...new Set(stores.map((s) => s.storeId))],
+    `networksForCity даёт по одной записи на сеть в городе ${city}`,
+  );
+  for (const n of networksForCity(city)) {
+    assert.equal(
+      n.externalStoreId,
+      stores.find((s) => s.storeId === n.storeId)?.externalStoreId,
+      `networksForCity берёт ПЕРВУЮ точку сети ${n.storeId} в городе ${city}`,
+    );
+  }
+}
+
+// Синтетическая пара точек одной сети — настоящий случай шага 3, которого в
+// справочнике пока нет (второй точки СПб у нас нет). Проверяем правило прямо на нём.
+{
+  const city = 'moscow';
+  const saved = [...(CITY_STORES[city] ?? [])];
+CITY_STORES[city] = [
+    { storeId: 'magnit' as const, name: 'Магнит, Пушкинская', externalStoreId: '990901', ready: true },
+    { storeId: 'magnit' as const, name: 'Магнит, Невский', externalStoreId: '990902', ready: true },
+    { storeId: 'lenta' as const, name: 'Лента, тестовая', externalStoreId: '9999', ready: false },
+  ];
+  try {
+    const labels = buildStoreLabels();
+    // Плашка прогресса ищет подпись по «сеть + код». Словарь, собранный по
+    // networksForCity, вторую точку сети не содержал бы вовсе — и подпись двух
+    // разных точек была бы одинаковой, то есть плашка врала бы ровно там,
+    // ради чего поточечная поддержка и заводилась.
+    assert.equal(labels.byPoint['magnit:990901'], 'Магнит, Пушкинская', 'подпись первой точки есть');
+    assert.equal(labels.byPoint['magnit:990902'], 'Магнит, Невский', 'и второй точки тоже — по коду, а не по сети');
+    assert.equal(labels.byPoint['lenta:9999'], 'Лента, тестовая', 'у другой сети своя точка со своим ключом');
+    // Подпись сети — одна запись на сеть, и берётся она из первого города
+    // списка: проверка не зависит от порядка ключей объекта справочника.
+    assert.equal(
+      labels.byStore['magnit'],
+      networksForCity(CITIES[0]!.id)[0]?.name,
+      'подпись сети берётся из первой точки первого города списка',
+    );
+
+    // Ключи точек города — то, чем помечаются галочки в шапке и что приходит в
+    // ядро как «выбранные магазины». Сеть с двумя точками даёт два ключа: одна
+    // галочка означала бы, что вторую точку нельзя снять отдельно.
+    assert.deepEqual(
+      pointKeysForCity(city),
+      ['magnit:990901', 'magnit:990902', 'lenta:9999'],
+      'ключи точек города — по одной на точку',
+    );
+    assert.deepEqual(
+      pointKeysForCity(city, true),
+      ['magnit:990901', 'magnit:990902'],
+      'в отбор галочек попадают только готовые точки',
+    );
+
+    // Адрес хранится БЕЗ города: город стоит в шапке приложения, и «Москва,
+    // ул. Саянская» рядом с «Москва» в заголовке читается как сбой вёрстки.
+    for (const s of storesForCity(city)) {
+      assert.ok(
+        s.address === undefined || !/Москва|Санкт-Петербург|Питер|Казань/.test(s.address),
+        `адрес точки ${s.externalStoreId} без города: ${s.address ?? ''}`,
+      );
+    }
+
+    // Подпись точки: адрес из сети, когда сеть его отдала, иначе имя точки.
+    assert.equal(
+      pointLabel({ ...CITY_STORES[city]![0]!, address: 'ул. Саянская, 11Б' }),
+      'Магнит, Пушкинская — ул. Саянская, 11Б',
+      'подпись единая: имя точки, потом адрес из сети',
+    );
+    assert.equal(
+      pointLabel(CITY_STORES[city]![2]!),
+      'Лента, тестовая',
+      'у точки без адреса подпись — одно имя, без пустого хвоста',
+    );
+  } finally {
+    CITY_STORES[city] = saved;
+  }
+  const twoPoints = [
+    { storeId: 'magnit' as const, name: 'Магнит, Пушкинская', externalStoreId: '990901', ready: true },
+    { storeId: 'magnit' as const, name: 'Магнит, Невский', externalStoreId: '990902', ready: true },
+    { storeId: 'lenta' as const, name: 'Лента', externalStoreId: '3311', ready: true },
+  ];
+  assert.deepEqual(
+    uniqueByNetwork(twoPoints).map((s) => s.externalStoreId),
+    ['990901', '3311'],
+    'две точки одной сети схлопываются в одну, и берётся первая',
+  );
+  // Первая точка не готова, вторая готова: сетевой список обязан показать
+  // готовую, иначе UI напишет «(скоро)» про сеть, которую опрос всё равно ходит.
+  assert.deepEqual(
+    uniqueByNetwork([
+      { storeId: 'svetofor' as const, name: 'Светофор А', externalStoreId: '1', ready: false },
+      { storeId: 'svetofor' as const, name: 'Светофор Б', externalStoreId: '2', ready: true },
+    ])[0]?.externalStoreId,
+    '2',
+    'готовая точка приоритетнее неготовой',
+  );
+  assert.equal(
+    storeByCode('magnit', 'moscow', '501478'),
+    undefined,
+    'чужой код точки в этом городе не находится — код привязан к городу',
+  );
+}
+
+// Фильтры каталога не должны превратиться в no-op: иначе все проверки выше
+// проходили бы на «все точки одного города». Проверяем на настоящих данных.
+{
+  const moscowMagnit = storesForCity('moscow', 'magnit');
+  assert.ok(moscowMagnit.length >= 1, 'у Магнита в Москве есть точка');
+  assert.ok(
+    moscowMagnit.every((s) => s.storeId === 'magnit'),
+    'storesForCity сужает по сети, а не отдаёт весь город',
+  );
+  assert.ok(
+    storesForCity('moscow').length > moscowMagnit.length,
+    'город без фильтра содержит и другие сети',
+  );
+  // Пятёрка вне Москвы не готова — это реальная запись с ready: false.
+  assert.ok(
+    readyStoresForCity('saint-petersburg').every((s) => s.ready),
+    'readyStoresForCity отдаёт только готовые точки',
+  );
+  assert.ok(
+    readyStoresForCity('saint-petersburg').every((s) => s.storeId !== 'pyaterochka'),
+    'неготовая Пятёрка СПб не попадает в список готовых',
+  );
+  assert.ok(
+    readyStoresForCity('saint-petersburg').length < storesForCity('saint-petersburg').length,
+    'в СПб есть неготовые точки — фильтр по ready что-то отбрасывает',
+  );
+}
 const base = {
   canonicalId: 'magnit-1',
   storeId: 'magnit',
   city: 'moscow',
+  storeCode: 'TEST',
   name: 'Молоко',
   price: 100,
 };
@@ -167,6 +375,7 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
     canonicalId: 'unit-price-1',
     storeId: 'magnit' as const,
     city: 'moscow',
+    storeCode: 'TEST',
     name: 'Молоко 3,2%, 930мл',
     price: 119,
     unitPrice: '128.00 ₽/л',
@@ -174,7 +383,13 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
   };
   assert.equal(savePriceIfChanged(db, toPriceInput(unitProduct)), 'inserted');
   saveProductCategory(db, [
-    { canonicalId: 'unit-price-1', storeId: 'magnit', city: 'moscow', categoryId: 'dairy-milk' },
+    {
+      canonicalId: 'unit-price-1',
+      storeId: 'magnit',
+      city: 'moscow',
+      storeCode: 'TEST',
+      categoryId: 'dairy-milk',
+    },
   ]);
   const onShelf = listCategoryProducts(db, { city: 'moscow', categoryId: 'dairy-milk' });
   assert.equal(onShelf[0]?.unitPrice, '128.00 ₽/л', 'полка отдаёт цену за единицу');
@@ -183,8 +398,8 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
   // потому что карточка по id закрыта WAF. JOIN обязан быть LEFT — иначе цели
   // без строки в products молча выпали бы из опроса вместе с историей.
   db.run(
-    `INSERT INTO prices_history (canonical_id, store_id, city, price, collected_at)
-     VALUES ('без-товара', 'magnit', 'moscow', 10, datetime('now'))`,
+    `INSERT INTO prices_history (canonical_id, store_id, city, store_code, price, collected_at)
+     VALUES ('без-товара', 'magnit', 'moscow', 'TEST', 10, datetime('now'))`,
   );
   const tracked = listTrackedProducts(db);
   assert.equal(
@@ -195,6 +410,27 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
   const withoutProduct = tracked.find((t) => t.canonicalId === 'без-товара');
   assert.ok(withoutProduct, 'цель без строки в products не потерялась (LEFT JOIN)');
   assert.equal(withoutProduct?.name, '', 'нет названия — пустая строка, а не null/undefined');
+
+  // Товар в двух точках одной сети — это ДВЕ цели опроса, у каждой свой код
+  // точки. Одна цель на пару «товар + сеть + город» опрашивала бы только одну
+  // точку, и цена второй вечно оставалась бы старой.
+  db.run(
+    `INSERT INTO prices_history (canonical_id, store_id, city, store_code, price, collected_at)
+     VALUES ('две-точки', 'magnit', 'moscow', 'MK1', 11, datetime('now')),
+            ('две-точки', 'magnit', 'moscow', 'MK2', 12, datetime('now'))`,
+  );
+  const twoPoints = listTrackedProducts(db).filter((t) => t.canonicalId === 'две-точки');
+  assert.equal(twoPoints.length, 2, 'две точки одной сети дают две цели опроса');
+  assert.deepEqual(
+    twoPoints.map((t) => t.storeCode).sort(),
+    ['MK1', 'MK2'],
+    'и у каждой цели свой код точки',
+  );
+  assert.equal(
+    listTrackedProducts(db).filter((t) => t.canonicalId === 'без-товара').length,
+    1,
+    'JOIN с products не задваивает цель: products.id — первичный ключ',
+  );
 
   // Цена за единицу наследуется, когда путь не отдаёт её: у Магнита поиск
   // снимает «106,45 ₽/л» из DOM, а fetchProduct (JSON-LD) не отдаёт. Без
@@ -237,13 +473,14 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
   // --- Избранное ----------------------------------------------------------
 // Ключ включает магазин и город: одна и та же цена в двух сетях — две отметки.
 {
-  const scope = { canonicalId: 'fav-1', storeId: 'magnit', city: 'moscow' };
+  const scope = { canonicalId: 'fav-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' };
   savePriceIfChanged(
     db,
     toPriceInput({
       canonicalId: 'fav-1',
       storeId: 'magnit',
       city: 'moscow',
+      storeCode: 'TEST',
       name: 'Молоко Домик в деревне 930мл',
       price: 119.99,
       inStock: true,
@@ -261,13 +498,13 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
 
   // Тот же товар в другом городе — ДРУГАЯ отметка.
   assert.equal(
-    isFavorite(db, { canonicalId: 'fav-1', storeId: 'magnit', city: 'ulyanovsk' }),
+    isFavorite(db, { canonicalId: 'fav-1', storeId: 'magnit', city: 'ulyanovsk', storeCode: 'TEST' }),
     false,
     'отметка не протекает на другой город',
   );
   // И другой магазин тоже.
   assert.equal(
-    isFavorite(db, { canonicalId: 'fav-1', storeId: 'lenta', city: 'moscow' }),
+    isFavorite(db, { canonicalId: 'fav-1', storeId: 'lenta', city: 'moscow', storeCode: 'TEST' }),
     false,
     'отметка не протекает на другую сеть',
   );
@@ -322,7 +559,7 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
   // Отметка раньше первого замера: строки products ещё нет, а внешний ключ
   // favorites → products включён. Без INSERT в saveFavorite звёздочка падала
   // с сырым «FOREIGN KEY constraint failed».
-  const fresh = { canonicalId: 'fav-fresh', storeId: 'lenta', city: 'ulyanovsk' };
+  const fresh = { canonicalId: 'fav-fresh', storeId: 'lenta', city: 'ulyanovsk', storeCode: 'TEST' };
   assert.equal(
     db.exec("SELECT COUNT(*) FROM products WHERE id = 'fav-fresh'")[0]?.values[0]?.[0],
     0,
@@ -342,6 +579,7 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
       canonicalId: 'fav-fresh',
       storeId: 'lenta',
       city: 'ulyanovsk',
+      storeCode: 'TEST',
       name: 'Кефир Простоквашино 900г',
       price: 89.9,
       inStock: true,
@@ -387,6 +625,7 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
     canonicalId: 'hist-many',
     storeId: 'magnit',
     city: 'moscow',
+    storeCode: 'TEST',
     name: 'Долгий товар',
     inStock: true,
     promoPrice: null,
@@ -399,21 +638,21 @@ assert.equal(lastPrices('magnit-blind').old, null, 'прежняя зачёрк�
       toPriceInput({ ...many, price: i, collectedAt: new Date(2026, 0, 1, 0, 0, i).toISOString() } as ScrapedProduct),
     );
   }
-const history = getPriceHistory(db, { canonicalId: 'hist-many', storeId: 'magnit', city: 'moscow', limit: 500 });
+const history = getPriceHistory(db, { canonicalId: 'hist-many', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', limit: 500 });
 assert.equal(history.length, 500, 'getPriceHistory отдаёт первые 500 записей');
 assert.notEqual(
   history[499]?.price,
   604,
   'последняя из первых 500 НЕ настоящая последняя цена — ровно тот дефект, который чинит latestPrices',
 );
-  const latest = latestPrices(db, [{ canonicalId: 'hist-many', storeId: 'magnit', city: 'moscow' }]);
+  const latest = latestPrices(db, [{ canonicalId: 'hist-many', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' }]);
   assert.equal(
-    latest.get('magnit:hist-many:moscow')?.price,
+    latest.get('magnit:hist-many:moscow:TEST')?.price,
     604,
     'latestPrices берёт настоящую последнюю цену, а не из середины истории',
   );
   assert.equal(
-    latestPrices(db, [{ canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow' }]).size,
+    latestPrices(db, [{ canonicalId: 'нет-такого', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' }]).size,
     0,
     'по неизвестному ключу пусто, а не ошибка',
   );
@@ -464,7 +703,7 @@ true,
     77,
     'порог перенесён',
   );
-  saveFavorite(migrated, { canonicalId: 'old-1', storeId: 'magnit', city: 'moscow' }, 60);
+  saveFavorite(migrated, { canonicalId: 'old-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' }, 60);
   assert.equal(
     migrated.exec("SELECT COUNT(*) FROM favorites WHERE store_id = 'magnit'")[0]?.values[0]?.[0],
     1,
@@ -546,11 +785,20 @@ for (const shape of LEGACY_SHAPES) {
     .filter((r) => Number(r[5]) > 0)
     .map((r) => String(r[1]))
     .sort();
-  assert.deepEqual(pk, ['canonical_id', 'city', 'store_id'], `[${shape.name}] ключ favorites не составной`);
+  assert.deepEqual(
+    pk,
+    ['canonical_id', 'city', 'store_code', 'store_id'],
+    `[${shape.name}] ключ favorites не четырёхчастный`,
+  );
   assert.equal(
     fixed.exec('SELECT COUNT(*) FROM favorites')[0]?.values[0]?.[0],
     1,
     `[${shape.name}] отметка потеряна при миграции`,
+  );
+  assert.equal(
+    String(fixed.exec("SELECT store_code FROM favorites WHERE canonical_id = 'old-1'")[0]?.values[0]?.[0] ?? ''),
+    '?',
+    `[${shape.name}] перенесённая отметка помечена как «любая точка сети»`,
   );
   assert.equal(
     Number(fixed.exec("SELECT target_price FROM favorites WHERE canonical_id = 'old-1'")[0]?.values[0]?.[0] ?? 0),
@@ -559,7 +807,7 @@ for (const shape of LEGACY_SHAPES) {
   );
   // Реальная запись избранного на такой базе: раньше падала на отсутствии
   // колонки или на несовпадении ключа.
-  saveFavorite(fixed, { canonicalId: 'old-1', storeId: 'magnit', city: 'moscow' }, 60);
+  saveFavorite(fixed, { canonicalId: 'old-1', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' }, 60);
   assert.equal(
     fixed.exec("SELECT COUNT(*) FROM favorites WHERE store_id = 'magnit' AND city = 'moscow'")[0]
       ?.values[0]?.[0],
@@ -568,7 +816,7 @@ for (const shape of LEGACY_SHAPES) {
   );
   assert.equal(
     Number(fixed.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0),
-    2,
+    SCHEMA_VERSION,
     `[${shape.name}] версия схемы не отмечена`,
   );
 
@@ -610,6 +858,7 @@ db = await openDb(fileStorageAt(file));
         canonicalId: id,
         storeId,
         city,
+        storeCode: 'TEST',
         name: 'Сыр сливочный 200г',
         price: 100,
         inStock: true,
@@ -623,6 +872,7 @@ db = await openDb(fileStorageAt(file));
     canonicalId,
     storeId,
     city: 'moscow',
+    storeCode: 'TEST',
     name: 'Сыр сливочный 200г',
     price: 100,
     promoPrice: null,
@@ -678,19 +928,20 @@ assert.equal(
 
 // Ключ, который SQLite не умеет привязать, обязан быть пропущен, а не уронить
 // весь запрос: одна битая запись в разметке не должна убирать цены у остальных.
-savePriceIfChanged(db, { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow', name: 'Товар', price: 10 });
+savePriceIfChanged(db, { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow', storeCode: 'TEST', name: 'Товар', price: 10 });
 const mixed = latestPrices(db, [
-  { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow' },
-  { canonicalId: undefined as unknown as string, storeId: 'magnit', city: 'moscow' },
+  { canonicalId: 'bind-ok', storeId: 'magnit', city: 'moscow', storeCode: 'TEST' },
+  { canonicalId: undefined as unknown as string, storeId: 'magnit', city: 'moscow', storeCode: 'TEST' },
 ]);
 assert.equal(mixed.size, 1, 'принимаемый ключ прочитан, непринимаемый пропущен');
-assert.equal([...mixed.keys()][0], 'magnit:bind-ok:moscow');
+assert.equal([...mixed.keys()][0], 'magnit:bind-ok:moscow:TEST', 'в ключе цены есть код точки');
 
 // product_links: sku известен, ссылки нет; sku неизвестен, ссылка есть.
 savePriceIfChanged(db, {
   canonicalId: 'link-a',
   storeId: 'magnit',
   city: 'moscow',
+  storeCode: 'TEST',
   name: 'Товар A',
   price: 20,
   storeSku: 'sku-a',
@@ -698,6 +949,7 @@ savePriceIfChanged(db, {
 savePriceIfChanged(db, {
   canonicalId: 'link-b',
   storeId: 'magnit',
+  storeCode: 'TEST',
   city: 'moscow',
   name: 'Товар B',
   price: 30,
@@ -716,19 +968,26 @@ assert.deepEqual(
 // --- Чек-лист цикла опроса --------------------------------------------------
 {
   assert.deepEqual(loadPollChecklist(db, 'moscow'), new Set(), 'до первого прогона чек-лист пуст');
-  markPollChecked(db, 'moscow', 'magnit', 'magnit-1');
-  markPollChecked(db, 'moscow', 'magnit', 'magnit-2');
-  markPollChecked(db, 'moscow', 'lenta', 'lenta-9');
-  markPollChecked(db, 'ulyanovsk', 'magnit', 'magnit-uly');
+  markPollChecked(db, 'moscow', 'magnit', 'MK1', 'magnit-1');
+  markPollChecked(db, 'moscow', 'magnit', 'MK2', 'magnit-1');
+  markPollChecked(db, 'moscow', 'magnit', 'MK1', 'magnit-2');
+  markPollChecked(db, 'moscow', 'lenta', '4161', 'lenta-9');
+  markPollChecked(db, 'ulyanovsk', 'magnit', 'UL1', 'magnit-uly');
   // Повторная отметка того же товара: INSERT OR IGNORE, иначе UNIQUE роняет опрос.
-  markPollChecked(db, 'moscow', 'magnit', 'magnit-1');
+  markPollChecked(db, 'moscow', 'magnit', 'MK1', 'magnit-1');
   const moscow = loadPollChecklist(db, 'moscow');
-  assert.equal(moscow.size, 3, 'повторная отметка не задваивает строку');
-  // Ключ пара «сеть+товар»: склейка была бы не выдумкой, а реальностью — id
-  // товара начинается с названия сети (`lenta-9` против сети `lenta`).
-  assert.ok(moscow.has(`magnit\u0000magnit-1`), 'товар Магнита отмечен');
-  assert.ok(moscow.has(`lenta\u0000lenta-9`), 'товар Ленты отмечен отдельно');
-  assert.equal(moscow.has(`magnit\u0000lenta-9`), false, 'товар одной сети не склеивается с id другой');
+  assert.equal(moscow.size, 4, 'повторная отметка не задваивает строку');
+  // Ключ пара «сеть+точка+товар»: склейка была бы не выдумкой, а реальностью —
+  // id товара начинается с названия сети (`lenta-9` против сети `lenta`), а у
+  // двух точек одной сети товар один и тот же.
+  assert.ok(moscow.has('magnit\u0000MK1\u0000magnit-1'), 'товар первой точки Магнита отмечен');
+  assert.ok(moscow.has('lenta\u00004161\u0000lenta-9'), 'товар Ленты отмечен отдельно');
+  assert.equal(moscow.has('magnit\u00004161\u0000lenta-9'), false, 'товар одной сети не склеивается с id другой');
+  assert.equal(
+    moscow.has('magnit\u0000MK1\u0000magnit-1') && moscow.has('magnit\u0000MK2\u0000magnit-1'),
+    true,
+    'один товар в двух точках отмечен дважды: отметка точки А не прячет точку Б',
+  );
   // Город в ключе: чужой город не подмешивается.
   assert.equal(loadPollChecklist(db, 'ulyanovsk').size, 1, 'чек-лист пер-городный');
   clearPollChecklist(db, 'moscow');
@@ -741,5 +1000,51 @@ assert.deepEqual(
 
 persistDb(db);
 assert.ok(fs.existsSync(file), 'db file persisted');
+
+// --- Видимость блока выдачи при выборе магазинов. ---------------------------
+// Правило одно и обязано быть единственным (renderer вне покрытия c8, а
+// именно точное сравнение ключа один раз съело перенесённые цены вместе с
+// товарами): блок своей точки виден по её выбору, блок перенесённых цен ('?' —
+// «точка неизвестна») виден, если выбрана хоть одна точка той же сети.
+{
+  const points = storesForCity('moscow', 'magnit');
+  const code = points[0]?.externalStoreId ?? '';
+  const on = (keys: PointKey[]): Record<PointKey, boolean> =>
+    Object.fromEntries(keys.map((k) => [k, true]));
+  assert.equal(
+    resultBlockVisible(on([pointKey('magnit', code)]), points, 'magnit', code),
+    true,
+    'выбранная точка: её блок виден',
+  );
+  assert.equal(
+    resultBlockVisible(on([]), points, 'magnit', code),
+    false,
+    'невыбранная точка: её блок скрыт',
+  );
+  assert.equal(
+    resultBlockVisible(on([pointKey('magnit', code)]), points, 'magnit', '?'),
+    true,
+    'перенесённые цены видны, когда выбрана своя точка той же сети',
+  );
+  assert.equal(
+    resultBlockVisible(on([pointKey('lenta', 'lenta-code')]), points, 'magnit', '?'),
+    false,
+    'перенесённые цены ЧУЖОЙ сети скрыты',
+  );
+  assert.equal(
+    resultBlockVisible(on([pointKey('magnit', code)]), points, 'magnit', '999999'),
+    false,
+    'несуществующая точка не проходит под выбранную',
+  );
+  // Подпись перенесённого блока обязана называть неизвестную точку: у всех точек
+  // Магнита имя «Магнит», и строка перенесённых цен иначе выглядела бы как цена
+  // ВЫБРАННОГО магазина.
+  assert.equal(
+    unknownPointLabel(points[0]?.name ?? ''),
+    `${points[0]?.name ?? ''} — ${UNKNOWN_POINT_LABEL}`,
+    'перенесённый блок подписан «точка не указана», а не именем выбранного магазина',
+  );
+}
+
 closeDb();
 console.log('db write-on-change: ALL GREEN');
